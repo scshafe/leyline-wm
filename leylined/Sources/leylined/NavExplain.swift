@@ -1,7 +1,5 @@
-// nav-explain — the headless scene runner backing the `core` backend of
-// display_geometry/nav-tests.sh. Scene parsing mirrors leyline-menu-ui's
-// NavExplainCLI exactly: the same key aliases, the same visibility defaults
-// (is_visible true / is_minimized false), the same filter order — a hidden or
+// nav-explain — the headless scene runner behind tests/oracles/navigation-tests.sh.
+// Visibility defaults are is_visible true / is_minimized false; a hidden or
 // minimized source is filtered before lookup and therefore reports noFocus.
 import Foundation
 import LeylineModel

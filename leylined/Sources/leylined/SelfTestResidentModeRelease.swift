@@ -1,28 +1,20 @@
 import Foundation
 import LeylineModel
 
-private final class ResidentModeReleaseRecorder: @unchecked Sendable {
-    struct Entry: Equatable { let mode: String; let generation: UInt64; let resetsInteraction: Bool }
-    private let lock = NSLock()
-    private var entries: [Entry] = []
-    func record(_ mode: String, _ generation: UInt64, _ resetsInteraction: Bool) {
-        lock.withLock { entries.append(.init(mode: mode, generation: generation, resetsInteraction: resetsInteraction)) }
-    }
-    var values: [Entry] { lock.withLock { entries } }
-}
+private struct ModeReleaseEntry: Equatable { let mode: String; let generation: UInt64; let resetsInteraction: Bool }
 
 /// Uses the actual atomic mode word and delivery mailbox, without installing a tap.
 func runResidentModeReleaseChecks(configuration: ResidentInputConfiguration, home: String, test: inout SelfTest) {
-    guard let data = FileManager.default.contents(atPath: home + "/leylined/Fixtures/input/mode-release.json"),
+    guard let data = FileManager.default.contents(atPath: SelfTestFixtures.path("input/mode-release.json", root: home)),
           let fixture = try? JSONValue.parse(data),
           let entry = fixture.at(path: "entry_chord")?.stringValue,
           let exit = fixture.at(path: "exit_chord")?.stringValue,
-          let reason = fixture.at(path: "release_reason")?.stringValue else {
+          let reason = fixture.at(path: "release_reason")?.stringValue.flatMap(ResidentInputReleaseReason.init(rawValue:)) else {
         test.check(false, "mode-release/fixture-required"); return
     }
-    let recorder = ResidentModeReleaseRecorder()
+    let recorder = Recorded<ModeReleaseEntry>()
     let routing = ResidentInputRouting(configuration: configuration, dispatchAction: { _, complete in complete(0) },
-        onModeChanged: { recorder.record($0, $1, $2) ; return true })
+        onModeChanged: { recorder.append(.init(mode: $0, generation: $1, resetsInteraction: $2)); return true })
     _ = routing.admit(chord: entry); routing.flushForSelfTest()
     let entered = routing.generation
     routing.withMailboxLockForSelfTest { routing.release(reason: reason) }
@@ -36,13 +28,13 @@ func runResidentModeReleaseChecks(configuration: ResidentInputConfiguration, hom
     // Hold the real delivery queue across two releases and a newer optimistic entry.
     // Stale release work must deliver the newer mode once, with the inherited reset.
     let held = DispatchSemaphore(value: 0), resume = DispatchSemaphore(value: 0)
-    let blocked = ResidentAtomic<Bool>(false), newer = ResidentModeReleaseRecorder()
+    let blocked = ResidentAtomic<Bool>(false), newer = Recorded<ModeReleaseEntry>()
     let advancing = ResidentInputRouting(configuration: configuration, dispatchAction: { _, complete in complete(0) },
         onModeChanged: { mode, generation, reset in
             if mode == "move", !blocked.exchange(true, ordering: .acquiringAndReleasing) {
                 held.signal(); _ = resume.wait(timeout: .now() + .seconds(3))
             }
-            newer.record(mode, generation, reset)
+            newer.append(.init(mode: mode, generation: generation, resetsInteraction: reset))
         return true })
     _ = advancing.admit(chord: entry)
     let firstHeld = held.wait(timeout: .now() + .seconds(1)) == .success
@@ -56,10 +48,10 @@ func runResidentModeReleaseChecks(configuration: ResidentInputConfiguration, hom
         && newer.values.filter { $0.generation == current }.count == 1,
         "mode-release/coalesced-forced-releases-retire-old-context-before-newer-entry-once")
 
-    let provisional = ResidentModeReleaseRecorder()
+    let provisional = Recorded<ModeReleaseEntry>()
     let partial = ResidentInputRouting(configuration: configuration, dispatchAction: { action, complete in
         complete(action.actionId == "move.cancel" ? 3 : 0)
-    }, onModeChanged: { provisional.record($0, $1, $2) ; return true })
+    }, onModeChanged: { provisional.append(.init(mode: $0, generation: $1, resetsInteraction: $2)); return true })
     _ = partial.admit(chord: entry); partial.flushForSelfTest()
     _ = partial.admit(chord: exit); partial.flushForSelfTest()
     test.check(partial.mode == "move" && provisional.values.contains { $0.mode == "default" }
@@ -73,17 +65,17 @@ private final class ResidentModeReleaseRoutingBox: @unchecked Sendable {
 
 /// The old callback is genuinely superseded between capture and authority commit.
 func runResidentModeReleaseAcknowledgementChecks(configuration: ResidentInputConfiguration, home: String, test: inout SelfTest) {
-    guard let data = FileManager.default.contents(atPath: home + "/leylined/Fixtures/input/mode-release.json"),
+    guard let data = FileManager.default.contents(atPath: SelfTestFixtures.path("input/mode-release.json", root: home)),
           let fixture = try? JSONValue.parse(data), let world = fixture.at(path: "authority_world"),
           let entry = fixture.at(path: "entry_chord")?.stringValue,
-          let reason = fixture.at(path: "release_reason")?.stringValue else {
+          let reason = fixture.at(path: "release_reason")?.stringValue.flatMap(ResidentInputReleaseReason.init(rawValue:)) else {
         test.check(false, "mode-release/acknowledgement-fixture-required"); return
     }
     let server = CoreServer(socketPath: "/tmp/mode-release-unused.sock", initialState: world)
     _ = server.applyModeFrame(.init(type: .snapshot, epoch: "mode-reset-ack", sequence: 0, mode: "move"))
     let box = ResidentModeReleaseRoutingBox(), renewed = ResidentAtomic<Bool>(false)
     let sequence = ResidentAtomic<UInt64>(0), rejected = ResidentAtomic<Int>(0)
-    let accepted = ResidentModeReleaseRecorder()
+    let accepted = Recorded<ModeReleaseEntry>()
     let routing = ResidentInputRouting(configuration: configuration, dispatchAction: { _, complete in complete(0) },
         onModeChanged: { mode, generation, reset in
             if mode == "default", reset, !renewed.exchange(true, ordering: .acquiringAndReleasing) {
@@ -94,7 +86,7 @@ func runResidentModeReleaseAcknowledgementChecks(configuration: ResidentInputCon
                 sequence: Int64(clamping: next), mode: mode, resetsInteraction: reset, inputGeneration: generation),
                 commitGuard: { box.routing?.generation == generation ? nil : "input_generation_released" })
             guard result.status == .accepted else { rejected.wrappingAdd(1, ordering: .acquiringAndReleasing); return false }
-            sequence.store(next, ordering: .releasing); accepted.record(mode, generation, reset)
+            sequence.store(next, ordering: .releasing); accepted.append(.init(mode: mode, generation: generation, resetsInteraction: reset))
             return true
         })
     box.routing = routing

@@ -3,17 +3,15 @@ import LeylineModel
 
 /// Frozen expected rectangles cover stroke, shared spacing and OS canvas policy.
 func runBorderSpacingScenarios(test: inout SelfTest) {
-    let path = responsivenessRepositoryRoot() + "/leylined/Fixtures/projection/border-spacing.json"
+    let path = SelfTestFixtures.path("projection/border-spacing.json")
     guard let data = FileManager.default.contents(atPath: path), let fixture = try? JSONValue.parse(data),
           let cases = fixture.at(path: "cases")?.arrayValue, cases.count == 5,
           let screens = fixture.at(path: "screens")?.arrayValue, screens.count == 4 else {
         test.check(false, "border-spacing/independent-fixture-load"); return
     }
-    let registryPath = responsivenessRepositoryRoot() + "/config/registry/borders.json"
-    let registry = FileManager.default.contents(atPath: registryPath).flatMap { try? JSONValue.parse($0) }
-    test.check(registry?.at(path: "width.default")?.intValue == Int64(BorderPalette.defaultThickness)
-        && registry?.at(path: "border_thickness") == nil,
-        "border-spacing/registry-defines-one-canonical-width-with-matching-default")
+    test.check(BorderPalette.thickness == 1
+        && BorderPalette.configurationDefaults.keys.sorted() == ["border_radius", "colors"],
+        "border-spacing/width-is-fixed-and-absent-from-seeded-configuration")
     for scenario in cases {
         let width = scenario.at(path: "width")!.intValue!
         let topology = scenario.at(path: "topology")!
@@ -22,9 +20,8 @@ func runBorderSpacingScenarios(test: inout SelfTest) {
         let left = Frame.from(targets.at(path: "1.frame")), right = Frame.from(targets.at(path: "2.frame"))
         test.check(left == Frame.from(scenario.at(path: "expected_left")) && right == Frame.from(scenario.at(path: "expected_right")),
             "border-spacing/width-\(width)-outer-reservation-and-single-shared-gutter")
-        if let left, let right {
-            let config = JSONValue.object(["width": .int(width)])
-            let thickness = Double(BorderPalette.thickness(store: config))
+        if width == Int64(BorderPalette.thickness), let left, let right {
+            let thickness = Double(BorderPalette.thickness)
             test.check(BorderRing(windowId: 1, frame: left, role: .focus).envelope(thickness: thickness)
                 == Frame.from(scenario.at(path: "expected_outer_left"))
                 && BorderRing(windowId: 2, frame: right, role: .focus).envelope(thickness: thickness)
@@ -56,6 +53,6 @@ func runBorderSpacingScenarios(test: inout SelfTest) {
             visible: Frame.from(scenario.at(path: "visible"))!, safeAreaTop: scenario.at(path: "safe_top")!.numberValue!,
             primaryHeight: scenario.at(path: "primary_height")!.numberValue!)
         test.check(actual == Frame.from(scenario.at(path: "expected")),
-            "border-spacing/\(scenario.at(path: "name")!.stringValue!)-fills-display-below-menu-and-notch")
+            "border-spacing/\(scenario.requiredString("name"))-fills-display-below-menu-and-notch")
     }
 }

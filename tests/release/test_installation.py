@@ -61,7 +61,7 @@ class NativeInstallationTests(unittest.TestCase):
         self.resources = self.base / "resources"
         for relative in [
             "VERSION", "keymap/decode-us.json", "keymap/global.json",
-            "keymap/modes.json", "config/registry/borders.json",
+            "keymap/modes.json",
         ]:
             target = self.resources / relative
             target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -123,10 +123,11 @@ class NativeInstallationTests(unittest.TestCase):
                           self.root / "state/leylined", self.agents]:
             self.assertEqual(stat.S_IMODE(directory.stat().st_mode), 0o700, directory)
 
-    def test_no_start_install_flattens_canonical_border_defaults(self) -> None:
+    def test_no_start_install_seeds_documented_nested_border_defaults(self) -> None:
         self.install()
-        registry = json.loads((self.resources / "config/registry/borders.json").read_text())
-        expected = {key: value["default"] for key, value in registry.items()}
+        expected = {"border_radius": 12, "colors": {
+            "focus": "0xff39ff14", "resizing": "0xffff8c00", "moved": "0xff2962ff",
+            "move_to": "0xffff5fa2", "drop_edge": "0xffffd400"}}
         self.assertEqual(json.loads((self.root / "config/borders.json").read_text()), expected)
 
     def test_repeated_no_start_install_preserves_bytes_and_timestamps(self) -> None:

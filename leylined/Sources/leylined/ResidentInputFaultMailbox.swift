@@ -62,8 +62,7 @@ final class ResidentInputFaultMailbox: @unchecked Sendable {
         ["pending_events": .int(pending.load(ordering: .acquiring) == 0 ? 0 : 1),
          "pending_capacity": .int(1), "executing_event": .bool(executing.load(ordering: .acquiring)),
          "superseded_events": .int(Int64(clamping: superseded.load(ordering: .relaxed))),
-         "rejected_events": .int(Int64(clamping: rejected.load(ordering: .relaxed))),
-         "recurring_poll_count": .int(0)]
+         "rejected_events": .int(Int64(clamping: rejected.load(ordering: .relaxed)))]
     }
 
     private static func box(_ bits: UInt64) -> Unmanaged<EventBox> {

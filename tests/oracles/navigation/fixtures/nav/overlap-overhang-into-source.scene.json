@@ -1,0 +1,14 @@
+{
+  "_doc": "200 cannot shrink below 574 points and overhangs 94 points into source 300 (x 961..1919). Edge distance west to 200 is -94, so the overlapping window ranks before 100 (edge 481) instead of being skipped.",
+  "displays": [
+    { "index": 1, "frame": { "x": 0, "y": 0, "w": 1920, "h": 1243 } }
+  ],
+  "windows": [
+    { "id": 100, "display": 1, "frame": { "x":   1, "y":  39, "w": 479, "h": 601 }, "app": "Terminal" },
+    { "id": 200, "display": 1, "frame": { "x": 481, "y":  39, "w": 574, "h": 601 }, "app": "Browser"  },
+    { "id": 300, "display": 1, "frame": { "x": 961, "y":  39, "w": 958, "h": 601 }, "app": "Editor"   },
+    { "id": 400, "display": 1, "frame": { "x":   1, "y": 641, "w": 959, "h": 601 }, "app": "Browser"  },
+    { "id": 500, "display": 1, "frame": { "x": 961, "y": 641, "w": 958, "h": 601 }, "app": "Terminal" }
+  ],
+  "source": { "window_id": 300 }
+}

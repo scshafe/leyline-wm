@@ -38,8 +38,14 @@ installer_validate_path() {
 }
 installer_validate_path "$installer_apps"
 installer_validate_path "$installer_bin"
+installer_bundles=('Leyline.app' 'Leyline Recovery.app')
+installer_expected_bundle_id() {
+  case "$1" in 'Leyline Recovery.app') printf '%s\n' org.leyline.recovery ;; *) printf '%s\n' org.leyline ;; esac
+}
+# The resident inside a bundle, without the developer LEYLINE_HOME so it uses that bundle's resources.
+installer_native() { local installer_bundle_root="$1"; shift; /usr/bin/env -u LEYLINE_HOME "$installer_bundle_root/Contents/MacOS/leylined" "$@"; }
 umask 077
-for installer_bundle in 'Leyline.app' 'Leyline Recovery.app'; do
+for installer_bundle in "${installer_bundles[@]}"; do
   [[ -d "$installer_source/$installer_bundle" ]] || { printf 'Missing app bundle: %s\n' "$installer_bundle" >&2; exit 66; }
   codesign --verify --strict --deep "$installer_source/$installer_bundle"
 done
@@ -54,19 +60,17 @@ installer_cli="$installer_apps/Leyline.app/Contents/Resources/leyline/bin/ley"
 if [[ -e "$installer_bin/ley" || -L "$installer_bin/ley" ]]; then
   [[ -L "$installer_bin/ley" && "$(readlink "$installer_bin/ley")" == "$installer_cli" ]] || { printf 'Existing unrelated ley command refused.\n' >&2; exit 65; }
 fi
-for installer_bundle in 'Leyline.app' 'Leyline Recovery.app'; do
+for installer_bundle in "${installer_bundles[@]}"; do
   installer_dest="$installer_apps/$installer_bundle"
   [[ ! -L "$installer_dest" ]] || { printf 'Symlink app destination refused.\n' >&2; exit 65; }
   if [[ -e "$installer_dest" ]]; then
     [[ ${#installer_update[@]} -gt 0 ]] || { printf 'App already installed; review an explicit --update.\n' >&2; exit 65; }
     installer_bundle_id="$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$installer_dest/Contents/Info.plist")"
-    installer_expected=org.leyline
-    [[ "$installer_bundle" != 'Leyline Recovery.app' ]] || installer_expected=org.leyline.recovery
-    [[ "$installer_bundle_id" == "$installer_expected" ]] || { printf 'Unrelated app destination refused.\n' >&2; exit 65; }
+    [[ "$installer_bundle_id" == "$(installer_expected_bundle_id "$installer_bundle")" ]] || { printf 'Unrelated app destination refused.\n' >&2; exit 65; }
   fi
 done
 installer_prior_registered=0
-installer_prior_status="$(/usr/bin/env -u LEYLINE_HOME "$installer_source/Leyline.app/Contents/MacOS/leylined" service-status)"
+installer_prior_status="$(installer_native "$installer_source/Leyline.app" service-status)"
 if printf '%s' "$installer_prior_status" | /usr/bin/grep -Eq '"registered"[[:space:]]*:[[:space:]]*true'; then installer_prior_registered=1; fi
 installer_staging="$(mktemp -d "$installer_apps/.leyline-install.XXXXXX")"
 installer_changed=()
@@ -81,7 +85,7 @@ installer_cleanup() {
     done
     [[ "$installer_link_created" == 0 ]] || rm -f "$installer_bin/ley"
     if [[ "$installer_prior_registered" == 1 && ${#installer_changed[@]} -gt 0 && -x "$installer_apps/Leyline.app/Contents/MacOS/leylined" ]]; then
-      if ! /usr/bin/env -u LEYLINE_HOME "$installer_apps/Leyline.app/Contents/MacOS/leylined" service-restart; then
+      if ! installer_native "$installer_apps/Leyline.app" service-restart; then
         printf 'Application files restored, but prior service restart failed; use Leyline Recovery.\n' >&2
         installer_rc=70
       fi
@@ -91,20 +95,20 @@ installer_cleanup() {
   exit "$installer_rc"
 }
 trap installer_cleanup EXIT
-for installer_bundle in 'Leyline.app' 'Leyline Recovery.app'; do
+for installer_bundle in "${installer_bundles[@]}"; do
   /usr/bin/ditto "$installer_source/$installer_bundle" "$installer_staging/$installer_bundle"
   codesign --verify --strict --deep "$installer_staging/$installer_bundle"
 done
-for installer_bundle in 'Leyline.app' 'Leyline Recovery.app'; do
+for installer_bundle in "${installer_bundles[@]}"; do
   installer_dest="$installer_apps/$installer_bundle"
   if [[ -e "$installer_dest" ]]; then mv "$installer_dest" "$installer_staging/old-$installer_bundle"; fi
   installer_changed+=("$installer_bundle")
   mv "$installer_staging/$installer_bundle" "$installer_dest"
 done
 if [[ ! -L "$installer_bin/ley" ]]; then ln -s "$installer_cli" "$installer_bin/ley"; installer_link_created=1; fi
-/usr/bin/env -u LEYLINE_HOME "$installer_apps/Leyline.app/Contents/MacOS/leylined" install "$installer_start" ${installer_update[@]+"${installer_update[@]}"}
+installer_native "$installer_apps/Leyline.app" install "$installer_start" ${installer_update[@]+"${installer_update[@]}"}
 if [[ ${#installer_update[@]} -gt 0 && "$installer_start" == --start ]]; then
-  /usr/bin/env -u LEYLINE_HOME "$installer_apps/Leyline.app/Contents/MacOS/leylined" service-restart
+  installer_native "$installer_apps/Leyline.app" service-restart
 fi
 installer_success=1
 printf 'Installed. CLI: %s/ley\n' "$installer_bin"

@@ -1,20 +1,10 @@
 import Foundation
 import LeylineModel
 
-private final class StartupSeedContinuation: @unchecked Sendable {
-    private let lock = NSLock()
-    private var scope: ResidentStartupSeedGate.Scope?
-    private var admissions = 0
-    func record(_ token: ResidentStartupSeedGate.Scope) { lock.withLock { scope = token; admissions += 1 } }
-    var latest: ResidentStartupSeedGate.Scope? { lock.withLock { scope } }
-    var count: Int { lock.withLock { admissions } }
-}
-
 /// Actual bootstrap/server and startup seed gate, with held capture and delayed
 /// reconciliation completion. No AppKit, AX, input, timers or live sockets.
 func runResidentStartupSeedGateScenarios(check: (String, Bool) -> Void) {
-    let folder = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-        .deletingLastPathComponent().appendingPathComponent("Fixtures/startup")
+    let folder = SelfTestFixtures.url("startup")
     do {
         let fixture = try JSONValue.parse(Data(contentsOf: folder.appendingPathComponent("native-seed-order.json")))
         guard let rawGeneration = fixture.at(path: "generation")?.intValue, rawGeneration > 0,
@@ -31,11 +21,11 @@ func runResidentStartupSeedGateScenarios(check: (String, Bool) -> Void) {
         let server = CoreServer(socketPath: "/tmp/leyline-tests-\(getpid())/native-startup-unused.sock")
         _ = server.applyWorldDelta(CoreStartupBootstrap.pendingDelta)
         _ = server.applyWorldDelta(starting)
-        let gate = ResidentStartupSeedGate(), continuation = StartupSeedContinuation()
+        let gate = ResidentStartupSeedGate(), continuation = Recorded<ResidentStartupSeedGate.Scope>()
         let token = gate.arm(generation: generation.load(ordering: .acquiring), observationEpoch: server.observationEpoch)!
         server.setCommittedSnapshotHandler { snapshot in
             if let admitted = gate.observe(snapshot, generation: generation.load(ordering: .acquiring), observationEpoch: server.observationEpoch) {
-                continuation.record(admitted)
+                continuation.append(admitted)
             }
         }
         let bootstrap = CoreStartupBootstrap(server: server)
@@ -56,7 +46,7 @@ func runResidentStartupSeedGateScenarios(check: (String, Bool) -> Void) {
         release.signal()
         let captured = returned.wait(timeout: .now() + .seconds(1)) == .success
         check("native-startup/genuine-complete-seed-admits-one-reconciliation-but-not-input-readiness",
-            captured && continuation.count == 1 && continuation.latest == token && gate.blocksClaims && server.worldSeedReady)
+            captured && continuation.count == 1 && continuation.last == token && gate.blocksClaims && server.worldSeedReady)
         _ = server.applyWorldDelta(seed)
         check("native-startup/duplicate-seed-cannot-queue-a-second-startup-reconciliation", continuation.count == 1 && gate.blocksClaims)
         let baseline = server.committedSnapshot

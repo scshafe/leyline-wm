@@ -48,10 +48,6 @@ public enum JQOrder {
             return na < nb
         }
     }
-
-    public static func equal(_ a: JSONValue, _ b: JSONValue) -> Bool {
-        !less(a, b) && !less(b, a)
-    }
 }
 
 extension Array {
@@ -66,17 +62,5 @@ extension Array {
                 return l.offset < r.offset
             }
             .map(\.element)
-    }
-}
-
-extension Array where Element == JSONValue {
-    /// jq `unique`: sort + dedup by the total order.
-    public func jqUnique() -> [JSONValue] {
-        let sorted = sortedStableBy { $0 }
-        var out: [JSONValue] = []
-        for v in sorted where out.last.map({ !JQOrder.equal($0, v) }) ?? true {
-            out.append(v)
-        }
-        return out
     }
 }

@@ -4,12 +4,12 @@ import LeylineModel
 /// Real control socket/client route and bounded request records; all lifecycle
 /// work is injected. No AppKit, tap, AX, deployed journal, reset or launchctl.
 func runResidentControlsClientScenarios(home: String, test: inout SelfTest) {
-    let path = home + "/leylined/Fixtures/resident/control-requests.json"
+    let path = SelfTestFixtures.path("resident/control-requests.json", root: home)
     guard let data = FileManager.default.contents(atPath: path), let fixture = try? JSONValue.parse(data) else {
         test.check(false, "control/fixture-load"); return
     }
-    let revision = UInt64(fixture.at(path: "revision")!.intValue!)
-    let completedRevision = UInt64(fixture.at(path: "completed_revision")!.intValue!)
+    let revision = fixture.requiredUInt64("revision")
+    let completedRevision = fixture.requiredUInt64("completed_revision")
     let requests = ResidentControlRequests()
     let soft = fixture.at(path: "soft")!.objectValue!
     let first = requests.admit(soft, revision: revision)
@@ -33,7 +33,7 @@ func runResidentControlsClientScenarios(home: String, test: inout SelfTest) {
         "control/completed-replay-is-idempotent-and-late-completion-cannot-overwrite")
     let stale = requests.admit(fixture.at(path: "stale")!.objectValue!, revision: revision)
     test.check(stale.intent == nil && stale.result.at(path: "reason")?.stringValue == "expected_revision_mismatch"
-        && requests.result(requestID: fixture.at(path: "stale.request_id")!.stringValue!, revision: completedRevision) == stale.result,
+        && requests.result(requestID: fixture.requiredString("stale.request_id"), revision: completedRevision) == stale.result,
         "control/stale-revision-refusal-is-terminal-and-cached")
     for key in ["bad_mode", "bad_resume", "bad_revision"] {
         test.check(requests.admit(fixture.at(path: key)!.objectValue!, revision: revision).intent == nil,
@@ -67,7 +67,7 @@ func runResidentControlsClientScenarios(home: String, test: inout SelfTest) {
     let maintenance = ResidentMaintenance()
     let firstOutcome = DispatchSemaphore(value: 0), duplicateOutcome = DispatchSemaphore(value: 0)
     let outcomeProof = ResidentAtomic<UInt64>(0)
-    let reusedID = fixture.at(path: "hard.request_id")!.stringValue!
+    let reusedID = fixture.requiredString("hard.request_id")
     _ = maintenance.begin(requestID: reusedID, stopParticipants: [{ $0() }], reset: { fixture.at(path: "hard_completed")! }, onOutcome: { outcome in
         if CoreRuntimeServices.maintenanceOutcomeIsCurrent(outcome, requestID: reusedID, generation: 9, currentGeneration: 9,
             epochIsCurrent: maintenance.isCurrentEpoch) { outcomeProof.wrappingAdd(32, ordering: .acquiringAndReleasing) }
@@ -106,7 +106,7 @@ func runResidentControlsClientScenarios(home: String, test: inout SelfTest) {
             if request["op"]?.stringValue == "control-result" {
                 let current = native.result(requestID: id, revision: server.currentRevision)
                 if current.at(path: "phase")?.stringValue == "queued",
-                   let done = native.complete(requestID: id, expectedAdmissionSequence: UInt64(current.at(path: "control_admission_sequence")!.intValue!), status: .accepted, revision: server.currentRevision,
+                   let done = native.complete(requestID: id, expectedAdmissionSequence: current.requiredUInt64("control_admission_sequence"), status: .accepted, revision: server.currentRevision,
                         reason: nil, details: fixture.at(path: "hard_completed")!.objectValue!) {
                     _ = server.applyWorldDelta(["event": .string("resident_control_result"), "control_last_result": done])
                 }
@@ -116,7 +116,7 @@ func runResidentControlsClientScenarios(home: String, test: inout SelfTest) {
         }
         guard server.start() else { test.check(false, "control/temp-socket-start"); return }
         defer { server.stop() }
-        let id = fixture.at(path: "hard.request_id")!.stringValue!
+        let id = fixture.requiredString("hard.request_id")
         let args = fixture.at(path: "hard.args")!.canonical()
         let result = ResidentCommandClient.execute(operation: "control", arguments: ["reset", "--socket", server.socketPath,
             "--request-id", id, "--args-json", args, "--timeout-seconds", "2"])
@@ -129,9 +129,8 @@ func runResidentControlsClientScenarios(home: String, test: inout SelfTest) {
         guard noControls.start() else { test.check(false, "control/no-controls-socket-start"); return }
         defer { noControls.stop() }
         let refused = ResidentCommandClient.execute(operation: "control", arguments: ["reset", "--socket", noControls.socketPath,
-            "--request-id", fixture.at(path: "off.request_id")!.stringValue!, "--no-wait"])
-        test.check(refused.value.at(path: "error.code")?.stringValue == "resident_control_unavailable"
-            && refused.value.at(path: "meta.mutation_fallback")?.boolValue == false,
+            "--request-id", fixture.requiredString("off.request_id"), "--no-wait"])
+        test.check(refused.value.at(path: "error.code")?.stringValue == "resident_control_unavailable",
             "control/unavailable-controls-refuse-without-fallback")
     } catch { test.check(false, "control/temp-fixture-error: \(error)") }
 }

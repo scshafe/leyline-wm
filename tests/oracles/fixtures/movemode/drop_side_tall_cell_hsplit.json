@@ -1,9 +1,0 @@
-{
-  "fn": "drop_side",
-  "note": "B3 aspect policy: a TALL target cell (960x1080, aspect 0.89) - the h-split's halves (960x540, aspect 1.78 == display) beat the v-split's (480x1080, 0.44), so the side is north/south; the moved window's centre (y=270) is above the cell centre -> north.",
-  "target_cell": {"frame": {"x": 960, "y": 0, "w": 960, "h": 1080}},
-  "moved_frame": {"x": 0, "y": 0, "w": 960, "h": 540},
-  "display": {"frame": {"x": 0, "y": 0, "w": 1920, "h": 1080}},
-  "policy": "aspect",
-  "expect": "north"
-}

@@ -32,7 +32,7 @@ blocked action dispatch or rendering.
 ## Numerical requirements
 
 These are engineering acceptance requirements, **not measured guarantees for
-version 1.0.0**. The machine-readable budget and timer inventory is
+version 1.0.1**. The machine-readable budget and timer inventory is
 [the responsiveness fixture](../../leylined/Fixtures/responsiveness/inventory.json).
 
 | Path and endpoint | Requirement |

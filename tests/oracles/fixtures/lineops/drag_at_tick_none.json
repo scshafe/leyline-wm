@@ -1,6 +1,0 @@
-{ "fn": "drag_at_tick",
-  "note": "mouse-line-drag v2 (M3): a tick with no line under the down point refuses (the host degrades to ghost-only for the drag).",
-  "arr": { "segments": [ { "axis": "v", "coord": 960, "lo": 0, "hi": 1080 } ], "bindings": {} },
-  "topology": { "displays": [ { "id": 1, "frame": [0,0,1920,1080], "usable": [0,0,1920,1080], "main": true } ], "gap": 0 },
-  "x": 400, "y": 300, "tol": 12, "dx": 60, "dy": 0,
-  "expect": { "ok": false, "stuck": false, "reason": "no gridline at (400,300)" } }

@@ -1,10 +1,8 @@
 // self-test fsm — byte-agreement with the frozen mode-FSM oracle for move and
 // resize: the row set derived from keymap/modes.json must equal
 // leylined/Fixtures/mode_fsm/<mode>.frozen.json keyed on (chord, is_enter) →
-// exit_predicate | transition:default (exactly mode-fsm-tests.sh's
-// frozen_predicate contract; verb strings are historical payload, not
-// compared). input is intentionally unported (dropped per retained-UX §4) and
-// the skip is LOUD. Plus the predicate evaluator truth table incl. the rc4
+// exit_predicate | transition:default (verb strings are historical payload,
+// not compared). Plus the predicate evaluator truth table incl. the rc4
 // universal guard.
 import Foundation
 import LeylineModel
@@ -25,10 +23,10 @@ private func resolveFsmPaths(_ args: [String]) -> (modes: String, fixtureDir: St
             i += 1
         }
     }
-    let env = ProcessInfo.processInfo.environment
+    let env = ProcessInfo.processInfo.environment, home = SelfTestFixtures.repositoryRoot(arguments: args)
     if modes == nil, let p = env["LEYLINE_KEYMAP_MODES"] { modes = p }
-    if modes == nil, let home = env["LEYLINE_HOME"] { modes = home + "/keymap/modes.json" }
-    if fixtureDir == nil, let home = env["LEYLINE_HOME"] { fixtureDir = home + "/leylined/Fixtures/mode_fsm" }
+    if modes == nil { modes = home + "/keymap/modes.json" }
+    if fixtureDir == nil { fixtureDir = SelfTestFixtures.path("mode_fsm", root: home) }
     guard let m = modes, let f = fixtureDir else { return nil }
     return (m, f)
 }
@@ -65,19 +63,19 @@ func runFsmSelfTest(_ args: [String]) -> Int32 {
     var t = SelfTest()
 
     guard let paths = resolveFsmPaths(args) else {
-        print("not ok fsm/paths: pass --modes/--fixture-dir or set LEYLINE_KEYMAP_MODES/LEYLINE_HOME")
-        return 1
+        t.check(false, "fsm/paths: pass --modes/--fixture-dir or set LEYLINE_KEYMAP_MODES/LEYLINE_HOME")
+        return t.finish("fsm")
     }
     guard let manifestData = FileManager.default.contents(atPath: paths.modes) else {
-        print("not ok fsm/modes-read: \(paths.modes)")
-        return 1
+        t.check(false, "fsm/modes-read: \(paths.modes)")
+        return t.finish("fsm")
     }
     let fsm: ModeFSM
     do {
         fsm = try ModeFSM(manifestData: manifestData)
     } catch {
-        print("not ok fsm/modes-parse: \(error)")
-        return 1
+        t.check(false, "fsm/modes-parse: \(error)")
+        return t.finish("fsm")
     }
 
     // Frozen-oracle agreement for the ported modes.
@@ -106,10 +104,7 @@ func runFsmSelfTest(_ args: [String]) -> Int32 {
         for k in mismatched { print("    predicate drift at \(describeRowKey(k)): frozen \(frozen[k] ?? "?") vs modes \(derived[k] ?? "?")") }
     }
 
-    // Retired text capture is historical evidence, never a shipping mode.
-    let inputFixture = paths.fixtureDir + "/input.frozen.json"
-    t.check(fsm.modes["input"] == nil && FileManager.default.fileExists(atPath: inputFixture),
-            "fsm/v1-has-no-text-capture-mode-and-preserves-independent-frozen-evidence")
+    t.check(Set(fsm.modes.keys) == ["move", "resize"], "fsm/v1-has-only-move-and-resize-modes")
 
     // The predicate evaluator truth table (decisive rcs per predicate).
     t.check(ExitPredicate.exitOnRc0.exits(rc: 0) == true

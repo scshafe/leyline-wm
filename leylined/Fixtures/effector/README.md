@@ -1,10 +1,10 @@
 # Resident effector fixtures
 
-`resize_burst.json` is the expected accumulated resize state while an effect is
-in flight. Four +10 width requests issue the first +10 state and the final +40
-state; superseded intermediate desired states do not actuate.
+`resize_burst.json` specifies a held resize burst while an effect is in flight:
+four requested widths issue the first and the latest target only; superseded
+intermediate desired states do not actuate.
 
-`leylined self-test effector` drives the production `CommandScheduling`,
+`bin/leylined-tests self-test effector` drives the production `CommandScheduling`,
 `ResidentEffector`, `ResidentEffectorFileJournal` and `ResidentPlanner` with
 controllable journal/AX ports. It verifies journal-before-effect, durable commit
 markers, refused/abandoned intent recovery, same-epoch request replay, bounded

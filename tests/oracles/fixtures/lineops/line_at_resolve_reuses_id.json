@@ -1,9 +1,0 @@
-{ "fn": "line_at_resolve",
-  "note": "mouse-line-drag M0: a hit segment that ALREADY carries an id (a pinned store can retain one from a prior gesture write) is REUSED, not double-minted.",
-  "arr": { "segments": [ { "axis": "h", "coord": 540, "lo": 0, "hi": 1920, "id": 7 },
-                         { "axis": "v", "coord": 960, "lo": 0, "hi": 1080 } ],
-           "bindings": {} },
-  "x": 955, "y": 545, "tol": 12,
-  "expect": { "kind": "junction",
-              "ids": [ { "id": 8, "axis": "v" }, { "id": 7, "axis": "h" } ],
-              "minted": [ { "id": 7, "axis": "h" }, { "id": 8, "axis": "v" } ] } }

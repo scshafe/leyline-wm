@@ -1,0 +1,338 @@
+{
+  "expect": {
+    "absorber": 4,
+    "arr": {
+      "bindings": {
+        "1:0:0": {
+          "contents": [
+            {
+              "frame": {
+                "h": 528,
+                "w": 948,
+                "x": 8,
+                "y": 8
+              },
+              "presented": true,
+              "window_id": 1
+            }
+          ],
+          "frame": {
+            "h": 528,
+            "w": 948,
+            "x": 8,
+            "y": 8
+          },
+          "presented": true,
+          "window_id": 1
+        },
+        "1:0:1": {
+          "contents": [
+            {
+              "frame": {
+                "h": 528,
+                "w": 948,
+                "x": 8,
+                "y": 544
+              },
+              "presented": true,
+              "window_id": 2
+            }
+          ],
+          "frame": {
+            "h": 528,
+            "w": 948,
+            "x": 8,
+            "y": 544
+          },
+          "presented": true,
+          "window_id": 2
+        },
+        "1:1:0": {
+          "contents": [
+            {
+              "frame": {
+                "h": 1064,
+                "w": 948,
+                "x": 964,
+                "y": 8
+              },
+              "presented": true,
+              "window_id": 4
+            }
+          ],
+          "frame": {
+            "h": 1064,
+            "w": 948,
+            "x": 964,
+            "y": 8
+          },
+          "presented": true,
+          "window_id": 4
+        },
+        "2:0:0": {
+          "contents": [
+            {
+              "frame": {
+                "h": 1064,
+                "w": 948,
+                "x": 1928,
+                "y": 8
+              },
+              "presented": true,
+              "window_id": 5
+            }
+          ],
+          "frame": {
+            "h": 1064,
+            "w": 948,
+            "x": 1928,
+            "y": 8
+          },
+          "presented": true,
+          "window_id": 5
+        },
+        "2:1:0": {
+          "contents": [
+            {
+              "frame": {
+                "h": 1064,
+                "w": 948,
+                "x": 2884,
+                "y": 8
+              },
+              "presented": true,
+              "window_id": 6
+            }
+          ],
+          "frame": {
+            "h": 1064,
+            "w": 948,
+            "x": 2884,
+            "y": 8
+          },
+          "presented": true,
+          "window_id": 6
+        }
+      },
+      "off_top": [],
+      "segments": [
+        {
+          "axis": "v",
+          "coord": 960,
+          "hi": 1072,
+          "lo": 8
+        },
+        {
+          "axis": "v",
+          "coord": 2880,
+          "hi": 1072,
+          "lo": 8
+        },
+        {
+          "axis": "h",
+          "coord": 540,
+          "hi": 960,
+          "lo": 8
+        }
+      ]
+    }
+  },
+  "fn": "prune",
+  "goners": [
+    3
+  ],
+  "note": "Production \"even\" reclaim prune. Input store and expectation frozen 2026-10-11 from the retired jq reference engine (jq 1.8.1, arrangement.jq bridge_arrangement / bridge_arrangement_native_prune) applied to the former tests/oracles/fixtures/arrangement/prune-roundtrip/store_prune_multidisplay_flat_grid.json.",
+  "store": {
+    "bindings": {
+      "1:0:0": {
+        "contents": [
+          {
+            "frame": {
+              "h": 528,
+              "w": 948,
+              "x": 8,
+              "y": 8
+            },
+            "presented": true,
+            "window_id": 1
+          }
+        ],
+        "frame": {
+          "h": 528,
+          "w": 948,
+          "x": 8,
+          "y": 8
+        },
+        "presented": true,
+        "window_id": 1
+      },
+      "1:0:1": {
+        "contents": [
+          {
+            "frame": {
+              "h": 528,
+              "w": 948,
+              "x": 8,
+              "y": 544
+            },
+            "presented": true,
+            "window_id": 2
+          }
+        ],
+        "frame": {
+          "h": 528,
+          "w": 948,
+          "x": 8,
+          "y": 544
+        },
+        "presented": true,
+        "window_id": 2
+      },
+      "1:1:0": {
+        "contents": [
+          {
+            "frame": {
+              "h": 528,
+              "w": 948,
+              "x": 964,
+              "y": 8
+            },
+            "presented": true,
+            "window_id": 3
+          }
+        ],
+        "frame": {
+          "h": 528,
+          "w": 948,
+          "x": 964,
+          "y": 8
+        },
+        "presented": true,
+        "window_id": 3
+      },
+      "1:1:1": {
+        "contents": [
+          {
+            "frame": {
+              "h": 528,
+              "w": 948,
+              "x": 964,
+              "y": 544
+            },
+            "presented": true,
+            "window_id": 4
+          }
+        ],
+        "frame": {
+          "h": 528,
+          "w": 948,
+          "x": 964,
+          "y": 544
+        },
+        "presented": true,
+        "window_id": 4
+      },
+      "2:0:0": {
+        "contents": [
+          {
+            "frame": {
+              "h": 1064,
+              "w": 948,
+              "x": 1928,
+              "y": 8
+            },
+            "presented": true,
+            "window_id": 5
+          }
+        ],
+        "frame": {
+          "h": 1064,
+          "w": 948,
+          "x": 1928,
+          "y": 8
+        },
+        "presented": true,
+        "window_id": 5
+      },
+      "2:1:0": {
+        "contents": [
+          {
+            "frame": {
+              "h": 1064,
+              "w": 948,
+              "x": 2884,
+              "y": 8
+            },
+            "presented": true,
+            "window_id": 6
+          }
+        ],
+        "frame": {
+          "h": 1064,
+          "w": 948,
+          "x": 2884,
+          "y": 8
+        },
+        "presented": true,
+        "window_id": 6
+      }
+    },
+    "off_top": [],
+    "segments": [
+      {
+        "axis": "h",
+        "coord": 540,
+        "hi": 1912,
+        "lo": 8
+      },
+      {
+        "axis": "v",
+        "coord": 960,
+        "hi": 1072,
+        "lo": 8
+      },
+      {
+        "axis": "v",
+        "coord": 2880,
+        "hi": 1072,
+        "lo": 8
+      }
+    ]
+  },
+  "topology": {
+    "dead_zones": [],
+    "displays": [
+      {
+        "frame": {
+          "h": 1080,
+          "w": 1920,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "usable": {
+          "h": 1080,
+          "w": 1920,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "frame": {
+          "h": 1080,
+          "w": 1920,
+          "x": 1920,
+          "y": 0
+        },
+        "id": 2,
+        "usable": {
+          "h": 1080,
+          "w": 1920,
+          "x": 1920,
+          "y": 0
+        }
+      }
+    ],
+    "gap": 8
+  }
+}

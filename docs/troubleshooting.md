@@ -15,11 +15,11 @@ Accessibility trust or an active input tap.
 | Shortcuts do nothing | Global management, focused Space ON/OFF, Accessibility/Input Monitoring grants, and actual Hyper modifiers |
 | Caps Lock + key does nothing | Caps Lock must be mapped to Hyper externally; test Command+Control+Option+Shift + key |
 | Space toggle unavailable | The resident needs complete trustworthy identity for the focused ordinary desktop Space |
-| Border width file appears ignored | Select **Use configured border width** to remove the saved global menu override |
 | A resize or move refuses | Application minima, stale observation, missing source/destination or an infeasible common cut |
 | A window is hidden by crowding | Select it from the **Windows** submenu |
 | A bottom/side Dock overlaps windows | Expected: the tiling canvas includes Dock space; choose your own Dock visibility preference |
 | Saved state needs recovery | Inspect the diagnostic error; use a resident hard reset only when rebuilding state is intended |
+| The menu icon is red | Open the menu: its status row names the problem, such as *Input Monitoring permission needed*, *Accessibility permission needed*, *Check Leyline settings*, *Window information unavailable* or *Desktop locked*. `ley resident health` reports `health.resident.controls.icon_state` and `unavailable_reason` |
 
 ## Recovery controls
 
@@ -42,7 +42,7 @@ or readiness problem rather than claiming a successful restart.
 
 ## Diagnostics and reports
 
-`ley resident snapshot`, `ley perf` and `ley trace` inspect current state and bounded
+`ley resident snapshot` and `ley resident trace` inspect current state and bounded
 local diagnostics. They can include window/app metadata, local paths, Space/display
 identifiers and timing. Review and redact output before sharing it. Report macOS
 version, architecture, affected applications, reproducible steps and the relevant

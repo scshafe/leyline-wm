@@ -9,744 +9,6 @@ import Darwin
 import Foundation
 import LeylineModel
 
-/// @canonical projection_system_ui_owner -- only positively identified OS
-/// composition surfaces are excluded before AX client enrollment. Bundle ID
-/// alone, an unknown owner, or a user-provided executable never establishes this.
-func projectionIsSystemUIOwner(bundleIdentifier: String?, executablePath: String?) -> Bool {
-    bundleIdentifier == "com.apple.WindowManager"
-        && executablePath == "/System/Library/CoreServices/WindowManager.app/Contents/MacOS/WindowManager"
-}
-
-@_silgen_name("_AXUIElementGetWindow")
-private func projectionAXWindowID(_ element: AXUIElement,
-                                  _ windowId: UnsafeMutablePointer<CGWindowID>) -> AXError
-
-struct ProjectionAXWindowIdentity: Equatable, Sendable {
-    let windowId: CGWindowID
-    let pid: pid_t
-}
-
-/// Uses the owner-PID/CGWindowID identity bridge. AX wrappers alone are never
-/// evidence that a recycled ID is unchanged.
-func liveProjectionAXWindowIdentity(_ element: AXUIElement) -> ProjectionAXWindowIdentity? {
-    try? liveProjectionAXWindowIdentityResult(element).get()
-}
-
-/// Preserve an external messaging failure separately from an observed identity change.
-func liveProjectionAXWindowIdentityResult(_ element: AXUIElement,
-                                         beforeRead: () -> ProjectionObservationFailure? = { nil })
-    -> Result<ProjectionAXWindowIdentity, ProjectionObservationFailure> {
-    var windowId: CGWindowID = 0
-    var pid: pid_t = 0
-    if let failure = beforeRead() { return .failure(failure) }
-    let windowError = projectionAXWindowID(element, &windowId)
-    guard windowError == .success else {
-        return .failure(.init(code: "ax_window_identity_read_failed:\(windowError.rawValue)"))
-    }
-    if let failure = beforeRead() { return .failure(failure) }
-    let pidError = AXUIElementGetPid(element, &pid)
-    guard pidError == .success else {
-        return .failure(.init(code: "ax_window_owner_read_failed:\(pidError.rawValue)"))
-    }
-    guard windowId > 0, pid > 0 else {
-        return .failure(.init(code: "ax_window_identity_invalid:id=\(windowId),pid=\(pid)"))
-    }
-    return .success(ProjectionAXWindowIdentity(windowId: windowId, pid: pid))
-}
-
-struct ProjectionObservationFailure: Error, Equatable, Sendable {
-    let code: String
-}
-
-/// Reserve the whole fixed message allowance before every external call. A
-/// shared AX element always uses the same cap, so observation/setter lanes cannot
-/// race to relax each other's deadline near the end of a read.
-func projectionAXReadBudgetAllowsCall(started: UInt64, now: UInt64) -> Bool {
-    guard now >= started else { return false }
-    return now - started <= TargetedProjectionSnapshot.axTotalReadBudgetNs
-        - TargetedProjectionSnapshot.axMessageBudgetNs
-}
-
-struct TargetedWindowObservation: Equatable, Sendable {
-    let windowId: Int64
-    let pid: pid_t
-    let frame: Frame
-    let role: String
-    let subrole: String
-    let title: String
-    let resizable: Bool
-    let movable: Bool
-    let minimized: Bool
-    let onscreen: Bool
-    var appName: String = ""
-}
-
-struct ProjectionWindowAttributeBatch: Equatable, Sendable {
-    let frame: Frame
-    let role: String
-    let subrole: String
-    let minimized: Bool
-    let title: String
-}
-
-func projectionWindowReadAttributes() -> [CFString] {
-    [kAXPositionAttribute as CFString, kAXSizeAttribute as CFString, kAXRoleAttribute as CFString,
-     kAXSubroleAttribute as CFString, kAXMinimizedAttribute as CFString, kAXTitleAttribute as CFString]
-}
-
-/// @canonical projection_window_attribute_batch -- one SDK batch retains per-slot error semantics.
-/// Only an explicitly absent title is optional; unknown mandatory attributes never prove ineligibility.
-func projectionDecodeWindowAttributes(_ copiedValues: CFArray?)
-    -> Result<ProjectionWindowAttributeBatch, ProjectionObservationFailure> {
-    let attributes = projectionWindowReadAttributes()
-    guard var values = copiedValues as? [AnyObject], values.count == attributes.count else {
-        return .failure(.init(code: "ax_attribute_batch_malformed"))
-    }
-    for index in values.indices where CFGetTypeID(values[index]) == AXValueGetTypeID() {
-        let value = unsafeDowncast(values[index], to: AXValue.self)
-        if AXValueGetType(value) == .axError {
-            var error = AXError.success
-            guard AXValueGetValue(value, .axError, &error) else {
-                return .failure(.init(code: "ax_attribute_error_malformed:\(attributes[index])"))
-            }
-            if index == 5, error == .noValue { values[index] = "" as NSString }
-            else { return .failure(.init(code: "ax_attribute_read_failed:\(attributes[index]):\(error.rawValue)")) }
-        }
-    }
-    guard CFGetTypeID(values[0]) == AXValueGetTypeID(), CFGetTypeID(values[1]) == AXValueGetTypeID(),
-          CFGetTypeID(values[2]) == CFStringGetTypeID(), CFGetTypeID(values[3]) == CFStringGetTypeID(),
-          CFGetTypeID(values[4]) == CFBooleanGetTypeID(), CFGetTypeID(values[5]) == CFStringGetTypeID(),
-          let role = values[2] as? String, let subrole = values[3] as? String,
-          let minimized = values[4] as? Bool, let title = values[5] as? String else {
-        return .failure(.init(code: "ax_attribute_type_mismatch"))
-    }
-    let positionValue = unsafeDowncast(values[0], to: AXValue.self), sizeValue = unsafeDowncast(values[1], to: AXValue.self)
-    var position = CGPoint.zero, size = CGSize.zero
-    guard AXValueGetType(positionValue) == .cgPoint, AXValueGetType(sizeValue) == .cgSize,
-          AXValueGetValue(positionValue, .cgPoint, &position), AXValueGetValue(sizeValue, .cgSize, &size),
-          position.x.isFinite, position.y.isFinite, size.width.isFinite, size.height.isFinite else {
-        return .failure(.init(code: "ax_frame_read_failed"))
-    }
-    return .success(.init(frame: Frame(x: position.x, y: position.y, w: size.width, h: size.height),
-                          role: role, subrole: subrole, minimized: minimized, title: title))
-}
-
-struct ProjectionWindowHandle: @unchecked Sendable {
-    let element: AXUIElement
-    let pid: pid_t
-    let windowId: Int64
-}
-
-struct ProjectionWindowReadback: Sendable {
-    let handle: ProjectionWindowHandle
-    let observation: TargetedWindowObservation
-    let observerGeneration: UInt64
-    let completedUptimeNs: UInt64
-}
-
-struct ProjectionWindowInventory: Sendable {
-    let handles: [ProjectionWindowHandle]
-    let visibleWindowIds: Set<Int64>
-    let ownerPids: Set<pid_t>
-    let ignoredWindowIds: Set<Int64>
-    init(handles: [ProjectionWindowHandle], visibleWindowIds: Set<Int64>, ownerPids: Set<pid_t>, ignoredWindowIds: Set<Int64> = []) {
-        self.handles = handles; self.visibleWindowIds = visibleWindowIds; self.ownerPids = ownerPids; self.ignoredWindowIds = ignoredWindowIds
-    }
-}
-
-protocol TargetedProjectionWindowReading: Sendable {
-    var supportsCacheAudit: Bool { get }
-    func auditInventory(ignored: [ProjectionWindowHandle], beforeExternalCall: @escaping @Sendable () -> ProjectionObservationFailure?)
-        -> Result<ProjectionWindowInventory, ProjectionObservationFailure>
-    func auditRead(handle: ProjectionWindowHandle, beforeExternalCall: @escaping @Sendable () -> ProjectionObservationFailure?)
-        -> Result<TargetedWindowObservation, ProjectionObservationFailure>
-    func inventory(enrollOwners: (Set<pid_t>) -> Result<Void, ProjectionObservationFailure>)
-        -> Result<ProjectionWindowInventory, ProjectionObservationFailure>
-    func focusedElement(pid: pid_t) -> Result<AXUIElement?, ProjectionObservationFailure>
-    func read(element: AXUIElement?, pid: pid_t, expectedWindowId: Int64?)
-        -> Result<TargetedWindowObservation, ProjectionObservationFailure>
-    func freshWindowHandle(pid: pid_t, windowId: Int64) -> Result<ProjectionWindowHandle, ProjectionObservationFailure>
-}
-
-extension TargetedProjectionWindowReading {
-    var supportsCacheAudit: Bool { false }
-    func auditInventory(ignored: [ProjectionWindowHandle], beforeExternalCall: @escaping @Sendable () -> ProjectionObservationFailure?)
-        -> Result<ProjectionWindowInventory, ProjectionObservationFailure> { .failure(.init(code: "cache_audit_reader_unsupported")) }
-    func auditRead(handle: ProjectionWindowHandle, beforeExternalCall: @escaping @Sendable () -> ProjectionObservationFailure?)
-        -> Result<TargetedWindowObservation, ProjectionObservationFailure> { .failure(.init(code: "cache_audit_reader_unsupported")) }
-    func freshWindowHandle(pid: pid_t, windowId: Int64) -> Result<ProjectionWindowHandle, ProjectionObservationFailure> {
-        .failure(.init(code: "effect_fresh_handle_reader_unavailable"))
-    }
-    func inventory(enrollOwners: (Set<pid_t>) -> Result<Void, ProjectionObservationFailure>)
-        -> Result<ProjectionWindowInventory, ProjectionObservationFailure> {
-        .failure(.init(code: "world_inventory_reader_unavailable"))
-    }
-}
-
-/// The exceptional owner query requires one exact candidate; aliases, foreign owners and unknown
-/// identities are refusals rather than a guessed replacement for the immutable registered target.
-func projectionUniqueFreshWindowHandle(_ candidates: [ProjectionWindowHandle], pid: pid_t, windowId: Int64)
-    -> Result<ProjectionWindowHandle, ProjectionObservationFailure> {
-    guard pid > 0, windowId > 0, candidates.allSatisfy({ $0.pid == pid && $0.windowId > 0 }) else {
-        return .failure(.init(code: "effect_fresh_handle_foreign_or_unknown_identity"))
-    }
-    let matching = candidates.filter { $0.windowId == windowId }
-    guard matching.count == 1 else {
-        return .failure(.init(code: matching.isEmpty ? "effect_fresh_handle_missing" : "effect_fresh_handle_alias_ambiguous"))
-    }
-    return .success(matching[0])
-}
-
-func projectionEffectRefreshBudgetAllowsCall(started: UInt64, now: UInt64) -> Bool {
-    now >= started && now - started <= TargetedProjectionSnapshot.effectRefreshTotalBudgetNs
-        - TargetedProjectionSnapshot.effectRefreshMessageBudgetNs
-}
-
-struct ProjectionSpaceContext: Equatable, Sendable {
-    let key: String
-    let displayId: String
-    let visible: Bool
-}
-
-typealias ProjectionAuditGuard = @Sendable () -> ProjectionObservationFailure?
-typealias ProjectionDisplayTopologyRead = @Sendable ([String: Frame], @escaping ProjectionAuditGuard) -> Result<[JSONValue], ProjectionObservationFailure>
-
-/// Canonical display read used by baseline and detached audit. AppKit usable frames are supplied
-/// as an immutable mapping; no utility callback reaches NSScreen or changes the canonical cache.
-func projectionReadDisplayTopology(_ usable: [String: Frame], beforeCall: @escaping ProjectionAuditGuard)
-    -> Result<[JSONValue], ProjectionObservationFailure> {
-    if let failure = beforeCall() { return .failure(failure) }
-    var count: UInt32 = 0
-    guard CGGetActiveDisplayList(0, nil, &count) == .success else { return .failure(.init(code: "cache_audit_topology_unavailable")) }
-    if let failure = beforeCall() { return .failure(failure) }
-    var ids = [CGDirectDisplayID](repeating: 0, count: Int(count))
-    guard CGGetActiveDisplayList(count, &ids, &count) == .success else { return .failure(.init(code: "cache_audit_topology_unavailable")) }
-    var out: [JSONValue] = []
-    for id in ids {
-        if let failure = beforeCall() { return .failure(failure) }
-        let frame = CGDisplayBounds(id)
-        if let failure = beforeCall() { return .failure(failure) }
-        let uuid = CGDisplayCreateUUIDFromDisplayID(id).map { CFUUIDCreateString(nil, $0.takeRetainedValue()) as String } ?? ""
-        if let failure = beforeCall() { return .failure(failure) }
-        var object: JSONObject = ["display_id": .string(uuid), "id": .int(Int64(id)), "main": .bool(id == CGMainDisplayID()),
-            "frame": Frame(x: frame.minX, y: frame.minY, w: frame.width, h: frame.height).json,
-            "usable_frame_known": .bool(usable[uuid] != nil)]
-        if let value = usable[uuid] { object["usable_frame"] = value.json; object["usable"] = value.json }
-        out.append(.object(object))
-    }
-    return .success(out.sorted { ($0.at(path: "id")?.intValue ?? 0) < ($1.at(path: "id")?.intValue ?? 0) })
-}
-
-protocol ProjectionSpaceObserving: Sendable {
-    func makeAuditProbe() -> (@Sendable (Int64, @escaping @Sendable () -> ProjectionObservationFailure?) -> Result<ProjectionSpaceContext, ProjectionObservationFailure>)?
-    func rebaseline() -> Result<Void, ProjectionObservationFailure>
-    func context(windowId: Int64) -> Result<ProjectionSpaceContext, ProjectionObservationFailure>
-    func currentContexts() -> Result<[ProjectionSpaceContext], ProjectionObservationFailure>
-}
-
-extension ProjectionSpaceObserving {
-    func makeAuditProbe() -> (@Sendable (Int64, @escaping @Sendable () -> ProjectionObservationFailure?) -> Result<ProjectionSpaceContext, ProjectionObservationFailure>)? { nil }
-    func currentContexts() -> Result<[ProjectionSpaceContext], ProjectionObservationFailure> {
-        .failure(.init(code: "independent_current_display_space_unavailable"))
-    }
-}
-
-private func liveProjectionInventoryStringAttribute(_ element: AXUIElement, _ attribute: CFString)
-    -> Result<String, ProjectionObservationFailure> {
-    var raw: CFTypeRef?
-    let error = AXUIElementCopyAttributeValue(element, attribute, &raw)
-    guard error == .success, let value = raw as? String, !value.isEmpty else {
-        return .failure(.init(code: "ax_inventory_classification_attribute_unavailable:\(attribute):\(error.rawValue)"))
-    }
-    return .success(value)
-}
-
-/// @canonical projection_named_window_description -- exact ID encoded as the
-/// raw CGWindowID expected by Quartz, with no object retain/release callbacks.
-/// Related: the retained reactor's rawCGWindowIDArray bridge.
-func projectionNamedWindowDescription(windowID: CGWindowID,
-    descriptionReader: (CFArray) -> CFArray? = CGWindowListCreateDescriptionFromArray
-) -> Result<[String: Any], ProjectionObservationFailure> {
-    guard windowID > 0 else { return .failure(.init(code: "cg_target_window_id_invalid")) }
-    var rawValues: [UnsafeRawPointer?] = [UnsafeRawPointer(bitPattern: UInt(windowID))]
-    let ids = rawValues.withUnsafeMutableBufferPointer {
-        CFArrayCreate(kCFAllocatorDefault, $0.baseAddress, $0.count, nil)
-    }
-    guard let ids, let descriptions = descriptionReader(ids) as? [[String: Any]],
-          descriptions.count == 1, let row = descriptions.first,
-          (row[kCGWindowNumber as String] as? NSNumber)?.uint32Value == windowID else {
-        return .failure(.init(code: "cg_target_description_unavailable_or_mismatched"))
-    }
-    return .success(row)
-}
-
-/// Quartz defines an absent kCGWindowIsOnscreen key as not ordered on screen.
-/// A present non-boolean is malformed, not a successful visibility observation.
-func projectionWindowOnscreen(_ value: Any?) -> Result<Bool, ProjectionObservationFailure> {
-    guard let value else { return .success(false) }
-    guard CFGetTypeID(value as CFTypeRef) == CFBooleanGetTypeID(), let flag = value as? Bool else {
-        return .failure(.init(code: "cg_target_visibility_malformed"))
-    }
-    return .success(flag)
-}
-
-/// @canonical projection_inventory_identity -- structural exclusion precedes
-/// identity refusal. Desktop/pseudo-window titles never authorize exclusion.
-/// A nil result excludes only a positively observed nonmanaged element; every
-/// standard-window candidate still needs the exact owning PID and positive CG ID.
-func projectionInventoryWindowIdentity(
-    element: AXUIElement, pid: pid_t,
-    readStringAttribute: (AXUIElement, CFString) -> Result<String, ProjectionObservationFailure> = liveProjectionInventoryStringAttribute,
-    readIdentity: (AXUIElement) -> ProjectionAXWindowIdentity? = liveProjectionAXWindowIdentity,
-    uptimeNs: () -> UInt64 = { DispatchTime.now().uptimeNanoseconds },
-    configureTimeout: (AXUIElement) -> AXError = { AXUIElementSetMessagingTimeout($0, TargetedProjectionSnapshot.axReadTimeoutSeconds) },
-    onClassification: (Bool) -> Void = { _ in }
-) -> Result<ProjectionAXWindowIdentity?, ProjectionObservationFailure> {
-    guard configureTimeout(element) == .success else {
-        return .failure(.init(code: "ax_inventory_timeout_configuration_failed:pid=\(pid)"))
-    }
-    let started = uptimeNs()
-    func withinBudget() -> Bool { uptimeNs() &- started < TargetedProjectionSnapshot.axTotalReadBudgetNs }
-    guard withinBudget() else { return .failure(.init(code: "ax_inventory_classification_deadline_exceeded:pid=\(pid)")) }
-    let role: String
-    switch readStringAttribute(element, kAXRoleAttribute as CFString) {
-    case .failure(let failure): return .failure(.init(code: failure.code + ":pid=\(pid)"))
-    case .success(let value): role = value
-    }
-    guard !role.isEmpty else { return .failure(.init(code: "ax_inventory_role_unknown:pid=\(pid)")) }
-    var standard = false
-    if role == kAXWindowRole as String {
-        guard withinBudget() else { return .failure(.init(code: "ax_inventory_classification_deadline_exceeded:pid=\(pid)")) }
-        switch readStringAttribute(element, kAXSubroleAttribute as CFString) {
-        case .failure(let failure): return .failure(.init(code: failure.code + ":pid=\(pid)"))
-        case .success(let subrole):
-            guard !subrole.isEmpty else { return .failure(.init(code: "ax_inventory_subrole_unknown:pid=\(pid)")) }
-            standard = subrole == kAXStandardWindowSubrole as String
-        }
-    }
-    guard withinBudget() else { return .failure(.init(code: "ax_inventory_classification_deadline_exceeded:pid=\(pid)")) }
-    onClassification(standard)
-    guard let identity = readIdentity(element) else {
-        return standard ? .failure(.init(code: "ax_inventory_identity_unavailable:pid=\(pid)")) : .success(nil)
-    }
-    guard withinBudget() else { return .failure(.init(code: "ax_inventory_classification_deadline_exceeded:pid=\(pid)")) }
-    guard identity.windowId > 0, identity.pid == pid, pid > 0 else {
-        return .failure(.init(code: "ax_inventory_identity_mismatch:pid=\(pid)"))
-    }
-    return .success(identity)
-}
-
-/// The only live AX read adapter for projection. Per-call timeouts and a total
-/// deadline stop hostile apps from turning observations into indefinite waits.
-private struct LiveTargetedProjectionWindowReader: TargetedProjectionWindowReading {
-    let sessionAvailable: @Sendable () -> Bool
-    var supportsCacheAudit: Bool { true }
-    func auditInventory(ignored: [ProjectionWindowHandle], beforeExternalCall: @escaping @Sendable () -> ProjectionObservationFailure?)
-        -> Result<ProjectionWindowInventory, ProjectionObservationFailure> {
-        guardedInventory(enrollOwners: { _ in .success(()) }, ignored: ignored, beforeExternalCall: beforeExternalCall)
-    }
-    func auditRead(handle: ProjectionWindowHandle, beforeExternalCall: @escaping @Sendable () -> ProjectionObservationFailure?)
-        -> Result<TargetedWindowObservation, ProjectionObservationFailure> {
-        guardedRead(element: handle.element, pid: handle.pid, expectedWindowId: handle.windowId, beforeExternalCall: beforeExternalCall)
-    }
-
-    /// Exceptional one-owner enumeration; ordinary notifications never invoke this method.
-    func freshWindowHandle(pid: pid_t, windowId: Int64) -> Result<ProjectionWindowHandle, ProjectionObservationFailure> {
-        let started = DispatchTime.now().uptimeNanoseconds
-        func beforeRead() -> ProjectionObservationFailure? {
-            guard sessionAvailable() else { return .init(code: "session_locked") }
-            guard projectionEffectRefreshBudgetAllowsCall(started: started, now: DispatchTime.now().uptimeNanoseconds) else {
-                return .init(code: "effect_fresh_handle_deadline_exceeded")
-            }
-            return nil
-        }
-        guard pid > 0, windowId > 0 else { return .failure(.init(code: "effect_fresh_handle_identity_invalid")) }
-        if let failure = beforeRead() { return .failure(failure) }
-        let application = AXUIElementCreateApplication(pid)
-        guard AXUIElementSetMessagingTimeout(application, Self.refreshTimeoutSeconds) == .success else {
-            return .failure(.init(code: "effect_fresh_handle_timeout_configuration_failed"))
-        }
-        var raw: CFTypeRef?
-        let error = AXUIElementCopyAttributeValue(application, kAXWindowsAttribute as CFString, &raw)
-        guard error == .success, let windows = raw as? [AXUIElement] else {
-            return .failure(.init(code: "effect_fresh_handle_inventory_failed:pid=\(pid):\(error.rawValue)"))
-        }
-        var candidates: [ProjectionWindowHandle] = []
-        for element in windows {
-            if let failure = beforeRead() { return .failure(failure) }
-            guard AXUIElementSetMessagingTimeout(element, Self.refreshTimeoutSeconds) == .success else {
-                return .failure(.init(code: "effect_fresh_handle_timeout_configuration_failed"))
-            }
-            switch liveProjectionAXWindowIdentityResult(element, beforeRead: beforeRead) {
-            case .failure(let failure): return .failure(failure)
-            case .success(let identity):
-                candidates.append(.init(element: element, pid: identity.pid, windowId: Int64(identity.windowId)))
-            }
-        }
-        guard sessionAvailable(), DispatchTime.now().uptimeNanoseconds - started <= TargetedProjectionSnapshot.effectRefreshTotalBudgetNs else {
-            return .failure(.init(code: "effect_fresh_handle_deadline_exceeded"))
-        }
-        return projectionUniqueFreshWindowHandle(candidates, pid: pid, windowId: windowId)
-    }
-    private static let refreshTimeoutSeconds: Float = 0.1
-
-    func inventory(enrollOwners: (Set<pid_t>) -> Result<Void, ProjectionObservationFailure>)
-        -> Result<ProjectionWindowInventory, ProjectionObservationFailure> {
-        guardedInventory(enrollOwners: enrollOwners, ignored: [], beforeExternalCall: { nil })
-    }
-    private func guardedInventory(enrollOwners: (Set<pid_t>) -> Result<Void, ProjectionObservationFailure>,
-                                  ignored: [ProjectionWindowHandle], beforeExternalCall: () -> ProjectionObservationFailure?)
-        -> Result<ProjectionWindowInventory, ProjectionObservationFailure> {
-        if let failure = beforeExternalCall() { return .failure(failure) }
-        guard sessionAvailable() else { return .failure(.init(code: "session_locked")) }
-        guard let rows = CGWindowListCopyWindowInfo(
-            [.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID
-        ) as? [[String: Any]] else { return .failure(.init(code: "cg_bootstrap_read_failed")) }
-        if let failure = beforeExternalCall() { return .failure(failure) }
-        let applications = NSWorkspace.shared.runningApplications
-        let systemOwners = Set(applications.filter {
-            projectionIsSystemUIOwner(bundleIdentifier: $0.bundleIdentifier,
-                executablePath: $0.executableURL?.standardizedFileURL.path)
-        }.map(\.processIdentifier))
-        let visible = rows.filter {
-            ($0[kCGWindowLayer as String] as? Int) == 0
-                && ($0[kCGWindowAlpha as String] as? Double ?? 1) > 0
-                && ($0[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value != getpid()
-                && (($0[kCGWindowOwnerPID as String] as? NSNumber).map { !systemOwners.contains($0.int32Value) } ?? true)
-        }
-        let visibleIds = Set(visible.compactMap { ($0[kCGWindowNumber as String] as? NSNumber)?.int64Value })
-        var owners = Set(visible.compactMap { ($0[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value })
-        if let failure = beforeExternalCall() { return .failure(failure) }
-        owners.formUnion(applications.filter { $0.activationPolicy == .regular }.map(\.processIdentifier))
-        owners.subtract(systemOwners)
-        owners.remove(ProcessInfo.processInfo.processIdentifier)
-        if case .failure(let failure) = enrollOwners(owners) { return .failure(failure) }
-        var handles: [ProjectionWindowHandle] = []
-        // A prior ignored label covers only an absent ID. Visible IDs need a
-        // fresh positive classification; an omitted/dead AX wrapper is unknown.
-        var ignoredIds = Set(ignored.map(\.windowId)).subtracting(visibleIds)
-        var inventoryCounts: [String] = []
-        for pid in owners.sorted() {
-            guard sessionAvailable() else { return .failure(.init(code: "session_locked")) }
-            if let failure = beforeExternalCall() { return .failure(failure) }
-            let app = AXUIElementCreateApplication(pid)
-            guard AXUIElementSetMessagingTimeout(app, TargetedProjectionSnapshot.axReadTimeoutSeconds) == .success else {
-                return .failure(.init(code: "ax_inventory_timeout_configuration_failed"))
-            }
-            var raw: CFTypeRef?
-            if let failure = beforeExternalCall() { return .failure(failure) }
-            let error = AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &raw)
-            if error == .noValue { inventoryCounts.append("\(pid)=no_value"); continue }
-            guard error == .success, let windows = raw as? [AXUIElement] else {
-                return .failure(.init(code: "ax_inventory_read_failed:pid=\(pid):\(error.rawValue)"))
-            }
-            inventoryCounts.append("\(pid)=\(windows.count)")
-            for element in windows {
-                guard sessionAvailable() else { return .failure(.init(code: "session_locked")) }
-                let knownIgnored = ignored.first { $0.pid == pid && CFEqual($0.element, element) }
-                if let knownIgnored, !visibleIds.contains(knownIgnored.windowId) { continue }
-                var standard = true
-                if let failure = beforeExternalCall() { return .failure(failure) }
-                switch projectionInventoryWindowIdentity(element: element, pid: pid, readStringAttribute: { element, attribute in
-                    if let failure = beforeExternalCall() { return .failure(failure) }
-                    return liveProjectionInventoryStringAttribute(element, attribute)
-                }, readIdentity: { element in
-                    try? liveProjectionAXWindowIdentityResult(element, beforeRead: beforeExternalCall).get()
-                }, configureTimeout: { element in
-                    if beforeExternalCall() != nil { return .cannotComplete }
-                    return AXUIElementSetMessagingTimeout(element, TargetedProjectionSnapshot.axReadTimeoutSeconds)
-                }, onClassification: { standard = $0 }) {
-                case .failure(let failure):
-                    // Invisible known rows were already excluded above. A
-                    // CG-visible expired wrapper cannot certify that numeric ID.
-                    return .failure(failure)
-                case .success(let identity):
-                    if let identity {
-                        if !standard { ignoredIds.insert(Int64(identity.windowId)) }
-                        else { ignoredIds.remove(Int64(identity.windowId)) }
-                        handles.append(.init(element: element, pid: pid, windowId: Int64(identity.windowId)))
-                    }
-                }
-            }
-        }
-        let observedIds = Set(handles.map(\.windowId))
-        guard visibleIds.subtracting(observedIds.union(ignoredIds)).isEmpty else {
-            let missing = visible.filter { row in
-                guard let id = (row[kCGWindowNumber as String] as? NSNumber)?.int64Value else { return true }
-                return !observedIds.contains(id)
-            }.map { row in
-                "id=\((row[kCGWindowNumber as String] as? NSNumber)?.int64Value ?? 0),pid=\((row[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value ?? 0)"
-            }.joined(separator: ";")
-            return .failure(.init(code: "world_visible_window_set_incomplete:\(missing):observed=\(observedIds.sorted()):inventory=\(inventoryCounts.joined(separator: ","))"))
-        }
-        return .success(.init(handles: handles, visibleWindowIds: visibleIds, ownerPids: owners, ignoredWindowIds: ignoredIds))
-    }
-    func focusedElement(pid: pid_t) -> Result<AXUIElement?, ProjectionObservationFailure> {
-        guard sessionAvailable() else { return .failure(.init(code: "session_locked")) }
-        let application = AXUIElementCreateApplication(pid)
-        guard AXUIElementSetMessagingTimeout(application, TargetedProjectionSnapshot.axReadTimeoutSeconds) == .success else {
-            return .failure(.init(code: "ax_timeout_configuration_failed"))
-        }
-        var raw: CFTypeRef?
-        let error = AXUIElementCopyAttributeValue(application, kAXFocusedWindowAttribute as CFString, &raw)
-        if error == .noValue || (error == .success && raw == nil) { return .success(nil) }
-        guard error == .success, let raw, CFGetTypeID(raw) == AXUIElementGetTypeID() else {
-            return .failure(.init(code: "ax_focused_window_read_failed:\(error.rawValue)"))
-        }
-        return .success(unsafeDowncast(raw, to: AXUIElement.self))
-    }
-
-    func read(element: AXUIElement?, pid: pid_t, expectedWindowId: Int64?)
-        -> Result<TargetedWindowObservation, ProjectionObservationFailure> {
-        guardedRead(element: element, pid: pid, expectedWindowId: expectedWindowId, beforeExternalCall: { nil })
-    }
-    private func guardedRead(element: AXUIElement?, pid: pid_t, expectedWindowId: Int64?, beforeExternalCall: () -> ProjectionObservationFailure?)
-        -> Result<TargetedWindowObservation, ProjectionObservationFailure> {
-        if let failure = beforeExternalCall() { return .failure(failure) }
-        guard sessionAvailable() else { return .failure(.init(code: "session_locked")) }
-        guard let element else { return .failure(.init(code: "ax_notification_element_missing")) }
-        guard AXUIElementSetMessagingTimeout(element, TargetedProjectionSnapshot.axReadTimeoutSeconds) == .success else {
-            return .failure(.init(code: "ax_timeout_configuration_failed"))
-        }
-        let started = DispatchTime.now().uptimeNanoseconds
-        let deadline = started + TargetedProjectionSnapshot.axTotalReadBudgetNs
-        var stage = "initial_identity"
-        func prepareRead() -> ProjectionObservationFailure? {
-            if let failure = beforeExternalCall() { return failure }
-            let now = DispatchTime.now().uptimeNanoseconds
-            return projectionAXReadBudgetAllowsCall(started: started, now: now)
-                ? nil : .init(code: "ax_read_deadline_exceeded:stage=\(stage):elapsed_ns=\(now >= started ? now - started : 0)")
-        }
-        let identity: ProjectionAXWindowIdentity
-        switch liveProjectionAXWindowIdentityResult(element, beforeRead: prepareRead) {
-        case .failure(let failure): return .failure(failure)
-        case .success(let value): identity = value
-        }
-        guard identity.pid == pid,
-              expectedWindowId == nil || expectedWindowId == Int64(identity.windowId) else {
-            return .failure(.init(code: "ax_notification_identity_mismatch:expected=\(expectedWindowId.map(String.init) ?? "none"),observed=\(identity.windowId),pid=\(pid),owner=\(identity.pid)"))
-        }
-        guard sessionAvailable() else { return .failure(.init(code: "session_locked")) }
-        stage = "attribute_batch"
-        if let failure = prepareRead() { return .failure(failure) }
-        var copiedValues: CFArray?
-        let batchError = AXUIElementCopyMultipleAttributeValues(element, projectionWindowReadAttributes() as CFArray,
-            AXCopyMultipleAttributeOptions(rawValue: 0), &copiedValues)
-        guard batchError == .success else { return .failure(.init(code: "ax_attribute_batch_read_failed:\(batchError.rawValue)")) }
-        let attributes: ProjectionWindowAttributeBatch
-        switch projectionDecodeWindowAttributes(copiedValues) {
-        case .failure(let failure): return .failure(failure)
-        case .success(let decoded): attributes = decoded
-        }
-        var resizable = DarwinBoolean(false)
-        var movable = DarwinBoolean(false)
-        stage = "size_capability"
-        if let failure = prepareRead() { return .failure(failure) }
-        let sizeError = AXUIElementIsAttributeSettable(element, kAXSizeAttribute as CFString, &resizable)
-        guard sizeError == .success, DispatchTime.now().uptimeNanoseconds < deadline else {
-            return .failure(.init(code: "ax_capability_read_failed:AXSize:\(sizeError.rawValue)"))
-        }
-        stage = "position_capability"
-        if let failure = prepareRead() { return .failure(failure) }
-        let positionError = AXUIElementIsAttributeSettable(element, kAXPositionAttribute as CFString, &movable)
-        guard positionError == .success else {
-            return .failure(.init(code: "ax_capability_read_failed:AXPosition:\(positionError.rawValue)"))
-        }
-        let finalIdentity: ProjectionAXWindowIdentity
-        stage = "final_identity"
-        switch liveProjectionAXWindowIdentityResult(element, beforeRead: prepareRead) {
-        case .failure(let failure): return .failure(failure)
-        case .success(let value): finalIdentity = value
-        }
-        guard DispatchTime.now().uptimeNanoseconds < deadline else {
-            return .failure(.init(code: "ax_read_deadline_exceeded"))
-        }
-        guard finalIdentity == identity else {
-            return .failure(.init(code: "ax_identity_changed_during_read"))
-        }
-        // Request only this exact ID. List options select relative window
-        // lists, not a single-window description. Owner must agree with AX.
-        guard sessionAvailable() else { return .failure(.init(code: "session_locked")) }
-        let row: [String: Any]
-        if let failure = beforeExternalCall() { return .failure(failure) }
-        switch projectionNamedWindowDescription(windowID: identity.windowId) {
-        case .failure(let failure): return .failure(failure)
-        case .success(let value): row = value
-        }
-        guard
-              (row[kCGWindowNumber as String] as? NSNumber)?.uint32Value == identity.windowId,
-              (row[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value == pid,
-              let ownerName = row[kCGWindowOwnerName as String] as? String else {
-            let owner = (row[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value ?? 0
-            return .failure(.init(code: "cg_target_identity_read_failed:id=\(identity.windowId),pid=\(pid),owner=\(owner),onscreen=\(row[kCGWindowIsOnscreen as String] != nil),owner_name=\(row[kCGWindowOwnerName as String] != nil)"))
-        }
-        let onscreen: Bool
-        switch projectionWindowOnscreen(row[kCGWindowIsOnscreen as String]) {
-        case .failure(let failure): return .failure(failure)
-        case .success(let visible): onscreen = visible
-        }
-        guard DispatchTime.now().uptimeNanoseconds < deadline else {
-            return .failure(.init(code: "ax_read_deadline_exceeded"))
-        }
-        return .success(TargetedWindowObservation(
-            windowId: Int64(identity.windowId), pid: pid,
-            frame: attributes.frame, role: attributes.role, subrole: attributes.subrole, title: attributes.title,
-            resizable: resizable.boolValue, movable: movable.boolValue, minimized: attributes.minimized,
-            onscreen: onscreen, appName: ownerName))
-    }
-}
-
-/// @canonical projection_space_observation -- independent OS Space UUIDs and
-/// per-display current membership. Runtime counters and kCGWindowWorkspace are
-/// never substituted. Private read ABI follows yabai/src/misc/extern.h and
-/// Hammerspoon/extensions/spaces/libspaces.m; missing support fails closed.
-final class IndependentProjectionSpaceObserver: ProjectionSpaceObserving, @unchecked Sendable {
-    private typealias MainConnection = @convention(c) () -> Int32
-    private typealias CopyDisplaySpaces = @convention(c) (Int32) -> Unmanaged<CFArray>?
-    private typealias CopyWindowSpaces = @convention(c) (Int32, Int32, CFArray) -> Unmanaged<CFArray>?
-    private typealias CopyWindowDisplay = @convention(c) (Int32, UInt32) -> Unmanaged<CFString>?
-    private typealias CurrentDisplaySpace = @convention(c) (Int32, CFString) -> UInt64
-    private struct Space: Sendable { let key: String; let displayId: String; let visible: Bool }
-    private let handle: UnsafeMutableRawPointer?
-    private let connection: MainConnection?
-    private let displays: CopyDisplaySpaces?
-    private let windows: CopyWindowSpaces?
-    private let windowDisplay: CopyWindowDisplay?
-    private let currentSpace: CurrentDisplaySpace?
-    private var spaces: [UInt64: Space] = [:]
-    private var baselineFailure: ProjectionObservationFailure? = .init(code: "space_not_baselined")
-
-    init() {
-        let handle = dlopen("/System/Library/PrivateFrameworks/SkyLight.framework/SkyLight", RTLD_LAZY | RTLD_LOCAL)
-        self.handle = handle
-        func symbol<T>(_ name: String, as type: T.Type) -> T? {
-            guard let handle, let pointer = dlsym(handle, name) else { return nil }
-            return unsafeBitCast(pointer, to: type)
-        }
-        connection = symbol("SLSMainConnectionID", as: MainConnection.self)
-        displays = symbol("SLSCopyManagedDisplaySpaces", as: CopyDisplaySpaces.self)
-        windows = symbol("SLSCopySpacesForWindows", as: CopyWindowSpaces.self)
-        windowDisplay = symbol("SLSCopyManagedDisplayForWindow", as: CopyWindowDisplay.self)
-        currentSpace = symbol("SLSManagedDisplayGetCurrentSpace", as: CurrentDisplaySpace.self)
-    }
-
-    deinit { if let handle { dlclose(handle) } }
-
-    /// Freeze the UUID namespace on the canonical lane; utility work reads only this immutable
-    /// copy and immutable function pointers, never the observer's mutable baseline dictionaries.
-    func makeAuditProbe() -> (@Sendable (Int64, @escaping @Sendable () -> ProjectionObservationFailure?) -> Result<ProjectionSpaceContext, ProjectionObservationFailure>)? {
-        guard baselineFailure == nil, connection != nil, windows != nil, windowDisplay != nil, currentSpace != nil else { return nil }
-        let namespace = spaces
-        return { [self] id, beforeCall in
-            guard id > 0, id <= Int64(UInt32.max) else { return .failure(.init(code: "cache_audit_space_identity_invalid")) }
-            if let failure = beforeCall() { return .failure(failure) }
-            let cid = self.connection!()
-            if let failure = beforeCall() { return .failure(failure) }
-            guard let raw = self.windows!(cid, 0x7, [NSNumber(value: id)] as CFArray)?.takeRetainedValue(),
-                  let memberships = raw as? [NSNumber], memberships.count == 1,
-                  let space = namespace[memberships[0].uint64Value] else { return .failure(.init(code: "cache_audit_space_unknown")) }
-            if let failure = beforeCall() { return .failure(failure) }
-            guard let display = self.windowDisplay!(cid, UInt32(id))?.takeRetainedValue(),
-                  display as String == space.displayId else { return .failure(.init(code: "cache_audit_display_changed")) }
-            if let failure = beforeCall() { return .failure(failure) }
-            let current = self.currentSpace!(cid, display)
-            guard current > 0 else { return .failure(.init(code: "cache_audit_space_unknown")) }
-            return .success(.init(key: space.key, displayId: space.displayId, visible: current == memberships[0].uint64Value))
-        }
-    }
-
-    func rebaseline() -> Result<Void, ProjectionObservationFailure> {
-        spaces.removeAll()
-        guard let connection, let displays, windows != nil, windowDisplay != nil, currentSpace != nil,
-              let raw = displays(connection())?.takeRetainedValue(),
-              let rows = raw as? [[String: Any]], !rows.isEmpty else {
-            baselineFailure = .init(code: "independent_space_observation_unavailable")
-            return .failure(baselineFailure!)
-        }
-        var next: [UInt64: Space] = [:]
-        for row in rows {
-            guard let display = row["Display Identifier"] as? String, !display.isEmpty,
-                  let current = row["Current Space"] as? [String: Any],
-                  let currentId = (current["ManagedSpaceID"] as? NSNumber ?? current["id64"] as? NSNumber)?.uint64Value,
-                  let entries = row["Spaces"] as? [[String: Any]], !entries.isEmpty else {
-                baselineFailure = .init(code: "independent_display_space_incomplete")
-                return .failure(baselineFailure!)
-            }
-            for entry in entries {
-                guard let type = entry["type"] as? Int else {
-                    baselineFailure = .init(code: "independent_space_type_unknown")
-                    return .failure(baselineFailure!)
-                }
-                if type != 0 { continue }
-                guard let id = (entry["ManagedSpaceID"] as? NSNumber ?? entry["id64"] as? NSNumber)?.uint64Value,
-                      id > 0, let uuid = entry["uuid"] as? String, !uuid.isEmpty else {
-                    baselineFailure = .init(code: "independent_space_identity_incomplete")
-                    return .failure(baselineFailure!)
-                }
-                // Native fullscreen and tiled system Spaces are outside the
-                // desktop eligibility contract; no active desktop is invented.
-                guard next[id] == nil else {
-                    baselineFailure = .init(code: "independent_space_identity_ambiguous")
-                    return .failure(baselineFailure!)
-                }
-                next[id] = Space(key: "space:uuid:\(uuid)", displayId: display, visible: id == currentId)
-            }
-        }
-        spaces = next
-        baselineFailure = nil
-        return .success(())
-    }
-
-    func context(windowId: Int64) -> Result<ProjectionSpaceContext, ProjectionObservationFailure> {
-        if let baselineFailure { return .failure(baselineFailure) }
-        guard windowId > 0, windowId <= Int64(UInt32.max), let connection, let windows,
-              let windowDisplay, let currentSpace else { return .failure(.init(code: "independent_space_observation_unavailable")) }
-        let cid = connection()
-        let ids = [NSNumber(value: windowId)] as CFArray
-        guard let raw = windows(cid, 0x7, ids)?.takeRetainedValue(),
-              let memberships = raw as? [NSNumber], memberships.count == 1,
-              let space = spaces[memberships[0].uint64Value],
-              let rawDisplay = windowDisplay(cid, UInt32(windowId))?.takeRetainedValue(),
-              (rawDisplay as String) == space.displayId else {
-            return .failure(.init(code: "independent_window_space_unknown_or_ambiguous"))
-        }
-        let activeId = currentSpace(cid, rawDisplay)
-        guard activeId > 0 else { return .failure(.init(code: "independent_current_display_space_unavailable")) }
-        return .success(.init(key: space.key, displayId: space.displayId,
-                             visible: memberships[0].uint64Value == activeId))
-    }
-
-    /// The only no-window Space target is an exact OS display UUID. Omitted
-    /// display selection succeeds for one independently observed display only.
-    func currentSpaceContext(displayUUID: String? = nil)
-        -> Result<ProjectionSpaceContext, ProjectionObservationFailure> {
-        if let baselineFailure { return .failure(baselineFailure) }
-        let displayIds = Set(spaces.values.map(\.displayId))
-        let display: String
-        if let displayUUID, displayIds.contains(displayUUID) { display = displayUUID }
-        else if displayUUID == nil, displayIds.count == 1 { display = displayIds.first! }
-        else { return .failure(.init(code: "independent_current_display_target_ambiguous")) }
-        guard let connection, let currentSpace,
-              let space = spaces[currentSpace(connection(), display as CFString)] else {
-            return .failure(.init(code: "independent_current_display_space_unavailable"))
-        }
-        return .success(.init(key: space.key, displayId: display, visible: true))
-    }
-
-    func currentContexts() -> Result<[ProjectionSpaceContext], ProjectionObservationFailure> {
-        if let baselineFailure { return .failure(baselineFailure) }
-        var contexts: [ProjectionSpaceContext] = []
-        for display in Set(spaces.values.map(\.displayId)).sorted() {
-            switch currentSpaceContext(displayUUID: display) {
-            case .success(let context): contexts.append(context)
-            case .failure(let failure): return .failure(failure)
-            }
-        }
-        guard !contexts.isEmpty else { return .failure(.init(code: "independent_current_display_space_unavailable")) }
-        return .success(contexts)
-    }
-}
-
 /// A serial observation lane owns this object. Every ordinary event reads its
 /// exact target. A complete cache additionally requires all-app lifecycle
 /// registration and an independently observed Space for every eligible window.
@@ -754,15 +16,17 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
     static let effectRefreshMessageBudgetNs: UInt64 = 100_000_000
     static let effectRefreshTotalBudgetNs: UInt64 = 200_000_000
     static let axMessageBudgetNs: UInt64 = 100_000_000
-    static let axReadTimeoutSeconds: Float = 0.1
+    /// The per-message cap in the unit the AX messaging timeout takes.
+    static let axReadTimeoutSeconds = Float(Double(axMessageBudgetNs) / 1e9)
     static let axTotalReadBudgetNs: UInt64 = 200_000_000
+    /// A cached frame that still matches the live window within a point is the same window.
+    static let frameContinuityTolerance = 1.0
     private let trusted: @Sendable () -> Bool
     private let sessionAvailable: @Sendable () -> Bool
     private let sessionGeneration: @Sendable () -> UInt64
     private let reader: any TargetedProjectionWindowReading
     private let spaces: any ProjectionSpaceObserving
     private let spaceEnabled: @Sendable (String) -> Bool
-    private let rules: JSONValue
     private let displayTopologyReader: ProjectionDisplayTopologyRead
     private let identityIsCurrent: @Sendable (ProjectionWindowHandle) -> Bool
     private let identityProof: @Sendable (ProjectionWindowHandle) -> Result<Bool, ProjectionObservationFailure>
@@ -824,7 +88,7 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
         }
         guard reader.supportsCacheAudit, let spaceProbe = spaces.makeAuditProbe() else { return .failure(.init(code: "cache_audit_backend_unsupported")) }
         let revision = currentAuditRevision, session = sessionGeneration(), owners = ownerPids
-        let observed = cachedWindows, retained = handles, reader = reader, matches = elementsMatch, rules = rules
+        let observed = cachedWindows, retained = handles, reader = reader, matches = elementsMatch
         let topologyReader = displayTopologyReader, topology = cachedTopology, usable = usableDisplayFrames
         let ignored = retained.values.filter { handle in
             guard let record = observed[handle.windowId], let role = record["role"]?.stringValue, let subrole = record["subrole"]?.stringValue else { return false }
@@ -871,7 +135,7 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
                     guard window.windowId == handle.windowId, window.pid == handle.pid else { return failed(.init(code: "cache_audit_read_identity_changed")) }
                     let tileable: JSONValue = .object(["role": .string(window.role), "subrole": .string(window.subrole),
                         "resizable": .bool(window.resizable), "app": .string(window.appName), "title": .string(window.title)])
-                    if !window.onscreen || window.minimized || !window.movable || !Autotile.tileable(tileable, rules) { continue }
+                    if !window.onscreen || window.minimized || !window.movable || !Autotile.tileable(tileable) { continue }
                     guard actual.insert(window.windowId).inserted, let prior = retained[window.windowId],
                           prior.pid == window.pid, matches(prior.element, handle.element), let record = observed[window.windowId] else {
                         return failed(.init(code: "cache_audit_new_or_changed_identity"))
@@ -882,7 +146,7 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
                         guard context.visible, context.key == record["space_key"]?.stringValue,
                               context.displayId == record["display_id"]?.stringValue else { return failed(.init(code: "cache_audit_space_changed")) }
                     }
-                    guard let priorFrame = Frame.from(record["frame"]), Geometry.frameEq(priorFrame, window.frame, tol: 1) else {
+                    guard let priorFrame = Frame.from(record["frame"]), Geometry.frameEq(priorFrame, window.frame, tol: Self.frameContinuityTolerance) else {
                         return failed(.init(code: "cache_audit_frame_changed"))
                     }
                 }
@@ -917,23 +181,16 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
         return delta
     }
 
-    convenience init(trusted: Bool, spaceEnabled: @escaping @Sendable (String) -> Bool = { _ in true },
-                     rules: JSONValue = .array([]),
-                     sessionAvailable: @escaping @Sendable () -> Bool = { true },
-                     sessionGeneration: @escaping @Sendable () -> UInt64 = { 0 }) {
-        self.init(trustedProvider: { trusted && AXIsProcessTrusted() }, spaceEnabled: spaceEnabled,
-            rules: rules, sessionAvailable: sessionAvailable, sessionGeneration: sessionGeneration)
-    }
-
     convenience init(trustedProvider: @escaping @Sendable () -> Bool,
                      spaceEnabled: @escaping @Sendable (String) -> Bool = { _ in true },
-                     rules: JSONValue = .array([]),
                      sessionAvailable: @escaping @Sendable () -> Bool = { true },
                      sessionGeneration: @escaping @Sendable () -> UInt64 = { 0 }) {
+        let spaces = IndependentProjectionSpaceObserver()
         self.init(trusted: trustedProvider,
-                  reader: LiveTargetedProjectionWindowReader(sessionAvailable: sessionAvailable),
-                  spaces: IndependentProjectionSpaceObserver(), spaceEnabled: spaceEnabled,
-                  rules: rules, worldObserver: AccessibilityWorldObserver(trustedProvider: { trustedProvider() && sessionAvailable() }),
+                  reader: LiveTargetedProjectionWindowReader(sessionAvailable: sessionAvailable,
+                      nonDesktopOnly: { [spaces] in spaces.nonDesktopOnlyWindowIds($0) }),
+                  spaces: spaces, spaceEnabled: spaceEnabled,
+                  worldObserver: AccessibilityWorldObserver(trustedProvider: { trustedProvider() && sessionAvailable() }),
                   sessionAvailable: sessionAvailable, sessionGeneration: sessionGeneration)
     }
 
@@ -941,7 +198,7 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
          reader: any TargetedProjectionWindowReading,
          spaces: any ProjectionSpaceObserving,
          spaceEnabled: @escaping @Sendable (String) -> Bool = { _ in true },
-         rules: JSONValue = .array([]), worldObserver: (any ProjectionWorldObserving)? = nil,
+         worldObserver: (any ProjectionWorldObserving)? = nil,
          identityIsCurrent: (@Sendable (ProjectionWindowHandle) -> Bool)? = nil,
          elementsMatch: @escaping @Sendable (AXUIElement, AXUIElement) -> Bool = { CFEqual($0, $1) },
          sessionAvailable: @escaping @Sendable () -> Bool = { true },
@@ -953,7 +210,6 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
         self.reader = reader
         self.spaces = spaces
         self.spaceEnabled = spaceEnabled
-        self.rules = rules
         self.displayTopologyReader = displayTopologyReader
         self.worldObserver = worldObserver
         let proof: @Sendable (ProjectionWindowHandle) -> Result<Bool, ProjectionObservationFailure>
@@ -1009,6 +265,23 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
         windowLifetimes.removeAll()
     }
 
+    /// Retire a window and record the failure that leaves the world incomplete.
+    private func failWindow(_ id: Int64, _ failure: ProjectionObservationFailure) -> ProjectionObservationFailure {
+        retireWindow(id)
+        worldComplete = false
+        worldFailure = failure
+        return failure
+    }
+
+    /// The session-lock failure when the session changed or locked since `session`; nil while it is current.
+    private func sessionFence(_ session: UInt64) -> ProjectionObservationFailure? {
+        guard sessionAvailable(), sessionGeneration() == session else {
+            sessionUnavailable()
+            return .init(code: "session_locked")
+        }
+        return nil
+    }
+
     private func retireWindow(_ id: Int64) {
         windowLifetimes.removeValue(forKey: id)
         handles.removeValue(forKey: id)
@@ -1059,45 +332,31 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
         case .success(false): identityFailure = .init(code: "window_resolver_identity_changed")
         case .failure(let failure): identityFailure = failure
         }
-        if let identityFailure {
-            retireWindow(windowId)
-            worldComplete = false
-            worldFailure = identityFailure
-            return .failure(identityFailure)
-        }
-        guard sessionAvailable(), sessionGeneration() == session else {
-            sessionUnavailable()
-            return .failure(.init(code: "session_locked"))
-        }
+        if let identityFailure { return .failure(failWindow(windowId, identityFailure)) }
+        if let locked = sessionFence(session) { return .failure(locked) }
         switch spaces.context(windowId: windowId) {
         case .failure(let failure):
-            retireWindow(windowId)
-            worldComplete = false
-            worldFailure = failure
-            return .failure(failure)
+            return .failure(failWindow(windowId, failure))
         case .success(let context):
             guard context.key == key, context.displayId == record["display_id"]?.stringValue,
                   context.visible, spaceEnabled(context.key) else {
-                retireWindow(windowId)
-                worldComplete = false
-                worldFailure = .init(code: "window_resolver_space_changed")
-                return .failure(worldFailure!)
+                return .failure(failWindow(windowId, .init(code: "window_resolver_space_changed")))
             }
         }
-        guard sessionAvailable(), sessionGeneration() == session else {
-            sessionUnavailable()
-            return .failure(.init(code: "session_locked"))
-        }
+        if let locked = sessionFence(session) { return .failure(locked) }
         return .success(handle)
     }
 
-    /// Completes an effect by the same targeted reader used for notifications;
-    /// a setter response itself is never represented as landed evidence.
+    #if LEYLINE_BUILD_TESTS
+    /// Developer checks read an observation without its handle; production
+    /// effects go through `readWindowWithHandle` so the setter handle and the
+    /// read pass one admission gate.
     func readWindow(windowId: Int64, observerGeneration: UInt64, expectedWindowGeneration: UInt64? = nil)
         -> Result<TargetedWindowObservation, ProjectionObservationFailure> {
         readWindowWithHandle(windowId: windowId, observerGeneration: observerGeneration,
                              expectedWindowGeneration: expectedWindowGeneration).map(\.observation)
     }
+    #endif
 
     /// Canonical read/handle pairing. A caller that needs a setter handle must not resolve again
     /// around this read: the returned handle passed the same lifetime/session/Space admission gate.
@@ -1110,32 +369,20 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
         case .success(let handle):
             targetedReads += 1
             let result = reader.read(element: handle.element, pid: handle.pid, expectedWindowId: windowId)
-            guard sessionAvailable(), sessionGeneration() == session else {
-                sessionUnavailable()
-                return .failure(.init(code: "session_locked"))
-            }
+            if let locked = sessionFence(session) { return .failure(locked) }
             switch result {
             case .failure(let failure):
-                retireWindow(windowId)
-                worldComplete = false
-                worldFailure = failure
-                return .failure(failure)
+                return .failure(failWindow(windowId, failure))
             case .success(let window):
                 guard window.windowId == windowId, window.pid == handle.pid else {
-                    retireWindow(windowId)
-                    worldComplete = false
-                    worldFailure = .init(code: "ax_notification_identity_mismatch")
-                    return .failure(worldFailure!)
+                    return .failure(failWindow(windowId, .init(code: "ax_notification_identity_mismatch")))
                 }
                 let request = ProjectionSnapshotRequest(reason: "effect_readback", application: nil,
                     observerGeneration: observerGeneration, accessibilityEvent: nil)
                 switch windowObject(window, request: request, appName: cachedWindows[windowId]?["app"]?.stringValue ?? "") {
                 case .success(let object): cachedWindows[windowId] = object
                 case .failure(let failure):
-                    retireWindow(windowId)
-                    worldComplete = false
-                    worldFailure = failure
-                    return .failure(failure)
+                    return .failure(failWindow(windowId, failure))
                 }
                 return .success(.init(handle: handle, observation: window, observerGeneration: observerGeneration,
                                       completedUptimeNs: DispatchTime.now().uptimeNanoseconds))
@@ -1178,9 +425,7 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
         case .failure(let failure): return .failure(failure)
         case .success(let window): observed = window
         }
-        guard sessionAvailable(), sessionGeneration() == session else {
-            sessionUnavailable(); return .failure(.init(code: "session_locked"))
-        }
+        if let locked = sessionFence(session) { return .failure(locked) }
         guard observed.windowId == windowId, observed.pid == retained.pid else {
             return .failure(.init(code: "effect_refresh_read_identity_changed"))
         }
@@ -1246,8 +491,7 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
         latestTargetObservation = [:]
         updateWorldFeedGeneration(request.observerGeneration)
         var error: ProjectionObservationFailure?
-        let isSweep = ["world_seed", "space_changed", "topology_changed", "wake_recovery",
-                       "trust_changed", "explicit_recovery", "application_launch_recovery", "cache_audit"].contains(request.reason)
+        let isSweep = WorldEvent.sweep.contains(request.reason)
         var refreshedWorld = isSweep
         var activationRecovery = false
         if !sessionAvailable() {
@@ -1269,6 +513,12 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
             } else if observerGeneration != request.observerGeneration, !handles.isEmpty || !ownerPids.isEmpty {
                 rebindWorldObserver(generation: request.observerGeneration)
             }
+            #if LEYLINE_BUILD_TESTS
+            // Developer checks republish cached state to read counters; it supplies no receipt or read.
+            let republishOnly = request.reason == "telemetry"
+            #else
+            let republishOnly = false
+            #endif
             if request.reason == "app_activated", !worldComplete {
                 // An activation is independent lifecycle evidence, not an AX
                 // retry. Replace a partial cache with one complete observation;
@@ -1327,8 +577,7 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
                                          expectedId: event.windowId, request: request,
                                          becomesFocus: !event.isWorldObservation)
                 }
-            } else if ["telemetry", "mode_changed", "configuration_changed", "presentation_health"].contains(request.reason) {
-                // Re-publishing state supplies no new window receipt/read.
+            } else if republishOnly {
             } else if request.reason == "ax_observer_degraded" {
                 focusId = nil
                 error = .init(code: "ax_observer_degraded")
@@ -1355,6 +604,21 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
         let focus = error == nil && worldComplete
             ? focusId.flatMap { cachedWindows[$0] }.map(JSONValue.object) ?? .null : .null
         return snapshot(request, focus: focus, error: error, started: started, session: session)
+    }
+
+    /// The window server reports a window joining or leaving a Space, including a
+    /// Mission Control move that raises no AX or workspace event. A cached window
+    /// now on another Space owes a sweep; one on no Space was destroyed, which the
+    /// AX lifecycle reports.
+    func windowChangedSpace(windowId: Int64) -> Bool {
+        guard sessionAvailable(), trusted(), worldObservationActive, worldComplete,
+              let row = cachedWindows[windowId], row["space_identity_available"]?.boolValue == true else { return false }
+        switch spaces.context(windowId: windowId) {
+        case .success(let context):
+            return context.key != row["space_key"]?.stringValue || context.visible != row["space_visible"]?.boolValue
+        case .failure:
+            return spaces.occupiesSpace(windowId: windowId)
+        }
     }
 
     private func refreshWorld(_ request: ProjectionSnapshotRequest) {
@@ -1569,7 +833,7 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
                 newIgnored.append((fresh, window))
             }
             let facts = windowFacts(window, appName: cachedWindows[window.windowId]?["app"]?.stringValue ?? "")
-            let eligible = window.movable && !window.minimized && window.onscreen && Autotile.tileable(.object(facts), rules)
+            let eligible = window.movable && !window.minimized && window.onscreen && Autotile.tileable(.object(facts))
             guard eligible else { continue }
             let context: ProjectionSpaceContext
             if let failure = guardRead() { return .failure(failure) }
@@ -1689,7 +953,7 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
         object["window_generation"] = .int(Int64(clamping: windowLifetimes[window.windowId]!.generation))
         object["registration_generation"] = .int(Int64(clamping: request.accessibilityEvent?.windowGeneration ?? 0))
         let eligible = window.movable && !window.minimized && window.onscreen
-            && Autotile.tileable(.object(object), rules)
+            && Autotile.tileable(.object(object))
         object["eligible"] = .bool(eligible)
         object["managed"] = .bool(eligible)
         switch spaces.context(windowId: window.windowId) {
@@ -1699,7 +963,6 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
             object["space_identity_failure"] = .string(failure.code)
         case .success(let context):
             object["space_key"] = .string(context.key)
-            object["desktop_space_key"] = .string(context.key)
             object["display_id"] = .string(context.displayId)
             object["space_visible"] = .bool(context.visible)
             object["space_enabled"] = .bool(spaceEnabled(context.key))
@@ -1766,7 +1029,8 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
             "session_generation": .int(Int64(clamping: session)),
             "read_started_uptime_ns": .int(Int64(clamping: started)),
             "read_completed_uptime_ns": .int(Int64(clamping: DispatchTime.now().uptimeNanoseconds)),
-            "ax_call_timeout_ms": .int(Int64(Self.axMessageBudgetNs / 1_000_000)), "ax_total_read_budget_ms": .int(200),
+            "ax_call_timeout_ms": .int(Int64(Self.axMessageBudgetNs / 1_000_000)),
+            "ax_total_read_budget_ms": .int(Int64(Self.axTotalReadBudgetNs / 1_000_000)),
             "world_source_observer_generation": worldObservationActive ? .int(Int64(clamping: worldObserverGeneration)) : .null,
             "admission_observer_generation": .int(Int64(clamping: request.observerGeneration)),
             "source_observer_generation": .null,

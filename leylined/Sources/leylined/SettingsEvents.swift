@@ -11,16 +11,12 @@ struct ResidentSettingsSnapshot: Equatable, Sendable {
     let errorCode: String?
     let generation: UInt64
     let configuration: JSONValue?
-    /// One global override; nil delegates to the canonical border configuration.
-    let globalGutterWidth: Int?
 
     init(spacesEnabled: [String: Bool], desiredRunning: Bool, present: Bool,
-         errorCode: String?, generation: UInt64, configuration: JSONValue? = nil,
-         globalGutterWidth: Int? = nil) {
+         errorCode: String?, generation: UInt64, configuration: JSONValue? = nil) {
         self.spacesEnabled = spacesEnabled; self.desiredRunning = desiredRunning
         self.present = present; self.errorCode = errorCode; self.generation = generation
         self.configuration = configuration
-        self.globalGutterWidth = globalGutterWidth
     }
 
     func enabled(spaceKey: String) -> Bool { spacesEnabled[spaceKey] ?? true }
@@ -29,68 +25,68 @@ struct ResidentSettingsSnapshot: Equatable, Sendable {
 /// @canonical resident_settings_store -- durable global and Space management
 /// preferences. Absent is an explicit default; invalid/unreadable is a failure.
 enum ResidentSettingsStore {
+    static let schema = "leyline/resident-settings/v1"
+
     static func defaultPath() -> String {
-        let environment = ProcessInfo.processInfo.environment
-        let config = environment["LEYLINE_CONFIG_DIR"]
-            ?? ((environment["LEYLINE_ROOT"] ?? (NSHomeDirectory() + "/.config/leyline")) + "/config")
-        return config + "/leylined-settings.json"
+        ResidentLayout.settings(config: ResidentPaths.config())
+    }
+
+    /// The canonical settings document, newline-terminated, as the resident writes
+    /// it and the installer seeds it.
+    static func document(spacesEnabled: [String: Bool], desiredRunning: Bool) -> Data {
+        let value: JSONObject = ["schema": .string(schema),
+                                 "spaces_enabled": .object(JSONObject(unordered: spacesEnabled.mapValues(JSONValue.bool))),
+                                 "desired_running": .bool(desiredRunning)]
+        return Data((JSONValue.object(value).canonical() + "\n").utf8)
+    }
+
+    /// Read a private JSON object file. Absent is `(present: false, nil, nil)`; a stat
+    /// failure other than ENOENT, an unreadable, oversized, unparsable or non-object
+    /// file reports the matching code with no object.
+    static func loadObject(path: String, maximumBytes: Int? = nil,
+                           codes: (stat: String, read: String, invalid: String))
+        -> (present: Bool, object: JSONObject?, errorCode: String?) {
+        var entry = stat()
+        guard path.withCString({ lstat($0, &entry) }) == 0 else {
+            return (false, nil, errno == ENOENT ? nil : codes.stat)
+        }
+        guard let bytes = FileManager.default.contents(atPath: path) else { return (true, nil, codes.read) }
+        if let maximumBytes, bytes.count > maximumBytes { return (true, nil, codes.invalid) }
+        guard let object = (try? JSONValue.parse(bytes))?.objectValue else { return (true, nil, codes.invalid) }
+        return (true, object, nil)
     }
 
     static func read(path: String, generation: UInt64 = 0) -> ResidentSettingsSnapshot {
-        var entry = stat()
-        guard path.withCString({ lstat($0, &entry) }) == 0 else {
-            let code = errno == ENOENT ? nil : "SETTINGS.STAT_FAILED"
+        let loaded = loadObject(path: path, codes: ("SETTINGS.STAT_FAILED", "SETTINGS.READ_FAILED", "SETTINGS.INVALID"))
+        guard let object = loaded.object else {
             return ResidentSettingsSnapshot(spacesEnabled: [:], desiredRunning: true,
-                                            present: false, errorCode: code, generation: generation)
+                                            present: loaded.present, errorCode: loaded.errorCode, generation: generation)
         }
-        guard let bytes = FileManager.default.contents(atPath: path) else {
-            return ResidentSettingsSnapshot(spacesEnabled: [:], desiredRunning: true,
-                                            present: true, errorCode: "SETTINGS.READ_FAILED", generation: generation)
-        }
-        guard let object = (try? JSONValue.parse(bytes))?.objectValue,
-              object["schema"]?.stringValue == "leyline/resident-settings/v1",
+        guard object["schema"]?.stringValue == schema,
               let spaces = object["spaces_enabled"]?.objectValue,
               let running = object["desired_running"]?.boolValue,
-              spaces.allSatisfy({ !$0.key.isEmpty && $0.value.boolValue != nil }),
-              object["global_gutter_width"] == nil
-                || (object["global_gutter_width"]?.intValue.map { $0 >= 0 && $0 <= 512 } == true) else {
+              spaces.allSatisfy({ !$0.key.isEmpty && $0.value.boolValue != nil }) else {
             return ResidentSettingsSnapshot(spacesEnabled: [:], desiredRunning: true,
                                             present: true, errorCode: "SETTINGS.INVALID", generation: generation)
         }
         let enabled = Dictionary(uniqueKeysWithValues: spaces.map { ($0.key, $0.value.boolValue!) })
         return ResidentSettingsSnapshot(spacesEnabled: enabled, desiredRunning: running,
-                                        present: true, errorCode: nil, generation: generation,
-                                        globalGutterWidth: object["global_gutter_width"]?.intValue.map(Int.init))
+                                        present: true, errorCode: nil, generation: generation)
     }
 
-    /// Updating management alone preserves the existing global override. A
-    /// failed read refuses the update instead of replacing preferences.
+    /// Atomically persist management preferences. Invalid existing settings
+    /// refuse the update rather than being replaced by fabricated defaults.
     static func write(path: String, spacesEnabled: [String: Bool], desiredRunning: Bool) throws {
         let current = read(path: path)
         if let errorCode = current.errorCode {
             throw ResidentInputError(code: errorCode, message: "Cannot preserve the current resident settings for update")
         }
-        try write(path: path, spacesEnabled: spacesEnabled, desiredRunning: desiredRunning,
-                  globalGutterWidth: current.globalGutterWidth)
-    }
-
-    /// Writes the complete preference snapshot atomically; an explicit nil
-    /// restores the registry preference. Filesystem work belongs off-main.
-    static func write(path: String, spacesEnabled: [String: Bool], desiredRunning: Bool,
-                      globalGutterWidth: Int?) throws {
         guard spacesEnabled.keys.allSatisfy({ !$0.isEmpty }) else {
             throw ResidentInputError(code: "SETTINGS.SPACE_KEY_INVALID", message: "Cannot persist an empty Space identity")
         }
-        guard globalGutterWidth.map({ (0...512).contains($0) }) ?? true else {
-            throw ResidentInputError(code: "SETTINGS.GUTTER_WIDTH_INVALID", message: "Global gutter must be between 0 and 512 points")
-        }
         let parent = (path as NSString).deletingLastPathComponent
         try FileManager.default.createDirectory(atPath: parent, withIntermediateDirectories: true)
-        var value: JSONObject = ["schema": .string("leyline/resident-settings/v1"),
-                                 "spaces_enabled": .object(JSONObject(unordered: spacesEnabled.mapValues(JSONValue.bool))),
-                                 "desired_running": .bool(desiredRunning)]
-        if let globalGutterWidth { value["global_gutter_width"] = .int(Int64(globalGutterWidth)) }
-        try Data((JSONValue.object(value).canonical() + "\n").utf8).write(
+        try document(spacesEnabled: spacesEnabled, desiredRunning: desiredRunning).write(
             to: URL(fileURLWithPath: path), options: .atomic)
         guard chmod(path, 0o600) == 0 else {
             throw ResidentInputError(code: "SETTINGS.PERMISSION_FAILED", message: "Failed to restrict resident settings permissions")
@@ -141,7 +137,7 @@ final class SettingsEvents: @unchecked Sendable {
     func health() -> JSONObject {
         queue.sync {
             ["running": .bool(running), "directory_watch_count": .int(Int64(watches.count)),
-             "generation": .int(Int64(generation)), "recurring_poll_count": .int(0),
+             "generation": .int(Int64(generation)),
              "error_code": sourceErrorCode.map(JSONValue.string)
                 ?? lastSnapshot?.errorCode.map(JSONValue.string) ?? .null]
         }
@@ -189,7 +185,6 @@ final class SettingsEvents: @unchecked Sendable {
         if !force, let previous = lastSnapshot,
            candidate.spacesEnabled == previous.spacesEnabled,
            candidate.desiredRunning == previous.desiredRunning,
-           candidate.globalGutterWidth == previous.globalGutterWidth,
            candidate.configuration == previous.configuration,
            candidate.present == previous.present, candidate.errorCode == previous.errorCode { return }
         generation += 1

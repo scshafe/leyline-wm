@@ -7,12 +7,12 @@ neutral temporary source tree, excludes private history/state and scans artifact
 from __future__ import annotations
 import argparse, gzip, hashlib, json, os, plistlib, shutil, stat, subprocess, sys, tarfile, tempfile
 from pathlib import Path
-from privacy_audit import audit, private_tokens, github_repository_parts
+from privacy_audit import FORBIDDEN_PARTS, FORBIDDEN_SUFFIXES, audit, private_tokens, github_repository_parts
 
 ROOT=Path(__file__).resolve().parents[2]
-SOURCE_ROOTS={"bin","commands","config","docs","keymap","leylined","lib","packaging","scripts","tests",".github"}
-SOURCE_FILES={"README.md","CLAUDE.md","AX-GRANT.md","LICENSE","NOTICE","VERSION",".gitignore","install.sh"}
-RUNTIME_COMMANDS={"act","resident","ctl","doctor","validate","setup","perf","trace"}
+SOURCE_ROOTS={"bin","commands","docs","keymap","leylined","lib","packaging","scripts","tests",".github"}
+SOURCE_FILES={"README.md","CLAUDE.md","LICENSE","VERSION",".gitignore","install.sh"}
+RUNTIME_COMMANDS={"act","resident","ctl","doctor","setup"}
 
 
 def run(args: list[str], cwd: Path | None = None, env: dict[str,str] | None = None) -> str:
@@ -25,18 +25,28 @@ def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def app_shell(template: Path, app: Path, version: str) -> Path:
+    """The bundle's MacOS directory plus its Info.plist stamped with the release version."""
+    (app/'Contents/MacOS').mkdir(parents=True,exist_ok=True)
+    plist=plistlib.loads(template.read_bytes())
+    plist['CFBundleShortVersionString']=plist['CFBundleVersion']=version
+    (app/'Contents/Info.plist').write_bytes(plistlib.dumps(plist))
+    return app
+
+
 def source_files(repository: Path) -> list[Path]:
-    result=run(["git","ls-files","--cached","--others","--exclude-standard"],cwd=repository)
+    """Tracked files only: untracked work never enters a public export."""
+    result=run(["git","ls-files","--cached"],cwd=repository)
     paths=[]
     for line in result.splitlines():
         relative=Path(line)
         if not relative.parts or (relative.parts[0] not in SOURCE_ROOTS and line not in SOURCE_FILES): continue
-        if any(p in {".git",".claude",".build","__pycache__","runtime","dist"} or p.endswith(".dSYM") for p in relative.parts): continue
+        if any(p in FORBIDDEN_PARTS or p.endswith(".dSYM") for p in relative.parts): continue
         path=repository/relative
         if not path.exists(): continue
         if path.is_symlink(): raise RuntimeError(f"Source export does not accept symlinks: {relative}")
         if path.is_file():
-            if path.name==".DS_Store" or path.suffix in {".p12",".pfx",".pem",".key",".pyc",".log",".jsonl"}: continue
+            if path.name==".DS_Store" or path.suffix in FORBIDDEN_SUFFIXES: continue
             if path.read_bytes()[:4] in {b'\xcf\xfa\xed\xfe',b'\xce\xfa\xed\xfe',b'\xca\xfe\xba\xbe',b'\xca\xfe\xba\xbf'}: continue
             paths.append(relative)
     return sorted(set(paths))
@@ -84,17 +94,16 @@ def anonymous_history(source: Path, version: str) -> None:
     assert not run(['git','remote'],cwd=source)
 
 
-def app_resources(source: Path, app: Path) -> Path:
+def app_resources(source: Path, app: Path, version: str) -> Path:
     home=app/'Contents/Resources/leyline';home.mkdir(parents=True)
-    for name in ['keymap','config/registry','lib']:
+    for name in ['keymap','lib']:
         shutil.copytree(source/name,home/name)
     (home/'commands').mkdir();(home/'bin').mkdir()
     for name in RUNTIME_COMMANDS:shutil.copy2(source/f'commands/{name}.sh',home/f'commands/{name}.sh')
     shutil.copy2(source/'bin/ley',home/'bin/ley')
     (home/'bin/leylined').symlink_to('../../../MacOS/leylined')
-    shutil.copy2(source/'leylined/Fixtures/input/v1-claims.json',home/'config/input-routes.json')
     shutil.copy2(source/'VERSION',home/'VERSION');shutil.copy2(source/'LICENSE',home/'LICENSE')
-    (home/'release.json').write_text(json.dumps({'version':(source/'VERSION').read_text().strip(),'profile':'application'},sort_keys=True)+'\n')
+    (home/'release.json').write_text(json.dumps({'version':version,'profile':'application'},sort_keys=True)+'\n')
     return home
 
 
@@ -102,12 +111,9 @@ def build_application(source: Path, output: Path, architecture: str, identity: s
     env={**os.environ,'LEYLINE_CODESIGN_IDENTITY':identity or '-'}
     if identity:env['LEYLINE_DISTRIBUTION_SIGNING']='1'
     else:env.pop('LEYLINE_DISTRIBUTION_SIGNING',None)
-    app=output/'Leyline.app';(app/'Contents/MacOS').mkdir(parents=True)
     version=(source/'VERSION').read_text().strip()
-    plist=plistlib.loads((source/'packaging/Leyline.Info.plist').read_bytes())
-    plist['CFBundleShortVersionString']=plist['CFBundleVersion']=version
-    (app/'Contents/Info.plist').write_bytes(plistlib.dumps(plist))
-    app_resources(source,app)
+    app=app_shell(source/'packaging/Leyline.Info.plist',output/'Leyline.app',version)
+    app_resources(source,app,version)
     arches=['arm64','x86_64'] if architecture=='universal' else [architecture]
     products=[];recovery_products=[]
     for arch in arches:
@@ -117,10 +123,7 @@ def build_application(source: Path, output: Path, architecture: str, identity: s
         recovery=output/f'Recovery-{arch}.app'
         run([str(source/'bin/leyline-recovery-app-build'),'--output-app',str(recovery),'--arch',arch],cwd=source,env=env)
         recovery_products.append(recovery/'Contents/MacOS/leyline-recovery')
-    recovery=output/'Leyline Recovery.app';(recovery/'Contents/MacOS').mkdir(parents=True)
-    recovery_plist=plistlib.loads((source/'bin/leyline-recovery.Info.plist').read_bytes())
-    recovery_plist['CFBundleShortVersionString']=recovery_plist['CFBundleVersion']=version
-    (recovery/'Contents/Info.plist').write_bytes(plistlib.dumps(recovery_plist))
+    recovery=app_shell(source/'bin/leyline-recovery.Info.plist',output/'Leyline Recovery.app',version)
     for paths,target in [(products,app/'Contents/MacOS/leylined'),(recovery_products,recovery/'Contents/MacOS/leyline-recovery')]:
         if len(paths)==1:shutil.copy2(paths[0],target)
         else:run(['/usr/bin/lipo','-create',*[str(p) for p in paths],'-output',str(target)])
@@ -142,16 +145,13 @@ def build_application(source: Path, output: Path, architecture: str, identity: s
 
 def assemble_existing(source: Path, output: Path) -> None:
     """Assemble locally built shipping binaries; no developer runtime is accepted."""
-    binary=source/'bin/leylined'
-    if run([str(binary),'version']).split()[-1]!=(source/'VERSION').read_text().strip():raise RuntimeError('Built version differs from VERSION')
+    binary=source/'bin/leylined';version=(source/'VERSION').read_text().strip()
+    if run([str(binary),'version']).split()[-1]!=version:raise RuntimeError('Built version differs from VERSION')
     probe=subprocess.run([str(binary),'self-test','model'],capture_output=True)
     if probe.returncode!=64:raise RuntimeError('Shipping binary exposes developer test commands')
-    app=output/'Leyline.app';(app/'Contents/MacOS').mkdir(parents=True)
+    app=app_shell(source/'packaging/Leyline.Info.plist',output/'Leyline.app',version)
     shutil.copy2(binary,app/'Contents/MacOS/leylined')
-    plist=plistlib.loads((source/'packaging/Leyline.Info.plist').read_bytes())
-    version=(source/'VERSION').read_text().strip();plist['CFBundleShortVersionString']=plist['CFBundleVersion']=version
-    (app/'Contents/Info.plist').write_bytes(plistlib.dumps(plist))
-    app_resources(source,app)
+    app_resources(source,app,version)
     shutil.copytree(source/'bin/Leyline Recovery.app',output/'Leyline Recovery.app')
     run([str(source/'bin/leyline-codesign'),str(app),'org.leyline'])
     run(['/usr/bin/codesign','--verify','--strict','--deep',str(app)])
@@ -247,8 +247,7 @@ def main() -> int:
         if findings:raise RuntimeError('Anonymous Git audit failed: '+json.dumps(findings))
     checksums=''.join(f'{digest(path)}  {path.name}\n' for path in artifacts)
     (output/'SHA256SUMS').write_text(checksums)
-    policy=json.loads((ROOT/'packaging/release-policy.json').read_text())
-    report={'homebrew_repository_required':not bool(args.repository),'license_review_pending':policy['license_review_pending'],'version':version,'artifacts':[p.name for p in artifacts],'public_source':source.name,'anonymous_history':args.anonymous_history,
+    report={'homebrew_repository_required':not bool(args.repository),'version':version,'artifacts':[p.name for p in artifacts],'public_source':source.name,'anonymous_history':args.anonymous_history,
             'notarized':bool(args.notary_profile),'publisher_identity_in_signature':bool(args.sign_identity),
             'privacy_clean':True,'license':(ROOT/'LICENSE').read_text().splitlines()[0],'published':False}
     (output/'release-report.json').write_text(json.dumps(report,indent=2,sort_keys=True)+'\n')

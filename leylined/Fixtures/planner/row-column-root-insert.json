@@ -1,0 +1,81 @@
+{
+  "schema": "leyline/row-column-root-insert/v1",
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": { "x": 0, "y": 0, "w": 2048, "h": 1326 },
+        "usable": { "x": 0, "y": 41, "w": 2048, "h": 1285 }
+      }
+    ],
+    "gap": 1,
+    "outer_gap": 1
+  },
+  "world_context": {
+    "complete": true,
+    "trusted": true,
+    "space_enabled": true,
+    "active_space_key": "display:1/space:A",
+    "observer_epoch": "row-column-fixture-epoch",
+    "observer_generation": 3,
+    "topology_revision": 2,
+    "focused_window_id": 1
+  },
+  "scenes": {
+    "rows": {
+      "segments": [
+        { "axis": "v", "coord": 1024, "lo": 42, "hi": 694.5, "relation": "pinned" },
+        { "axis": "h", "coord": 694.5, "lo": 1, "hi": 2047, "relation": "pinned" }
+      ],
+      "bindings": {
+        "1:0:0": { "window_id": 1 },
+        "1:1:0": { "window_id": 2 },
+        "1:0:1": { "window_id": 3 }
+      },
+      "off_top": [],
+      "focus": 1
+    },
+    "rows_overlapping_cut": {
+      "segments": [
+        { "axis": "v", "coord": 1024, "lo": 42, "hi": 694.5, "relation": "pinned" },
+        { "axis": "h", "coord": 694.5, "lo": 1, "hi": 1024, "relation": "pinned" },
+        { "axis": "h", "coord": 694.5, "lo": 1, "hi": 2047, "relation": "pinned" },
+        { "axis": "h", "coord": 694.5, "lo": 1024, "hi": 2047, "relation": "pinned" }
+      ],
+      "bindings": {
+        "1:0:0": { "window_id": 1 },
+        "1:1:0": { "window_id": 2 },
+        "1:0:1": { "window_id": 3 }
+      },
+      "off_top": [],
+      "focus": 1
+    },
+    "columns": {
+      "segments": [
+        { "axis": "v", "coord": 683, "lo": 42, "hi": 1325, "relation": "pinned" },
+        { "axis": "v", "coord": 1365, "lo": 42, "hi": 1325, "relation": "pinned" }
+      ],
+      "bindings": {
+        "1:0:0": { "window_id": 1 },
+        "1:1:0": { "window_id": 2 },
+        "1:2:0": { "window_id": 3 }
+      },
+      "off_top": [],
+      "focus": 3
+    }
+  },
+  "expected_left_full_frames": {
+    "1": [1, 42, 1023, 1283],
+    "2": [1025, 42, 1022, 652],
+    "3": [1025, 695, 1022, 630]
+  },
+  "expected_bottom_full_frames": {
+    "1": [1, 42, 1023, 641],
+    "2": [1025, 42, 1022, 641],
+    "3": [1, 684, 2046, 641]
+  },
+  "expected_overlapping_prune_frames": {
+    "1": [1, 42, 1022.5, 1283],
+    "2": [1024.5, 42, 1022.5, 1283]
+  }
+}

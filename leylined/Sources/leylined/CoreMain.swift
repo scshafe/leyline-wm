@@ -50,7 +50,7 @@ final class CoreStartupBootstrap: @unchecked Sendable {
 
     private func isCurrent(_ epoch: UInt64) -> Bool {
         server.observationEpoch == epoch
-            && server.worldState.at(path: "management_enabled")?.boolValue != false
+            && server.worldState.managementEnabled
     }
 }
 
@@ -169,10 +169,8 @@ private func coreUsableDisplayFrames() -> [String: Frame] {
 }
 
 func runCore(_ args: [String]) -> Int32 {
-    let environment = ProcessInfo.processInfo.environment
-    let root = environment["LEYLINE_ROOT"] ?? (NSHomeDirectory() + "/.config/leyline")
-    let runtime = environment["LEYLINE_RUNTIME_DIR"] ?? (root + "/runtime")
-    var socketPath = runtime + "/sockets/leylined.sock"
+    let root = ResidentPaths.root()
+    var socketPath = ResidentPaths.socket()
     #if LEYLINE_BUILD_TESTS
     var maximumRevisions = 0
     var simulateNoTrust = false
@@ -210,7 +208,7 @@ func runCore(_ args: [String]) -> Int32 {
     let sessionAvailable: @Sendable () -> Bool = { sessionActive.load(ordering: .acquiring) }
     let observationTrusted: @Sendable () -> Bool = { sessionAvailable() && trustProvider() }
     let trusted = trustProvider()
-    let journalPath = root + "/state/leylined/journal.jsonl"
+    let journalPath = ResidentLayout.journal(root: root)
     let journal = ResidentEffectorFileJournal(path: journalPath)
     var initialRevision: UInt64 = 0
     var initialState: JSONValue = .object([:])
@@ -233,10 +231,8 @@ func runCore(_ args: [String]) -> Int32 {
     let rendererSetup: (renderer: BorderRenderer?, health: CoreProjectionHealth) = MainActor.assumeIsolated {
         // Establish the dockless identity before mount can create an NSPanel.
         NSApplication.shared.setActivationPolicy(.accessory)
-        var initialBorderStore = BorderConfiguration.readStore()?.objectValue ?? [:]
-        let initialPreferences = ResidentSettingsStore.read(path: ResidentSettingsStore.defaultPath())
-        if let width = initialPreferences.globalGutterWidth { initialBorderStore["width"] = .int(Int64(width)) }
-        let candidate = BorderRenderer(store: .object(initialBorderStore))
+        // The settings geometry watcher validates and applies borders.json.
+        let candidate = BorderRenderer(store: nil)
         _ = candidate.mount()
         return (candidate, candidate.health)
     }
@@ -257,7 +253,7 @@ func runCore(_ args: [String]) -> Int32 {
     let feed = ProjectionInputFeed(
         observer: accessibilityObserver,
         captureTargeted: { snapshots.capture($0) },
-        executeOnMain: { operation in
+        executeOnObservationLane: { operation in
             observationQueue.async(execute: operation)
         },
         onHealthChanged: { health in
@@ -266,7 +262,7 @@ func runCore(_ args: [String]) -> Int32 {
         transientRecovery: transientRecovery,
         recoverySessionGeneration: { sessionGeneration.load(ordering: .acquiring) },
         recoveryObservationEpoch: { server.observationEpoch },
-        recoveryPermitted: { observationTrusted() && server.worldState.at(path: "management_enabled")?.boolValue != false },
+        recoveryPermitted: { observationTrusted() && server.worldState.managementEnabled },
         deliver: { delta in
             // A delayed read may return after both lock and unlock. Its old
             // session cannot regain authority merely because the boolean is ON.
@@ -281,7 +277,7 @@ func runCore(_ args: [String]) -> Int32 {
             observationTrusted()
                 && sessionGeneration.load(ordering: .acquiring) == seed.sessionGeneration
                 && server.observationEpoch == seed.observationEpoch
-                && server.worldState.at(path: "management_enabled")?.boolValue != false
+                && server.worldState.managementEnabled
         })
     observationQueue.sync {
         feed.configureCacheAudit(cacheAudit,
@@ -290,13 +286,8 @@ func runCore(_ args: [String]) -> Int32 {
             finish: { snapshots.finishCacheAudit(seed: $0, probe: $1) })
     }
 
-    let preferences = ResidentSettingsStore.read(path: ResidentSettingsStore.defaultPath())
-    let gap = preferences.globalGutterWidth ?? Int(BorderConfiguration.readStore()?.at(path: "width")?.intValue ?? Int64(BorderPalette.defaultThickness))
-    guard (0...512).contains(gap) else {
-        FileHandle.standardError.write(Data("leylined: CONFIG.GAP_INVALID\n".utf8)); return 65
-    }
     let actions = ResidentActionController(server: server, snapshots: snapshots,
-        observationQueue: observationQueue, journal: journal, gap: gap)
+        observationQueue: observationQueue, journal: journal, gap: BorderPalette.thickness)
     let services: CoreRuntimeServices
     do {
         services = try CoreRuntimeServices(server: server,
@@ -309,9 +300,9 @@ func runCore(_ args: [String]) -> Int32 {
     server.setCommittedSnapshotHandler { snapshot in
         driver.publish(snapshot)
         services.receive(snapshot)
-        let event = snapshot.world.at(path: "event")?.stringValue ?? ""
-        if ["world_seed", "global_start", "wake_recovery", "topology_changed", "application_launch_recovery", "explicit_recovery"].contains(event),
-           snapshot.world.at(path: "observation.world_complete")?.boolValue == true,
+        let event = snapshot.world.worldEvent
+        if WorldEvent.cacheAuditTriggers.contains(event),
+           snapshot.world.worldComplete == true,
            snapshot.world.at(path: "cache_audit_recovery")?.boolValue != true,
            let sourceGeneration = snapshot.world.at(path: "observer_generation")?.intValue,
            let sourceSession = snapshot.world.at(path: "observation.session_generation")?.intValue {
@@ -320,7 +311,7 @@ func runCore(_ args: [String]) -> Int32 {
                 guard observationTrusted(), server.observationEpoch == epoch,
                       sourceSession == Int64(clamping: sessionGeneration.load(ordering: .acquiring)),
                       sourceGeneration == Int64(clamping: feed.currentGeneration),
-                      server.worldState.at(path: "management_enabled")?.boolValue != false else { return }
+                      server.worldState.managementEnabled else { return }
                 _ = feed.requestCacheAudit(reason: "after_" + event)
             }
         }
@@ -328,7 +319,7 @@ func runCore(_ args: [String]) -> Int32 {
     server.configureCommands(actionIDs: Array(ResidentActionController.actionIDs)) { actions.handle($0) }
     let observe: @Sendable (@escaping @Sendable () -> Void) -> Void = { operation in
         observationQueue.async {
-            guard server.worldState.at(path: "management_enabled")?.boolValue != false else { return }
+            guard server.worldState.managementEnabled else { return }
             operation()
         }
     }
@@ -370,7 +361,7 @@ func runCore(_ args: [String]) -> Int32 {
         services.sessionUnavailable()
         observationQueue.async {
             snapshots.sessionUnavailable()
-            guard server.worldState.at(path: "management_enabled")?.boolValue != false else { return }
+            guard server.worldState.managementEnabled else { return }
             feed.trustChanged(frontmost: nil)
         }
     }
@@ -395,7 +386,7 @@ func runCore(_ args: [String]) -> Int32 {
                 snapshots.setUsableDisplayFrames(frames)
                 feed.wake(frontmost: app)
                 guard sessionAvailable(), services.sessionMayResume(),
-                      server.worldState.at(path: "observation.world_complete")?.boolValue == true,
+                      server.worldState.worldComplete == true,
                       server.worldState.at(path: "persistence_available")?.boolValue != false,
                       server.worldState.at(path: "geometry_available")?.boolValue != false else { return }
                 _ = server.applyWorldDelta(["event": .string("session_recovered"),
@@ -466,6 +457,17 @@ func runCore(_ args: [String]) -> Int32 {
             snapshots.setUsableDisplayFrames(frames)
             feed.topologyChanged(frontmost: app)
         }
+    }
+    let windowSpaceNotifications = MainActor.assumeIsolated {
+        CoreWindowSpaceNotifications.register { windowId in
+            let app = projectionApplication(NSWorkspace.shared.frontmostApplication)
+            observe {
+                if snapshots.windowChangedSpace(windowId: windowId) { feed.windowSpaceChanged(frontmost: app) }
+            }
+        }
+    }
+    if !windowSpaceNotifications {
+        FileHandle.standardError.write(Data("leylined: window Space notifications unavailable\n".utf8))
     }
     let trustAudit = CoreTrustAudit(read: trustProvider) { isTrusted in
         if !isTrusted {

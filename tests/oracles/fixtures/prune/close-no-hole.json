@@ -1,0 +1,136 @@
+{
+  "expect": {
+    "absorber": 602,
+    "arr": {
+      "bindings": {
+        "1:0:0": {
+          "contents": [
+            {
+              "frame": {
+                "h": 1000,
+                "w": 500,
+                "x": 0,
+                "y": 0
+              },
+              "presented": true,
+              "window_id": 602
+            }
+          ],
+          "frame": {
+            "h": 1000,
+            "w": 500,
+            "x": 0,
+            "y": 0
+          },
+          "presented": true,
+          "window_id": 602
+        },
+        "1:1:0": {
+          "contents": [
+            {
+              "frame": {
+                "h": 1000,
+                "w": 500,
+                "x": 500,
+                "y": 0
+              },
+              "presented": true,
+              "window_id": 603
+            }
+          ],
+          "frame": {
+            "h": 1000,
+            "w": 500,
+            "x": 500,
+            "y": 0
+          },
+          "presented": true,
+          "window_id": 603
+        }
+      },
+      "off_top": [],
+      "segments": [
+        {
+          "axis": "v",
+          "coord": 500,
+          "hi": 1000,
+          "lo": 0,
+          "relation": "pinned"
+        }
+      ]
+    }
+  },
+  "fn": "prune",
+  "goners": [
+    601
+  ],
+  "note": "Production \"even\" reclaim prune. Input store and expectation frozen 2026-10-11 from the retired jq reference engine (jq 1.8.1, arrangement.jq bridge_arrangement / bridge_arrangement_native_prune) applied to the former tests/oracles/fixtures/arrangement/prune-scenes/close-no-hole.json.",
+  "store": {
+    "bindings": {
+      "1:0:0": {
+        "frame": {
+          "h": 500,
+          "w": 1000,
+          "x": 0,
+          "y": 0
+        },
+        "window_id": 601
+      },
+      "1:0:1": {
+        "frame": {
+          "h": 500,
+          "w": 500,
+          "x": 0,
+          "y": 500
+        },
+        "window_id": 602
+      },
+      "1:1:1": {
+        "frame": {
+          "h": 500,
+          "w": 500,
+          "x": 500,
+          "y": 500
+        },
+        "window_id": 603
+      }
+    },
+    "off_top": [],
+    "promotions": [],
+    "segments": [
+      {
+        "axis": "h",
+        "coord": 500,
+        "hi": 1000,
+        "lo": 0,
+        "relation": "pinned"
+      },
+      {
+        "axis": "v",
+        "coord": 500,
+        "hi": 1000,
+        "lo": 500,
+        "relation": "pinned"
+      }
+    ]
+  },
+  "topology": {
+    "displays": [
+      {
+        "frame": {
+          "h": 1000,
+          "w": 1000,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "usable": {
+          "h": 1000,
+          "w": 1000,
+          "x": 0,
+          "y": 0
+        }
+      }
+    ]
+  }
+}

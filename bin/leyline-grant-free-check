@@ -1,27 +1,20 @@
 #!/usr/bin/env bash
 # leyline-grant-free-check — the fail-the-build gate that proves a grant-free
-# Swift binary makes ZERO Accessibility / event-tap calls, and (with
-# --never-key) never force-activates the app or takes key. This is the gate the
-# leyline-menu-bar v1 design *claimed* existed but did not: before this, the
-# build just ran `swiftc` and a regression that called AXUIElement / CGEvent /
-# NSApp.activate(ignoringOtherApps:) compiled and shipped green.
+# Swift binary (Leyline Recovery) makes ZERO Accessibility / event-tap calls.
 #
 # It scans the COMMENT-STRIPPED sources, so prose that merely NAMES a banned
 # symbol (e.g. "// makes zero AXUIElement calls") does not trip the gate — only
 # real code counts. Comment stripping is newline-preserving so reported line
 # numbers match the original file.
 #
-# Usage: leyline-grant-free-check [--never-key] <src.swift> [<src.swift> ...]
-#   --never-key   also ban force-activation + makeKey (for a never-key window).
+# Usage: leyline-grant-free-check <src.swift> [<src.swift> ...]
 # Exit 0 = clean; 1 = a violation was found; 2 = usage error.
 
 set -euo pipefail
 
-never_key=0
 srcs=()
 for a in "$@"; do
   case "$a" in
-    --never-key) never_key=1 ;;
     -*) echo "grant-free-check: unknown flag: $a" >&2; exit 2 ;;
     *) srcs+=("$a") ;;
   esac
@@ -32,8 +25,6 @@ done
 # event-tap/synthesis surface, and the frameworks that vend them. (NSEvent /
 # NSTrackingArea are AppKit-local and grant-free — deliberately NOT banned.)
 ax_pat='AXUIElement|AXObserver|AXIsProcessTrusted|kAX[A-Z]|CGEvent|import[[:space:]]+ApplicationServices|import[[:space:]]+Carbon'
-# Banned additionally in a NEVER-KEY window source: force-activation + taking key.
-key_pat='activate\(ignoringOtherApps|NSApp\.activate|\.makeKey'
 
 # Strip /* block */ (blanked, newlines kept) then // line comments (to EOL),
 # preserving line numbers so a hit's line maps back to the original source.
@@ -49,13 +40,6 @@ for f in "${srcs[@]}"; do
     echo "grant-free VIOLATION (Accessibility / event-tap symbol) in $f:" >&2
     printf '%s\n' "$hits" | sed 's/^/    /' >&2
     rc=1
-  fi
-  if (( never_key )); then
-    if hits="$(printf '%s\n' "$code" | grep -nE "$key_pat" || true)"; [[ -n "$hits" ]]; then
-      echo "never-key VIOLATION (force-activate / makeKey) in $f:" >&2
-      printf '%s\n' "$hits" | sed 's/^/    /' >&2
-      rc=1
-    fi
   fi
 done
 (( rc == 0 )) && echo "grant-free-check: clean (${#srcs[@]} source(s))"

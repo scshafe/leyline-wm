@@ -8,10 +8,9 @@
     <key>CFBundleDisplayName</key>           <string>Leyline Recovery</string>
     <key>CFBundlePackageType</key>           <string>APPL</string>
     <key>CFBundleInfoDictionaryVersion</key> <string>6.0</string>
-    <key>CFBundleShortVersionString</key>    <string>1.0</string>
-    <key>CFBundleVersion</key>               <string>1</string>
     <key>LSMinimumSystemVersion</key>        <string>14.0</string>
-    <!-- NO LSUIElement: this app SHOWS a window and takes focus (the one Leyline GUI where
+    <!-- Builders stamp both bundle versions from the root VERSION file.
+         NO LSUIElement: this app SHOWS a window and takes focus (the one Leyline GUI where
          activating is correct — the recovery moment). NO CFBundleIconFile in v1 (default icon). -->
 </dict>
 </plist>

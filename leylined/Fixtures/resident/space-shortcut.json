@@ -149,15 +149,6 @@
       "trusted": true,
       "normal": true,
       "control": false
-    },
-    {
-      "name": "null-focus-projection-keeps-active-space",
-      "delta": {
-        "focused_space": null
-      },
-      "trusted": true,
-      "normal": true,
-      "control": true
     }
   ],
   "stalled_action_clock": {

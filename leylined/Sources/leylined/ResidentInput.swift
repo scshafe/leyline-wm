@@ -7,17 +7,17 @@ import LeylineModel
 
 struct ResidentInputWatchdogDecision: Equatable, Sendable {
     let shouldRelease: Bool
-    let reason: String?
+    let reason: ResidentInputReleaseReason?
 
     static func evaluate(now: UInt64, callbackStarted: UInt64,
                          runLoopProgress: UInt64, authorityProgress: UInt64,
                          modal: Bool, started: Bool, pendingActionStarted: UInt64 = 0) -> Self {
         let budget = UInt64(ResidentInputConstants.releaseBudgetMilliseconds) * 1_000_000
         func stale(_ timestamp: UInt64) -> Bool { timestamp > 0 && now >= timestamp && now - timestamp >= budget }
-        if stale(callbackStarted) { return Self(shouldRelease: true, reason: "callback_deadline") }
-        if started && stale(runLoopProgress) { return Self(shouldRelease: true, reason: "tap_run_loop_deadline") }
-        if modal && stale(authorityProgress) { return Self(shouldRelease: true, reason: "authority_deadline") }
-        if modal && stale(pendingActionStarted) { return Self(shouldRelease: true, reason: "action_deadline") }
+        if stale(callbackStarted) { return Self(shouldRelease: true, reason: .callbackDeadline) }
+        if started && stale(runLoopProgress) { return Self(shouldRelease: true, reason: .tapRunLoopDeadline) }
+        if modal && stale(authorityProgress) { return Self(shouldRelease: true, reason: .authorityDeadline) }
+        if modal && stale(pendingActionStarted) { return Self(shouldRelease: true, reason: .actionDeadline) }
         return Self(shouldRelease: false, reason: nil)
     }
 }
@@ -76,14 +76,14 @@ final class ResidentInput: @unchecked Sendable {
                      onModeChanged: @escaping @Sendable (String, UInt64, Bool) -> Bool,
                      onFaultRelease: @escaping @Sendable (ResidentInputFaultRelease) -> Void = { _ in }) throws -> ResidentInput {
         let decode = try KeyDecode(fixtureData: Data(contentsOf: URL(
-            fileURLWithPath: home + "/keymap/decode-us.json")))
+            fileURLWithPath: ResidentLayout.keymap("decode-us", home: home))))
         guard decode.droppedRows.isEmpty else {
             throw ResidentInputError(code: "INPUT.DECODE_INVALID", message: "Keyboard decode contains rejected rows")
         }
-        let fsm = try ModeFSM(manifestData: Data(contentsOf: URL(fileURLWithPath: home + "/keymap/modes.json")))
+        let fsm = try ModeFSM(manifestData: Data(contentsOf: URL(fileURLWithPath: ResidentLayout.keymap("modes", home: home))))
         let configuration = try ResidentInputConfiguration(
             decode: decode, fsm: fsm,
-            globalData: Data(contentsOf: URL(fileURLWithPath: home + "/keymap/global.json")),
+            globalData: Data(contentsOf: URL(fileURLWithPath: ResidentLayout.keymap("global", home: home))),
             supportedActionIds: supportedActionIds)
         return ResidentInput(configuration: configuration,
                              dispatchAction: dispatchAction, onModeChanged: onModeChanged, onFaultRelease: onFaultRelease)
@@ -120,7 +120,7 @@ final class ResidentInput: @unchecked Sendable {
         worker.start()
         // This bounds activation, not keyboard delivery. A startup failure leaves
         // no tap and remains visible in health instead of pretending to be on.
-        guard ready.wait(timeout: .now() + .milliseconds(ResidentInputConstants.releaseCeilingMilliseconds)) == .success,
+        guard ready.wait(timeout: .now() + .milliseconds(ResidentInputConstants.tapActivationTimeoutMilliseconds)) == .success,
               tapInstalled.load(ordering: .acquiring) else {
             stop()
             return false
@@ -145,7 +145,7 @@ final class ResidentInput: @unchecked Sendable {
         spaceControlAllowed.store(false, ordering: .releasing)
         routing.setClaimEligibility(management: false, spaceControl: false)
         routing.setAccepting(false)
-        routing.release(reason: "global_stop")
+        routing.release(reason: .globalStop)
         watchdog?.cancel()
         watchdog = nil
         // Port disable is serialized with any re-enable on the independent
@@ -177,13 +177,13 @@ final class ResidentInput: @unchecked Sendable {
     /// Context invalidation releases bare modal keys immediately, while the
     /// mode notification crosses the existing bounded delivery lane afterward.
     /// It does not wait for AppKit, the authoritative executor, or landed AX.
-    func releaseModal(reason: String) {
+    func releaseModal(reason: ResidentInputReleaseReason) {
         routing.release(reason: reason, preserveSpaceControls: spaceControlAllowed.load(ordering: .acquiring))
     }
 
     /// The authoritative world gate must positively allow claims. A running
     /// tap on an incomplete/unknown/OFF world remains a pass-through monitor.
-    func setClaimsAllowed(_ allowed: Bool, spaceControlAllowed controlAllowed: Bool = false, reason: String = "world_unavailable") {
+    func setClaimsAllowed(_ allowed: Bool, spaceControlAllowed controlAllowed: Bool = false, reason: ResidentInputReleaseReason = .worldUnavailable) {
         let previous = claimsAllowed.exchange(allowed, ordering: .acquiringAndReleasing)
         let priorControl = spaceControlAllowed.exchange(controlAllowed, ordering: .acquiringAndReleasing)
         if priorControl && !controlAllowed { routing.invalidateSpaceContext() }
@@ -306,7 +306,7 @@ final class ResidentInput: @unchecked Sendable {
                 "action_id": .string(held.actionId), "chord": .string(held.chord),
                 "input_generation": .int(Int64(clamping: held.generation)),
                 "cg_event_timestamp_ns": .int(Int64(clamping: event.timestamp))], timestamp: now, nonblocking: true)
-            if held.actionId.hasPrefix("resize.adjust."), held.generation == routing.generation {
+            if held.actionId.hasPrefix(ResidentActionIDs.resizeAdjustPrefix), held.generation == routing.generation {
                 _ = routing.admit(chord: held.chord, phase: .keyUp, receiptUptimeNs: now)
             }
             return nil
@@ -363,7 +363,8 @@ final class ResidentInput: @unchecked Sendable {
         // Recovery requires fresh progress from BOTH lanes. Default-mode idle
         // cannot disguise a stuck authority, and no tap teardown loses re-arm.
         if safetyReleased.load(ordering: .acquiring), now >= runProgress, now >= authority,
-           now - runProgress < 100_000_000, now - authority < 100_000_000,
+           now - runProgress < ResidentInputConstants.rearmFreshnessNanoseconds,
+           now - authority < ResidentInputConstants.rearmFreshnessNanoseconds,
            desiredRunning.load(ordering: .acquiring), let tap {
             CGEvent.tapEnable(tap: tap, enable: true)
             routing.setAccepting(claimsAllowed.load(ordering: .acquiring) || spaceControlAllowed.load(ordering: .acquiring))
@@ -377,7 +378,7 @@ final class ResidentInput: @unchecked Sendable {
         guard decision.shouldRelease,
               !safetyReleased.exchange(true, ordering: .acquiringAndReleasing) else { return }
         routing.setAccepting(false)
-        routing.release(reason: decision.reason ?? "watchdog_deadline")
+        routing.release(reason: decision.reason ?? .watchdogDeadline)
         watchdogReleaseCount.wrappingAdd(1, ordering: .relaxed)
         portLock.lock()
         if let tap { CGEvent.tapEnable(tap: tap, enable: false) }

@@ -14,7 +14,6 @@ private final class RecoveryFixtureOperations: @unchecked Sendable {
     func fireTimer() { lock.lock(); let item = timers.isEmpty ? nil : timers.removeFirst(); lock.unlock(); item?.1() }
     func runOne() { lock.lock(); let item = work.isEmpty ? nil : work.removeFirst(); lock.unlock(); item?() }
     var timerCount: Int { lock.lock(); defer { lock.unlock() }; return timers.count }
-    var workCount: Int { lock.lock(); defer { lock.unlock() }; return work.count }
 }
 private final class RecoveryFixtureState: @unchecked Sendable {
     private let lock = NSLock()
@@ -36,33 +35,21 @@ private final class RecoveryFixtureState: @unchecked Sendable {
     }
     func deliver(_ delta: JSONObject) { lock.lock(); deltas.append(delta); lock.unlock() }
 }
-private final class RecoveryFixtureObserver: AccessibilityFocusObserving, @unchecked Sendable {
-    var onEvent: ((AccessibilityFocusEvent) -> Void)?
-    var onHealthChanged: ((AccessibilityObserverHealth) -> Void)?
-    var attached = 0
-    func attach(to pid: pid_t, generation: UInt64) -> AccessibilityObserverHealth {
-        attached += 1
-        return .init(ready: true, pid: pid, generation: generation, windowNotificationsReady: true, degradedReason: nil)
-    }
-    func detach(generation: UInt64) {}
-}
-
 /// Actual feed + actual recovery coordinator; fake scheduling/AX capture supplies deterministic faults.
 func runProjectionTransientRecoveryScenarios(test: inout SelfTest) {
-    let path = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-        .deletingLastPathComponent().appendingPathComponent("Fixtures/feed/transient-recovery.json")
+    let path = SelfTestFixtures.url("feed/transient-recovery.json")
     guard let data = try? Data(contentsOf: path), let fixture = try? JSONValue.parse(data),
           let codes = fixture.at(path: "transient_codes")?.arrayValue?.compactMap(\.stringValue) else {
         test.check(false, "transient-recovery/fixture-load"); return
     }
     test.check(fixture.at(path: "scenarios")?.arrayValue?.count == 8 && codes.count == 5
         && codes.allSatisfy(ProjectionTransientRecovery.isTransient)
-        && !ProjectionTransientRecovery.isTransient(fixture.at(path: "nontransient_code")!.stringValue!)
+        && !ProjectionTransientRecovery.isTransient(fixture.requiredString("nontransient_code"))
         && fixture.at(path: "delay_milliseconds")?.intValue == Int64(ProjectionTransientRecovery.delayMilliseconds),
         "transient-recovery/nonempty-eight-scenario-fixture-with-explicit-cannotComplete-and-one-hundred-ms-budget")
-    let operations = RecoveryFixtureOperations(), state = RecoveryFixtureState(), observer = RecoveryFixtureObserver()
+    let operations = RecoveryFixtureOperations(), state = RecoveryFixtureState(), observer = FakeAccessibilityObserver()
     let recovery = ProjectionTransientRecovery(execute: { operations.enqueue($0) }, schedule: { operations.schedule($0, $1) })
-    let feed = ProjectionInputFeed(observer: observer, captureTargeted: { state.capture($0) }, executeOnMain: { operations.enqueue($0) },
+    let feed = ProjectionInputFeed(observer: observer, captureTargeted: { state.capture($0) }, executeOnObservationLane: { operations.enqueue($0) },
         transientRecovery: recovery, recoverySessionGeneration: { state.sessionGeneration }, recoveryObservationEpoch: { state.observationEpoch },
         deliver: { state.deliver($0) })
     let app = ProjectionApplication(pid: 12157, name: "Fixture")
@@ -72,7 +59,7 @@ func runProjectionTransientRecoveryScenarios(test: inout SelfTest) {
         && state.latest?["focus"] == .null, "transient-recovery/duplicate-world-and-focus-faults-coalesce-and-stay-unavailable")
     state.isFailing = false
     operations.fireTimer(); operations.runOne()
-    test.check(observer.attached == 2 && state.latest?["event"] == .string("explicit_recovery")
+    test.check(observer.attaches.count == 2 && state.latest?["event"] == .string("explicit_recovery")
         && state.latest?["observation"]?.at(path: "world_recovered")?.boolValue == true
         && state.latest?["transient_recovery_first_failure"]?.stringValue == codes[2]
         && recovery.snapshot.at(path: "attempt_count")?.intValue == 1,
@@ -118,17 +105,16 @@ func runProjectionTransientRecoveryScenarios(test: inout SelfTest) {
 
 /// Boundary scenarios verify the whole-message reserve independently of AX IO.
 func runProjectionAXReadBudgetScenarios(test: inout SelfTest) {
-    let path = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-        .deletingLastPathComponent().appendingPathComponent("Fixtures/feed/ax-read-budget.json")
+    let path = SelfTestFixtures.url("feed/ax-read-budget.json")
     guard let data = try? Data(contentsOf: path), let fixture = try? JSONValue.parse(data),
           let scenarios = fixture.at(path: "scenarios")?.arrayValue, scenarios.count == 5 else {
         test.check(false, "ax-read-budget/nonempty-fixture-load"); return
     }
     for row in scenarios {
-        let started = UInt64(row.at(path: "started")!.intValue!), now = UInt64(row.at(path: "now")!.intValue!)
+        let started = row.requiredUInt64("started"), now = row.requiredUInt64("now")
         let allowed = projectionAXReadBudgetAllowsCall(started: started, now: now)
         test.check(allowed == row.at(path: "allowed")!.boolValue!
             && (!allowed || now - started + TargetedProjectionSnapshot.axMessageBudgetNs <= TargetedProjectionSnapshot.axTotalReadBudgetNs),
-            "ax-read-budget/" + row.at(path: "name")!.stringValue!)
+            "ax-read-budget/" + row.requiredString("name"))
     }
 }

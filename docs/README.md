@@ -1,18 +1,18 @@
 # Leyline documentation
 
-Leyline 1.0.0 manages tiled windows, borders, move previews and per-Space controls
+Leyline 1.0.1 manages tiled windows, borders, move previews and per-Space controls
 in one native macOS resident.
 
 | Guide | Contents |
 |---|---|
 | [Installation](installation.md) | Package installation, permissions, update and removal |
 | [Usage and shortcuts](usage.md) | Focus, move, resize, Space toggle and recovery |
-| [Configuration](configuration.md) | Border width, colors, settings and paths |
+| [Configuration](configuration.md) | Border colors, settings and paths |
 | [Troubleshooting](troubleshooting.md) | Readiness, permissions, constraints and recovery |
 | [Privacy](privacy.md) | Local data, permissions and safe diagnostics |
 | [Development](development.md) | Source map, builds, tests and contribution checks |
 | [Release preparation](releasing.md) | Versioning, clean exports and distribution checks |
-| [Version 1.0.0](release-notes.md) | Official feature baseline and limitations |
+| [Release notes](release-notes.md) | 1.0.1 changes, the 1.0.0 baseline and limitations |
 
 Implementation contracts describe invariants rather than installation steps:
 

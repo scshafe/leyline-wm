@@ -1,15 +1,20 @@
 import Foundation
 import LeylineModel
 
+/// The lifecycle verbs the socket admits; the hello advertises exactly these.
+enum ResidentControlAction: String, CaseIterable, Sendable {
+    case start, stop, restart, reset
+}
+
 struct ResidentControlIntent: Sendable {
     let requestID: String
-    let action: String
+    let action: ResidentControlAction
     let hard: Bool
     let resume: Bool?
     let expectedRevision: UInt64?
     var admissionSequence: UInt64 = 0
     var fingerprint: JSONValue {
-        .object(["action": .string(action), "hard": .bool(hard), "resume": resume.map(JSONValue.bool) ?? .null,
+        .object(["action": .string(action.rawValue), "hard": .bool(hard), "resume": resume.map(JSONValue.bool) ?? .null,
             "expected_revision": expectedRevision.map { .int(Int64(clamping: $0)) } ?? .null])
     }
 }
@@ -38,15 +43,15 @@ final class ResidentControlRequests: @unchecked Sendable {
         func refused(_ reason: String) -> (ResidentControlIntent?, JSONValue) {
             (nil, Self.result(id: id, status: .refused, revision: revision, reason: reason))
         }
-        guard !id.isEmpty, id.utf8.count <= 256 else { return refused("control_request_id_invalid") }
-        guard let action = request["action_id"]?.stringValue, ["start", "stop", "restart", "reset"].contains(action),
+        guard !id.isEmpty, id.utf8.count <= ResidentProtocolLimits.identifierBytes else { return refused("control_request_id_invalid") }
+        guard let action = request["action_id"]?.stringValue.flatMap(ResidentControlAction.init(rawValue:)),
               let args = (request["args"] ?? .object([:])).objectValue,
               Set(args.keys).isSubset(of: ["mode", "resume"]),
               args["resume"] == nil || args["resume"]?.boolValue != nil else { return refused("control_arguments_invalid") }
         guard args["mode"] == nil || args["mode"]?.stringValue != nil else { return refused("control_reset_mode_invalid") }
         let mode = args["mode"]?.stringValue ?? "soft"
-        guard ["soft", "hard"].contains(mode), action == "reset" || args["mode"] == nil,
-              action == "reset" || action == "restart" || args["resume"] == nil else { return refused("control_reset_mode_invalid") }
+        guard ["soft", "hard"].contains(mode), action == .reset || args["mode"] == nil,
+              action == .reset || action == .restart || args["resume"] == nil else { return refused("control_reset_mode_invalid") }
         let expected: Int64?
         switch request["expected_revision"] {
         case nil: expected = nil
@@ -72,13 +77,13 @@ final class ResidentControlRequests: @unchecked Sendable {
             return (nil, value)
         }
         if let expected = intent.expectedRevision, expected != revision { return rememberRefusal("expected_revision_mismatch") }
-        guard action == "stop" || !records.values.contains(where: { $0.result.at(path: "phase")?.stringValue == "queued" }) else {
+        guard action == .stop || !records.values.contains(where: { $0.result.at(path: "phase")?.stringValue == "queued" }) else {
             return rememberRefusal("resident_control_busy")
         }
         guard admissionSequence < UInt64(Int64.max) else { return rememberRefusal("resident_control_epoch_exhausted") }
         admissionSequence += 1
         intent.admissionSequence = admissionSequence
-        let queued: JSONValue = .object(["ok": .bool(true), "status": .string("accepted"), "phase": .string("queued"),
+        let queued: JSONValue = .object(["ok": .bool(true), "status": .string(WmStatus.accepted.rawValue), "phase": .string("queued"),
             "completed": .bool(false), "request_id": .string(id), "revision": .int(Int64(clamping: revision)),
             "control_admission_sequence": .int(Int64(intent.admissionSequence))])
         records[id] = Record(intent: intent, result: queued); order.append(id)
@@ -86,7 +91,7 @@ final class ResidentControlRequests: @unchecked Sendable {
     }
 
     func result(requestID: String, revision: UInt64) -> JSONValue {
-        guard !requestID.isEmpty, requestID.utf8.count <= 256 else {
+        guard !requestID.isEmpty, requestID.utf8.count <= ResidentProtocolLimits.identifierBytes else {
             return Self.result(id: requestID, status: .refused, revision: revision, reason: "control_request_id_invalid")
         }
         lock.lock(); defer { lock.unlock() }

@@ -17,9 +17,6 @@ final class AccessibilityWorldObserver: ProjectionWorldObserving, @unchecked Sen
     private var generation: UInt64 = 0
     var onEvent: (@Sendable (AccessibilityFocusEvent) -> Void)?
 
-    convenience init(trusted: Bool) {
-        self.init(trustedProvider: { trusted && AXIsProcessTrusted() })
-    }
     init(trustedProvider: @escaping @Sendable () -> Bool) { self.trustedProvider = trustedProvider }
 
     /// A complete inventory is observed before it becomes authoritative. Any

@@ -2,17 +2,6 @@ import Foundation
 import CryptoKit
 import LeylineModel
 
-func responsivenessRepositoryRoot() -> String {
-    let environment = ProcessInfo.processInfo.environment
-    let optionalCandidates: [String?] = [environment["LEYLINE_HOME"], environment["LEYLINE_ROOT"],
-        FileManager.default.currentDirectoryPath,
-        URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-            .deletingLastPathComponent().deletingLastPathComponent().path]
-    let candidates: [String] = optionalCandidates.compactMap { $0 }
-    return candidates.first { FileManager.default.fileExists(atPath: $0 + "/leylined/Fixtures/responsiveness/inventory.json") }
-        ?? candidates.last!
-}
-
 /// @canonical responsiveness_inventory_validation -- source discovery and frozen path coverage fail closed.
 func validateResponsivenessInventory(_ inventory: JSONValue, root: String) -> [String] {
     var errors: [String] = []
@@ -41,7 +30,7 @@ func validateResponsivenessInventory(_ inventory: JSONValue, root: String) -> [S
     if inventory.at(path: "source_inventory_counts.native_actions")?.intValue != Int64(nativeIDs.count) {
         errors.append("source_count_mismatch_native_actions")
     }
-    let requiredCapabilities: Set<String> = ["windows_selection", "gutter_configuration", "gutter_reapply",
+    let requiredCapabilities: Set<String> = ["windows_selection", "status_icon", "fixed_border_spacing",
         "exact_move_preview", "move_confirmation_identity", "settled_clamp_learning", "native_performance_trace"]
     let capabilityRows = rows.filter { $0.at(path: "id")?.stringValue?.hasPrefix("capability:") == true }
     let capabilityIDs = Set(capabilityRows.compactMap { $0.at(path: "id")?.stringValue }.map { String($0.dropFirst(11)) })
@@ -122,7 +111,7 @@ func validateResponsivenessInventory(_ inventory: JSONValue, root: String) -> [S
     // Hash the model's insertion-ordered canonical wire bytes, including string escapes.
     let frozenHashes = ["budgets": "53e97a6a45449ccbd633227e0941f0218a69a6a6195c640520f4685f1da8cf2e",
         "timers": "4d6b198c7a567c0842c1165f10f10a8e720f49014a7b72311f94d098ba16cd9c",
-        "scenes": "7746a49c766aaf0cbc1e86caa60fe531a533230c233186697221ae8bf3eebfa2"]
+        "scenes": "4c4278947a177e813cede66e0275133d6f32dc62a95f7c6969a852cac84b21fd"]
     for (key, expected) in frozenHashes {
         let canonical = (inventory.at(path: key) ?? .null).canonical()
         let hash = SHA256.hash(data: Data(canonical.utf8)).map { String(format: "%02x", $0) }.joined()
@@ -133,16 +122,16 @@ func validateResponsivenessInventory(_ inventory: JSONValue, root: String) -> [S
 
 func runResponsivenessSelfTest(_ args: [String]) -> Int32 {
     guard args.isEmpty || args == ["--list-scenarios"] else { return 64 }
-    let root = responsivenessRepositoryRoot()
-    guard let data = FileManager.default.contents(atPath: root + "/leylined/Fixtures/responsiveness/inventory.json"),
+    let root = SelfTestFixtures.repositoryRoot()
+    var tests = SelfTest()
+    guard let data = FileManager.default.contents(atPath: SelfTestFixtures.path("responsiveness/inventory.json", root: root)),
           let inventory = try? JSONValue.parse(data) else {
-        print("not ok responsiveness/inventory-missing"); return 1
+        tests.check(false, "responsiveness/inventory-missing"); return tests.finish("responsiveness")
     }
     if args == ["--list-scenarios"] {
         print(inventory.canonical())
         return validateResponsivenessInventory(inventory, root: root).isEmpty ? 0 : 1
     }
-    var tests = SelfTest()
     let valid = validateResponsivenessInventory(inventory, root: root)
     tests.check(valid.isEmpty, "responsiveness/source-bound-full-inventory")
     for error in valid { print("    " + error) }

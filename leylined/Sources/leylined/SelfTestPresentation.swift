@@ -1,40 +1,12 @@
 import Foundation
 import LeylineModel
 
-private final class PresentationTestQueue: @unchecked Sendable {
-    private let lock = NSLock()
-    private var work: [@Sendable () -> Void] = []
-    private(set) var snapshots: [CoreCommittedSnapshot] = []
-    func enqueue(_ operation: @escaping @Sendable () -> Void) {
-        lock.lock(); work.append(operation); lock.unlock()
-    }
-    func record(_ snapshot: CoreCommittedSnapshot) {
-        lock.lock(); snapshots.append(snapshot); lock.unlock()
-    }
-    var count: Int {
-        lock.lock(); defer { lock.unlock() }; return work.count
-    }
-    func drain() {
-        while true {
-            lock.lock()
-            guard !work.isEmpty else { lock.unlock(); return }
-            let operation = work.removeFirst()
-            lock.unlock()
-            operation()
-        }
-    }
-}
-
 /// Exercises the real server publication and mailbox with rendering withheld.
 /// It verifies committed/submitted semantics, never physical-frame timing.
 func runPresentationSelfTest() -> Int32 {
-    var failures: [String] = []
-    func check(_ name: String, _ passed: Bool) {
-        if !passed { failures.append(name) }
-    }
-    let path = URL(fileURLWithPath: #filePath)
-        .deletingLastPathComponent().deletingLastPathComponent()
-        .deletingLastPathComponent().appendingPathComponent("Fixtures/projection/authority.json")
+    var test = SelfTest()
+    func check(_ name: String, _ passed: Bool) { test.check(passed, name) }
+    let path = SelfTestFixtures.url("projection/authority.json")
     do {
         let fixture = try JSONValue.parse(Data(contentsOf: path))
         guard let base = fixture.at(path: "world")?.objectValue,
@@ -54,9 +26,9 @@ func runPresentationSelfTest() -> Int32 {
                   expected.map { plan.rings.count == 1 && plan.rings[0].role.rawValue == $0 }
                     ?? plan.rings.isEmpty)
         }
-        let queue = PresentationTestQueue()
-        let mailbox = CorePresentationMailbox(execute: { queue.enqueue($0) }, present: { queue.record($0) })
-        let server = CoreServer(socketPath: "/tmp/leyline-tests-\(getpid())/leylined-presentation-unused-\(getpid()).sock")
+        let queue = ManualPresenter()
+        let mailbox = CorePresentationMailbox(execute: { queue.enqueue($0) }, present: { queue.present($0) })
+        let server = CoreServer(socketPath: selfTestSocketPath("leylined-presentation-unused"))
         server.setCommittedSnapshotHandler { mailbox.submit($0) }
         var seed = base
         seed["event"] = .string("world_seed")
@@ -65,10 +37,10 @@ func runPresentationSelfTest() -> Int32 {
             _ = server.applyWorldDelta(["event": .string("fixture_update"), "sequence": .int(Int64(i))])
         }
         check("blocked renderer cannot stop 200 authoritative commits", server.currentRevision == 200)
-        check("blocked renderer leaves factual health unacknowledged", server.committedSnapshot.revision == 200 && queue.snapshots.isEmpty)
-        check("publication backlog bounded to one scheduled and one pending", queue.count == 1 && mailbox.health["pending_snapshots"] == .int(1))
+        check("blocked renderer leaves factual health unacknowledged", server.committedSnapshot.revision == 200 && queue.presented.isEmpty)
+        check("publication backlog bounded to one scheduled and one pending", queue.pending == 1 && mailbox.health["pending_snapshots"] == .int(1))
         queue.drain()
-        check("superseded visuals render only the latest immutable revision", queue.snapshots.count == 1 && queue.snapshots[0].revision == 200 && queue.snapshots[0].world.at(path: "sequence") == .int(200))
+        check("superseded visuals render only the latest immutable revision", queue.presented.count == 1 && queue.presented[0].revision == 200 && queue.presented[0].world.at(path: "sequence") == .int(200))
         let mode = ModeFrame(type: .snapshot, epoch: "presentation-fixture", sequence: 0, mode: "resize")
         _ = server.applyModeFrame(mode)
         let origin = server.committedSnapshot
@@ -78,10 +50,6 @@ func runPresentationSelfTest() -> Int32 {
         _ = server.applyWorldDelta(["focus": .object(changedFocus), "event": .string("focus_changed")])
         check("new focus invalidates the old mode context", server.committedSnapshot.world.at(path: "mode") == .string("default") && server.committedSnapshot.borderPlan.rings.first?.role == .focus)
         queue.drain()
-        let last = queue.snapshots.last!
-        mailbox.replayLatest()
-        queue.drain()
-        check("remount replays current snapshot and same revision", queue.snapshots.last == last)
         check("physical visibility is never inferred from submission", mailbox.health["visible_frame_evidence"] == .null)
         var source = base["focus"]!.objectValue!
         source["window_id"] = .int(101)
@@ -101,9 +69,7 @@ func runPresentationSelfTest() -> Int32 {
         _ = server.applyWorldDelta(["event": .string("ax_window_destroyed"), "windows": .array([.object(source), .object(destination)])])
         check("real move-origin loss still clears mode authority", server.worldState.at(path: "mode") == .string("default"))
     } catch {
-        failures.append("fixture: \(error)")
+        check("fixture: \(error)", false)
     }
-    for failure in failures { FileHandle.standardError.write(Data("self-test presentation FAIL: \(failure)\n".utf8)) }
-    print("self-test presentation: \(failures.isEmpty ? "ok" : "failed")")
-    return failures.isEmpty ? 0 : 1
+    return test.finish("presentation")
 }

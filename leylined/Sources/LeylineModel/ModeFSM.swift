@@ -15,8 +15,7 @@ public enum ExitPredicate: String, CaseIterable, Sendable {
     case unconditionalExit = "unconditional_exit"
     case noExit = "no_exit"
 
-    /// The evaluator, semantics verbatim from parcel/mode-fsm-tests.sh
-    /// `evaluate` (predicate × rc → exit?).
+    /// The evaluator (predicate × rc → exit?).
     public func exits(rc: Int) -> Bool {
         switch self {
         case .exitOnRc0: return rc == 0
@@ -107,8 +106,7 @@ public struct ModeFSM: Sendable {
     }
 
     #if LEYLINE_BUILD_TESTS
-    /// The frozen-oracle row set for one mode, keyed exactly as
-    /// mode-fsm-tests.sh `frozen_predicate` keys it: (chord, is_enter) →
+    /// The frozen-oracle row set for one mode, keyed (chord, is_enter) →
     /// "predicate:<name>" | "transition:default".
     public func frozenRows(mode id: String) -> [String: String]? {
         guard let mode = modes[id] else { return nil }

@@ -6,6 +6,12 @@ import LeylineModel
 
 /// @canonical framed_json_socket -- do not reimplement this framing or Unix
 /// socket address construction elsewhere in the leylined executable target.
+/// Wire limits the command client and every resident-side admitter agree on.
+enum ResidentProtocolLimits {
+    /// Longest action or request identifier, in UTF-8 bytes.
+    static let identifierBytes = 256
+}
+
 enum FramedJSONSocket {
     static let maximumPayloadBytes = 4 * 1024 * 1024
 
@@ -21,6 +27,16 @@ enum FramedJSONSocket {
                   setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, length) == 0 else { close(fd); return nil }
         }
 
+        guard let connected = withSocketAddress(path: path, { Darwin.connect(fd, $0, $1) }), connected == 0 else {
+            close(fd)
+            return nil
+        }
+        return fd
+    }
+
+    /// Run `body` with the Unix socket address for `path`; nil when the path does
+    /// not fit `sun_path` (~104 bytes), which callers treat as a refused socket.
+    static func withSocketAddress(path: String, _ body: (UnsafePointer<sockaddr>, socklen_t) -> Int32) -> Int32? {
         var address = sockaddr_un()
         address.sun_family = sa_family_t(AF_UNIX)
         let capacity = MemoryLayout.size(ofValue: address.sun_path)
@@ -33,20 +49,10 @@ enum FramedJSONSocket {
                 }
             }
         }
-        guard fits else {
-            close(fd)
-            return nil
+        guard fits else { return nil }
+        return withUnsafePointer(to: &address) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { body($0, socklen_t(MemoryLayout<sockaddr_un>.size)) }
         }
-        let connected = withUnsafePointer(to: &address) {
-            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
-                Darwin.connect(fd, $0, socklen_t(MemoryLayout<sockaddr_un>.size))
-            }
-        }
-        guard connected == 0 else {
-            close(fd)
-            return nil
-        }
-        return fd
     }
 
     static func encode(_ value: JSONValue) -> Data {

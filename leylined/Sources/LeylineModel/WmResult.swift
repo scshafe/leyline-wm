@@ -5,6 +5,9 @@ public enum WmStatus: String, Codable, Sendable {
     case noop
     case refused
     case failed
+
+    /// The request succeeded: it changed state or correctly had nothing to change.
+    public var isOK: Bool { self == .accepted || self == .noop }
 }
 
 public struct WmResult: Codable, Sendable {

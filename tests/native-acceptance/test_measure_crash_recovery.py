@@ -11,6 +11,8 @@ import threading
 import time
 import unittest
 
+import acceptance_scenarios as frozen
+
 spec = importlib.util.spec_from_file_location("crash_measurement", Path(__file__).with_name("measure-crash-recovery.py"))
 measurement = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(measurement)
@@ -54,6 +56,18 @@ class CrashMeasurementTests(unittest.TestCase):
     def test_nearest_rank_statistics_keep_absolute_endpoints(self):
         self.assertEqual(measurement.distribution(list(range(1, 21))),
                          {"p50_ms": 10, "p95_ms": 19, "p99_ms": 20, "max_ms": 20})
+
+    def test_measurer_ceilings_match_frozen_scenarios(self):
+        scenarios = frozen.load_frozen_scenarios()
+        budgets = {row["id"]: row for row in scenarios["budgets"]}
+        self.assertEqual(measurement.ceilings(scenarios), {
+            "serving_p95_ms": budgets["crash_serving"]["p95_ms"], "convergence_p95_ms": budgets["serving_converged"]["p95_ms"],
+            "minimum_trials": 20, "window_counts": [1, 6, 12, 20]})
+        # The ceilings the measurer enforced before it read them from the frozen file.
+        self.assertEqual((budgets["crash_serving"]["p95_ms"], budgets["serving_converged"]["p95_ms"]), (3000, 2000))
+        relaxed = copy.deepcopy(scenarios); relaxed["budgets"][0]["p95_ms"] += 1
+        self.assertEqual(frozen.scenario_digest(scenarios), frozen.SCENARIOS_SHA256)
+        self.assertNotEqual(frozen.scenario_digest(relaxed), frozen.SCENARIOS_SHA256)
 
     def test_rpc_dribbling_cannot_extend_one_total_deadline(self):
         with tempfile.TemporaryDirectory(prefix="crpc-") as directory:

@@ -247,7 +247,9 @@ final class FixtureApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         show.target = self; fixtureMenu.addItem(show)
         let add = NSMenuItem(title: "New fixture window", action: #selector(addWindow), keyEquivalent: "")
         add.target = self; fixtureMenu.addItem(add)
-        for (index, title) in ["1 window", "6 windows", "12 windows", "20 windows", "Lifecycle 100", "Capture", "Stop"].enumerated() {
+        // Menu items and panel buttons share one tag space: control(_:)/menuControl(_:) switch on the index.
+        let controlTitles = ["1 window", "6 windows", "12 windows", "20 windows", "Lifecycle 100", "Capture", "Stop"]
+        for (index, title) in controlTitles.enumerated() {
             let action = NSMenuItem(title: title, action: #selector(menuControl(_:)), keyEquivalent: "")
             action.target = self; action.tag = index; fixtureMenu.addItem(action)
         }
@@ -258,8 +260,7 @@ final class FixtureApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
         panel.isFloatingPanel = true; panel.hidesOnDeactivate = false; panel.becomesKeyOnlyIfNeeded = false
         panel.setAccessibilityTitle("Acceptance fixture controls")
         let root = NSView(frame: NSRect(x: 0, y: 0, width: 620, height: 150)); panel.contentView = root
-        let labels = ["1 window", "6 windows", "12 windows", "20 windows", "Lifecycle 100", "Capture", "Stop"]
-        for (index, title) in labels.enumerated() {
+        for (index, title) in controlTitles.enumerated() {
             let button = NSButton(title: title, target: self, action: #selector(control(_:)))
             button.setAccessibilityLabel(title)
             button.tag = index; button.frame = NSRect(x: 10 + (index % 4) * 150, y: 100 - (index / 4) * 40, width: 145, height: 32)

@@ -1,8 +1,0 @@
-{ "fn": "line_at",
-  "note": "mouse-line-drag M0: a point on a segment's span but far from any perpendicular crossing hits ONE segment.",
-  "arr": { "segments": [ { "axis": "h", "coord": 540, "lo": 0, "hi": 1920 },
-                         { "axis": "v", "coord": 960, "lo": 0, "hi": 1080 } ],
-           "bindings": {} },
-  "x": 963, "y": 200, "tol": 12,
-  "expect": { "kind": "segment",
-              "hits": [ { "axis": "v", "coord": 960, "lo": 0, "hi": 1080 } ] } }

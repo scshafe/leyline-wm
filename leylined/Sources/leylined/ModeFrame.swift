@@ -19,21 +19,6 @@ struct ModeFrame: Equatable, Sendable {
         self.type = type; self.epoch = epoch; self.sequence = sequence; self.mode = mode
         self.resetsInteraction = resetsInteraction; self.inputGeneration = inputGeneration
     }
-
-    static func parse(_ data: Data) -> ModeFrame? {
-        guard let object = (try? JSONValue.parse(data))?.objectValue,
-              object["ok"]?.boolValue == true,
-              let rawType = object["type"]?.stringValue,
-              let type = ModeFrameType(rawValue: rawType),
-              let epoch = object["epoch"]?.stringValue, !epoch.isEmpty,
-              let sequence = object["sequence"]?.intValue, sequence >= 0,
-              let mode = object["mode"]?.stringValue, !mode.isEmpty,
-              object["resets_interaction"] == nil || object["resets_interaction"]?.boolValue != nil else {
-            return nil
-        }
-        return ModeFrame(type: type, epoch: epoch, sequence: sequence, mode: mode,
-            resetsInteraction: object["resets_interaction"]?.boolValue ?? false)
-    }
 }
 
 /// Pure epoch/sequence admission. A new authority epoch is established only

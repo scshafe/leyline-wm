@@ -897,6 +897,15 @@
       "window_id": 3,
       "path": "window_generation",
       "value": 3
+    },
+    {
+      "name": "affected_unobserved",
+      "window_id": 3,
+      "path": "window_id",
+      "value": 99,
+      "expected_roles": [
+        "moved"
+      ]
     }
   ]
 }

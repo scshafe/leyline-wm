@@ -1,5 +1,4 @@
-// The canonical Accessibility focus observer. Both `observe --follow` and
-// the resident core use this exact implementation: app-level focus changes
+// The canonical Accessibility focus observer of the resident core. App-level focus changes
 // rebind the focused-window moved/resized notifications, while an app/Space
 // lifecycle rebind replaces the whole observer generation. Registration
 // failures are typed degradations at the macOS Accessibility boundary; they
@@ -57,6 +56,21 @@ enum AccessibilityFocusEventKind: String, Sendable {
     case focusedWindowRestored = "ax_window_restored"
     case windowCreated = "ax_window_created"
     case worldObserverDegraded = "ax_world_observer_degraded"
+}
+
+extension AccessibilityFocusEventKind {
+    /// A window-lifecycle notification: created, destroyed, minimized or restored.
+    var isWindowLifecycle: Bool {
+        switch self {
+        case .windowCreated, .focusedWindowDestroyed, .focusedWindowMinimized, .focusedWindowRestored: return true
+        case .focusedWindowChanged, .focusedWindowMoved, .focusedWindowResized, .worldObserverDegraded: return false
+        }
+    }
+
+    /// Whether a published world event name is a window-lifecycle notification.
+    static func isWindowLifecycle(_ event: String) -> Bool {
+        Self(rawValue: event)?.isWindowLifecycle == true
+    }
 }
 
 struct AccessibilityFocusEvent: @unchecked Sendable {
@@ -211,19 +225,17 @@ final class AccessibilityFocusObserver: AccessibilityFocusObserving, @unchecked 
     private var retiredRegistrations: [AccessibilityNotificationRegistration] = []
     private static let maximumRetiredRegistrations = 256
 
-    convenience init(trusted: Bool) {
-        self.init(trustedProvider: { trusted && AXIsProcessTrusted() })
-    }
-
     init(trustedProvider: @escaping @Sendable () -> Bool) {
         self.trustedProvider = trustedProvider
     }
 
+    #if LEYLINE_BUILD_TESTS
     var isObservationRunLoopIndependentOfMain: Bool {
         observationRunLoop.perform {
             !Thread.isMainThread && CFRunLoopGetCurrent() != CFRunLoopGetMain()
         }
     }
+    #endif
 
     @discardableResult
     func attach(to pid: pid_t, generation: UInt64) -> AccessibilityObserverHealth {
@@ -285,7 +297,7 @@ final class AccessibilityFocusObserver: AccessibilityFocusObserving, @unchecked 
         guard createError == .success, let created else {
             return .degraded(
                 pid: pid, generation: generation,
-                reason: "ax_observer_create_failed:\(createError.rawValue)")
+                reason: "ax_observer_create_failed:\(createError.rawValue):pid=\(pid)")
         }
 
         let application = AXUIElementCreateApplication(pid)

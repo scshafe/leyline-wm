@@ -15,7 +15,6 @@ jobs:
           git config user.name "Leyline Contributors"
           git config user.email "contributors@leyline.invalid"
       - run: brew install jq
-      - run: scripts/development/setup-oracle-jq.sh
       - run: bin/leylined-build --tests
       - run: bin/leyline-recovery-app-build --tests
       - run: bin/ley test all

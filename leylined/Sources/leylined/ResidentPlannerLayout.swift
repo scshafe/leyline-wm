@@ -2,8 +2,6 @@ import Foundation
 import LeylineModel
 
 extension ResidentPlanner {
-    static func navRect(_ frame: Frame) -> NavRect { NavRect(x: frame.x, y: frame.y, w: frame.w, h: frame.h) }
-    static func key(_ cell: Arrangement.Comp) -> String { "\(cell.displayId ?? 0):\(cell.i0):\(cell.j0)" }
 
     static func boundary(frame: Frame, displayID: Int64, ownerPath: [String], edge: String) -> JSONValue {
         let vertical = edge == "east" || edge == "west"
@@ -23,10 +21,10 @@ extension ResidentPlanner {
 
     static func collinear(_ a: Frame, _ b: Frame, edge: String) -> Bool {
         switch edge {
-        case "west": return abs(a.x - b.x) <= 4
-        case "east": return abs(a.maxX - b.maxX) <= 4
-        case "north": return abs(a.y - b.y) <= 4
-        default: return abs(a.maxY - b.maxY) <= 4
+        case "west": return abs(a.x - b.x) <= Arrangement.coordinateTolerance
+        case "east": return abs(a.maxX - b.maxX) <= Arrangement.coordinateTolerance
+        case "north": return abs(a.y - b.y) <= Arrangement.coordinateTolerance
+        default: return abs(a.maxY - b.maxY) <= Arrangement.coordinateTolerance
         }
     }
 
@@ -42,7 +40,7 @@ extension ResidentPlanner {
         var components: [[Arrangement.AllocatedCell]] = []
         for cell in candidates {
             if let previous = components.last?.last,
-               abs((vertical ? previous.frame.maxY : previous.frame.maxX) - (vertical ? cell.frame.y : cell.frame.x)) <= 4 {
+               abs((vertical ? previous.frame.maxY : previous.frame.maxX) - (vertical ? cell.frame.y : cell.frame.x)) <= Arrangement.coordinateTolerance {
                 components[components.count - 1].append(cell)
             } else { components.append([cell]) }
         }
@@ -62,11 +60,13 @@ extension ResidentPlanner {
             result["boundary"] = boundary(frame: frame, displayID: cursor.displayID, ownerPath: cursor.ownerPath, edge: edge)
             return .object(result)
         }
+        // The display root is the last owning parent; an empty path selects it.
         let currentPath = (selected.at(path: "parcel_path")?.arrayValue ?? []).compactMap(\.stringValue)
-        let targetPath = selected.at(path: "scope")?.stringValue == "parent" ? Array(currentPath.dropLast()) : currentPath
-        guard !targetPath.isEmpty else { return nil }
+        let atParent = selected.at(path: "scope")?.stringValue == "parent"
+        guard !(atParent && currentPath.isEmpty) else { return nil }
+        let targetPath = atParent ? Array(currentPath.dropLast()) : currentPath
         let descendants = cells.filter { $0.displayID == cursor.displayID && $0.ownerPath.starts(with: targetPath) }
-        guard let frame = ownerCanvas(arrangement: arrangement, topology: topology, displayID: cursor.displayID, path: targetPath) else { return nil }
+        guard let frame = Arrangement.ownerCanvas(arrangement, topo: topology, displayID: cursor.displayID, path: targetPath) else { return nil }
         let vertical = edge == "east" || edge == "west"
         let ordered = descendants.sorted { a, b in
             let ap = vertical ? a.frame.y : a.frame.x, bp = vertical ? b.frame.y : b.frame.x
@@ -89,7 +89,7 @@ extension ResidentPlanner {
               let cursorID = selected.at(path: "cursor_window_id")?.intValue else { return nil }
         let ids = (selected.at(path: "ordered_window_ids")?.arrayValue ?? []).compactMap(\.intValue).filter { $0 != sourceID }
         let cells = Arrangement.allocatedCells(arrangement, topo: topology)
-        let participants = ids.compactMap { id in cells.first(where: { $0.topWindowID == id }) }
+        let participants = ids.compactMap { id in cells.topped(by: id) }
         guard !participants.isEmpty, participants.count == ids.count,
               let first = participants.first, participants.allSatisfy({ $0.displayID == first.displayID }) else { return nil }
         var result = selected.objectValue ?? [:]
@@ -112,16 +112,11 @@ extension ResidentPlanner {
         for participant in participants.dropFirst() {
             while !participant.ownerPath.starts(with: path) { guard !path.isEmpty else { return nil }; path.removeLast() }
         }
-        guard !path.isEmpty,
-              let frame = ownerCanvas(arrangement: arrangement, topology: topology, displayID: first.displayID, path: path),
+        guard let frame = Arrangement.ownerCanvas(arrangement, topo: topology, displayID: first.displayID, path: path),
               Set(cells.filter { $0.displayID == first.displayID && $0.ownerPath.starts(with: path) }.compactMap(\.topWindowID)) == Set(ids) else { return nil }
         result["parcel_path"] = .array(path.map(JSONValue.string))
         result["boundary"] = boundary(frame: frame, displayID: first.displayID, ownerPath: Array(path.dropLast()), edge: edge)
         return .object(result)
-    }
-
-    static func ownerCanvas(arrangement: JSONValue, topology: JSONValue, displayID: Int64, path: [String]) -> Frame? {
-        Arrangement.ownerCanvas(arrangement, topo: topology, displayID: displayID, path: path)
     }
 
     /// One immutable draft backs the preview and its eventual transaction.
@@ -157,7 +152,7 @@ extension ResidentPlanner {
         }
         var base: JSONObject = ["arrangement": state.at(path: "arrangement") ?? emptyArrangement,
             "minimum_sizes": state.at(path: "minimum_sizes") ?? .object([:]),
-            "active_space_key": (world.at(path: "windows")?.arrayValue ?? []).first(where: { $0.at(path: "window_id")?.intValue == sourceID })?.at(path: "space_key")
+            "active_space_key": (world.at(path: "windows")?.arrayValue ?? []).window(sourceID)?.at(path: "space_key")
                 ?? world.at(path: "active_space_key") ?? .null,
             "observer_epoch": world.at(path: "observer_epoch") ?? .null,
             "observer_generation": world.at(path: "observer_generation") ?? .null,
@@ -173,16 +168,14 @@ extension ResidentPlanner {
     }
 
     static func lifecycleFocusTarget(absorbers: [Int64], state: JSONValue, eligible: [JSONValue]) -> Int64? {
-        let ids = Set(eligible.compactMap { $0.at(path: "window_id")?.intValue })
+        let ids = Set(eligible.windowIDs)
         if let absorber = absorbers.first(where: ids.contains) { return absorber }
         for entry in state.at(path: "focus_history")?.arrayValue ?? [] {
             guard let id = entry.intValue ?? entry.at(path: "window_id")?.intValue, ids.contains(id),
-                  let observed = eligible.first(where: { $0.at(path: "window_id")?.intValue == id }) else { continue }
+                  let observed = eligible.window(id) else { continue }
             let identityMatches = ["pid", "window_generation", "space_key", "display_id"].allSatisfy { field in
                 entry.at(path: field).map { expected in
-                    let actual = field == "display_id" && expected.stringValue != nil && observed.at(path: field)?.intValue != nil
-                        ? observed.at(path: "display_uuid") : observed.at(path: field)
-                    return actual == expected
+                    WindowIdentity.observedValue(field: field, expected: expected, in: observed) == expected
                 } ?? true
             }
             if identityMatches { return id }
@@ -190,30 +183,23 @@ extension ResidentPlanner {
         return nil
     }
 
-    static func settle(arrangement: JSONValue, observed: [JSONValue], topology: JSONValue, focus: Int64?) -> JSONValue? {
-        settleWithEvidence(arrangement: arrangement, observed: observed, topology: topology, focus: focus)?.arrangement
-    }
-
     /// Every eligible managed identity survives settle, including overload and nested members.
-    static func settleWithEvidence(arrangement: JSONValue, observed: [JSONValue], topology: JSONValue,
-                                   focus: Int64?) -> (arrangement: JSONValue, absorbers: [Int64])? {
-        var result = Arrangement.bridgeArrangementNative(store: Arrangement.deriveNested(arr: arrangement, topo: topology), topo: topology)
+    static func settle(arrangement: JSONValue, observed: [JSONValue], topology: JSONValue, focus: Int64?) -> JSONValue? {
+        var result = Arrangement.bridgeArrangementNative(store: arrangement, topo: topology)
         let normalized = Project.normTopology(topology)
-        let wanted = Set(observed.compactMap { $0.at(path: "window_id")?.intValue })
-        var absorbers: [Int64] = []
+        let wanted = Set(observed.windowIDs)
         for id in Set(Arrangement.allocatedWindowIDs(result, topo: topology)).subtracting(wanted).sorted() {
-            guard let pruned = Arrangement.pruneAllocatedWindow(store: result, windowID: id, topo: topology, focused: focus),
+            guard let pruned = Arrangement.pruneAllocatedWindow(store: result, windowID: id, topo: topology),
                   let value = pruned.at(path: "arr") else { return nil }
             result = value
-            if let absorber = pruned.at(path: "absorber")?.intValue { absorbers.append(absorber) }
         }
         for window in observed.sorted(by: { ($0.at(path: "window_id")?.intValue ?? 0) < ($1.at(path: "window_id")?.intValue ?? 0) }) {
             guard let id = window.at(path: "window_id")?.intValue,
                   let frame = Frame.from(window.at(path: "frame")),
                   let displayID = Geometry.assignDisplay(frame, normalized.displays) else { return nil }
-            if let cell = Arrangement.allocatedCells(result, topo: topology).first(where: { $0.memberIDs.contains(id) }) {
+            if let cell = Arrangement.allocatedCells(result, topo: topology).containing(id) {
                 if cell.displayID == displayID { continue }
-                guard let pruned = Arrangement.pruneAllocatedWindow(store: result, windowID: id, topo: topology, focused: focus),
+                guard let pruned = Arrangement.pruneAllocatedWindow(store: result, windowID: id, topo: topology),
                       let value = pruned.at(path: "arr") else { return nil }
                 result = value
             }
@@ -224,44 +210,36 @@ extension ResidentPlanner {
                 result = Arrangement.bridgeArrangementNative(store: .object(object), topo: topology)
             } else {
                 result = Arrangement.bridgeArrangementNativeAdopt(store: result, newcomers: [id], ndid: displayID,
-                    focused: focus.map(JSONValue.int) ?? .null, topo: topology, insertionPolicy: "largest_first",
-                    newcomerMinimums: [id: window.at(path: "min_size") ?? .object([:])], allowOverload: true)
+                    focused: focus.map(JSONValue.int) ?? .null, topo: topology,
+                    newcomerMinimums: [id: window.at(path: "min_size") ?? .object([:])])
                 if result == .null { return nil }
             }
         }
-        func stamp(_ bag: JSONValue) -> JSONValue {
-            var object = bag.objectValue ?? [:]
-            object["bindings"] = .object((object["bindings"]?.objectValue ?? [:]).mapValues { value in
-                var binding = value.objectValue ?? [:]
-                if let nested = binding["nested"] { binding["nested"] = stamp(nested) }
-                if let id = binding["window_id"]?.intValue,
-                   let minimum = observed.first(where: { $0.at(path: "window_id")?.intValue == id })?.at(path: "min_size") { binding["min_size"] = minimum }
-                if let members = binding["contents"]?.arrayValue {
-                    binding["contents"] = .array(members.map { value in
-                        var member = value.objectValue ?? [:]
-                        if let id = member["window_id"]?.intValue,
-                           let minimum = observed.first(where: { $0.at(path: "window_id")?.intValue == id })?.at(path: "min_size") { member["min_size"] = minimum }
-                        return .object(member)
-                    })
-                }
-                return .object(binding)
-            })
-            return .object(object)
+        // Each member takes the floor its first observed record carries; a member whose
+        // record has none keeps whatever the arrangement already recorded.
+        var minimums: [Int64: JSONValue] = [:], seen = Set<Int64>()
+        for window in observed {
+            guard let id = window.at(path: "window_id")?.intValue, seen.insert(id).inserted else { continue }
+            if let minimum = window.at(path: "min_size") { minimums[id] = minimum }
         }
-        let stamped = Arrangement.bridgeArrangementNative(store: stamp(result), topo: topology)
+        let stampObserved: (inout JSONObject) -> Void = { record in
+            if let id = record["window_id"]?.intValue, let minimum = minimums[id] { record["min_size"] = minimum }
+        }
+        let stamped = Arrangement.bridgeArrangementNative(
+            store: Arrangement.mapBindingTree(result, binding: stampObserved, member: stampObserved), topo: topology)
         let focusedHidden = focus.flatMap { id in Arrangement.allocatedCells(stamped, topo: topology).first(where: { $0.memberIDs.contains(id) && $0.topWindowID != id }) }
         let resolution = focusedHidden.flatMap { _ in focus.flatMap { Arrangement.selectingMember(store: stamped, windowID: $0, topo: topology) } }
             ?? Arrangement.resolvingAutomaticOverload(store: stamped, topo: topology, focused: focus)
         guard let resolved = resolution else { return nil }
         result = resolved
         let actual = Arrangement.allocatedWindowIDs(result, topo: topology)
-        return actual.count == wanted.count && Set(actual) == wanted ? (result, absorbers) : nil
+        return actual.count == wanted.count && Set(actual) == wanted ? result : nil
     }
 
     static func swap(arrangement: JSONValue, topology: JSONValue, sourceID: Int64, targetID: Int64) -> JSONValue? {
         let cells = Arrangement.allocatedCells(arrangement, topo: topology)
-        guard let source = cells.first(where: { $0.topWindowID == sourceID }),
-              let target = cells.first(where: { $0.topWindowID == targetID }),
+        guard let source = cells.topped(by: sourceID),
+              let target = cells.topped(by: targetID),
               var sourceOwner = Arrangement.ownerBag(arrangement, path: source.ownerPath)?.objectValue,
               var sourceBindings = sourceOwner["bindings"]?.objectValue else { return nil }
         let sourceTop = source.binding.at(path: "contents")?.arrayValue?.first ?? source.binding
@@ -272,7 +250,7 @@ extension ResidentPlanner {
               var targetBindings = targetOwner["bindings"]?.objectValue else { return nil }
         targetBindings[target.anchor] = replacingTop(target.binding, member: sourceTop); targetOwner["bindings"] = .object(targetBindings)
         guard let changed = Arrangement.replacingOwnerBag(first, path: target.ownerPath, bag: .object(targetOwner)) else { return nil }
-        return minFit(Arrangement.bridgeArrangementNative(store: changed, topo: topology), topology)
+        return minFit(Arrangement.bridgeArrangementNative(store: changed, topo: topology), topology, prior: arrangement)
     }
 
     static func replacingTop(_ binding: JSONValue, member: JSONValue) -> JSONValue {
@@ -292,15 +270,23 @@ extension ResidentPlanner {
         return source.y + source.h / 2 <= target.y + target.h / 2 ? "north" : "south"
     }
 
-    static func minFit(_ arrangement: JSONValue, _ topology: JSONValue) -> JSONValue? {
-        let targets = Arrangement.arrangementTargetsRec(bridge: arrangement, topo: topology)
-        for cell in Arrangement.allocatedCells(arrangement, topo: topology) {
-            guard let id = cell.topWindowID, let frame = Frame.from(targets.at(path: "\(id).frame")) else { return nil }
-            if cell.binding.at(path: "minimum_fit")?.stringValue == "unavoidable" { continue }
-            if frame.x < cell.frame.x - 0.5 || frame.y < cell.frame.y - 0.5
-                || frame.maxX > cell.frame.maxX + 0.5 || frame.maxY > cell.frame.maxY + 0.5 { return nil }
+    /// Manual operations never increase how far any window extends outside its tile. Overlap
+    /// comes only from automatic minimum growth; an operation may reduce it.
+    static func minFit(_ arrangement: JSONValue, _ topology: JSONValue, prior: JSONValue) -> JSONValue? {
+        func overhang(_ store: JSONValue) -> [Int64: Double]? {
+            let targets = Arrangement.arrangementTargetsRec(bridge: store, topo: topology)
+            var result: [Int64: Double] = [:]
+            for cell in Arrangement.allocatedCells(store, topo: topology) {
+                guard let id = cell.topWindowID, let frame = Frame.from(targets.at(path: "\(id).frame")) else { return nil }
+                if cell.binding.at(path: "minimum_fit")?.stringValue == "unavoidable" { continue }
+                result[id] = max(0, cell.frame.x - frame.x) + max(0, frame.maxX - cell.frame.maxX)
+                    + max(0, cell.frame.y - frame.y) + max(0, frame.maxY - cell.frame.maxY)
+            }
+            return result
         }
-        return arrangement
+        guard let after = overhang(arrangement) else { return nil }
+        let before = overhang(prior) ?? [:]
+        return after.allSatisfy { id, amount in amount <= (before[id] ?? 0) + Arrangement.fitSlack } ? arrangement : nil
     }
 
     struct OwnerPiece {
@@ -316,27 +302,37 @@ extension ResidentPlanner {
         guard let edge = selection.at(path: "boundary.side")?.stringValue,
               ["north", "east", "south", "west"].contains(edge),
               let displayID = selection.at(path: "boundary.display_id")?.intValue,
-              let source = Arrangement.allocatedCells(arrangement, topo: topology).first(where: { $0.memberIDs.contains(sourceID) }),
+              let source = Arrangement.allocatedCells(arrangement, topo: topology).containing(sourceID),
               let sourceMember = (source.binding.at(path: "contents")?.arrayValue ?? [source.binding])
-                .first(where: { $0.at(path: "window_id")?.intValue == sourceID }),
-              let pruned = Arrangement.pruneAllocatedWindow(store: arrangement, windowID: sourceID, topo: topology, focused: sourceID),
+                .window(sourceID),
+              let pruned = Arrangement.pruneAllocatedWindow(store: arrangement, windowID: sourceID, topo: topology),
               let base = pruned.at(path: "arr") else { return nil }
         guard let currentSelection = resolvedSelection(selection, sourceID: sourceID, arrangement: base, topology: topology) else { return nil }
         let participants = Set((selection.at(path: "ordered_window_ids")?.arrayValue ?? []).compactMap(\.intValue)).subtracting([sourceID])
         guard !participants.isEmpty else { return nil }
+        func conserved(_ result: JSONValue) -> JSONValue? {
+            let before = Arrangement.allocatedWindowIDs(arrangement, topo: topology), after = Arrangement.allocatedWindowIDs(result, topo: topology)
+            guard before.count == after.count, Set(before) == Set(after) else { return nil }
+            return minFit(result, topology, prior: arrangement)
+        }
+        let parcelPath = (currentSelection.at(path: "parcel_path")?.arrayValue ?? []).compactMap(\.stringValue)
+        if currentSelection.at(path: "scope")?.stringValue == "parent", parcelPath.isEmpty {
+            let sourceMin = Arrangement.allocationMinimum(sourceMember, frame: source.frame, gap: Project.normTopology(topology).gap)
+            return insertAtRoot(base: base, topology: topology, displayID: displayID, edge: edge,
+                                sourceMember: sourceMember, sourceMin: sourceMin).flatMap(conserved)
+        }
         let path = (currentSelection.at(path: "boundary.owner_path")?.arrayValue ?? []).compactMap(\.stringValue)
         guard let owner = Arrangement.ownerBag(base, path: path)?.objectValue,
-              let canvas = ownerCanvas(arrangement: base, topology: topology, displayID: displayID, path: path) else { return nil }
+              let canvas = Arrangement.ownerCanvas(base, topo: topology, displayID: displayID, path: path) else { return nil }
         let normalized = Project.normTopology(topology)
-        guard let displayCanvas = ownerCanvas(arrangement: base, topology: topology, displayID: displayID, path: []) else { return nil }
+        guard let displayCanvas = Arrangement.ownerCanvas(base, topo: topology, displayID: displayID, path: []) else { return nil }
         let local = path.isEmpty ? topology : Arrangement.localTopology(canvas: canvas, displayID: 0, gap: normalized.gap)
         let bindings = owner["bindings"]?.objectValue ?? [:]
-        let rawCells = Arrangement.cellsMd(Arrangement.parseSegs(owner["segments"]), Project.normTopology(local))
-        let parcelPath = (currentSelection.at(path: "parcel_path")?.arrayValue ?? []).compactMap(\.stringValue)
+        let rawCells = Arrangement.bagCells(.object(owner), topology: local)
         let parentAnchor = currentSelection.at(path: "scope")?.stringValue == "parent" ? parcelPath.last : nil
         var pieces = rawCells.map { cell -> OwnerPiece in
-            let binding = bindings[key(cell)]
-            let selected = parentAnchor.map { key(cell) == $0 } ?? (binding.map { participants.contains($0.at(path: "window_id")?.intValue ?? 0) } ?? false)
+            let binding = bindings[Arrangement.anchorKey(cell)]
+            let selected = parentAnchor.map { Arrangement.anchorKey(cell) == $0 } ?? (binding.map { participants.contains($0.at(path: "window_id")?.intValue ?? 0) } ?? false)
             return OwnerPiece(displayID: cell.displayId ?? 0, frame: cell.frame, binding: binding, selected: selected)
         }
         let chosen = pieces.filter(\.selected)
@@ -354,12 +350,12 @@ extension ResidentPlanner {
             guard collinear(piece.frame, union, edge: edge) else { return nil }
             if index > 0 {
                 let prior = ordered[index - 1].frame
-                guard abs((vertical ? prior.maxY : prior.maxX) - (vertical ? piece.frame.y : piece.frame.x)) <= 4 else { return nil }
+                guard abs((vertical ? prior.maxY : prior.maxX) - (vertical ? piece.frame.y : piece.frame.x)) <= Arrangement.coordinateTolerance else { return nil }
             }
         }
         let sourceMin = Arrangement.allocationMinimum(sourceMember, frame: source.frame, gap: normalized.gap)
-        let insetUnion = inset(union, canvas: displayCanvas, gap: normalized.gap)
-        guard (vertical ? insetUnion.h : insetUnion.w) + 0.5 >= (vertical ? sourceMin.h : sourceMin.w) else { return nil }
+        let insetUnion = Arrangement.insetInterior(union, displayCanvas, normalized.gap)
+        guard (vertical ? insetUnion.h : insetUnion.w) + Arrangement.fitSlack >= (vertical ? sourceMin.h : sourceMin.w) else { return nil }
         var lower = -Double.infinity, upper = Double.infinity
         for piece in chosen {
             guard let binding = piece.binding else { return nil }
@@ -398,18 +394,79 @@ extension ResidentPlanner {
         pieces.append(OwnerPiece(displayID: path.isEmpty ? displayID : 0, frame: inserted, binding: sourceMember, selected: false))
         guard let rebuilt = rebuildOwner(pieces: pieces, prior: .object(owner), topology: local),
               let changed = Arrangement.replacingOwnerBag(base, path: path, bag: rebuilt) else { return nil }
-        let result = Arrangement.bridgeArrangementNative(store: changed, topo: topology)
-        let before = Arrangement.allocatedWindowIDs(arrangement, topo: topology), after = Arrangement.allocatedWindowIDs(result, topo: topology)
-        guard before.count == after.count, Set(before) == Set(after) else { return nil }
-        return minFit(result, topology)
+        return conserved(Arrangement.bridgeArrangementNative(store: changed, topo: topology))
     }
 
-    static func inset(_ frame: Frame, canvas: Frame, gap: Double) -> Frame {
-        let left = abs(frame.x - canvas.x) <= 4 ? 0 : gap / 2
-        let right = abs(frame.maxX - canvas.maxX) <= 4 ? 0 : gap / 2
-        let top = abs(frame.y - canvas.y) <= 4 ? 0 : gap / 2
-        let bottom = abs(frame.maxY - canvas.maxY) <= 4 ? 0 : gap / 2
-        return Frame(x: frame.x + left, y: frame.y + top, w: frame.w - left - right, h: frame.h - top - bottom)
+    /// The display root has no enclosing piece to shrink. Its vacated lines compress proportionally
+    /// into the remainder, nested parcels follow their allocations, and one new cut spans the
+    /// display between the remainder and the source. The cut starts at the display midpoint and
+    /// is clamped by the source floor and the root's composed floor.
+    static func insertAtRoot(base: JSONValue, topology: JSONValue, displayID: Int64, edge: String,
+                             sourceMember: JSONValue, sourceMin: (w: Double, h: Double)) -> JSONValue? {
+        let normalized = Project.normTopology(topology), gap = normalized.gap
+        let split = Arrangement.bagsWithRejected(Arrangement.parseSegs(base.at(path: "segments")), normalized)
+        guard let bag = split.bags.first(where: { $0.displayId == displayID }), let canvas = bag.rect,
+              canvas.w > 0, canvas.h > 0 else { return nil }
+        let prefix = "\(displayID):"
+        let bindings = base.at(path: "bindings")?.objectValue ?? [:]
+        let own = bindings.filter { $0.key.hasPrefix(prefix) }
+        let oldCells = Arrangement.cells(bag.segments, canvas).map { cell -> Arrangement.Comp in
+            var cell = cell; cell.displayId = displayID; return cell
+        }
+        // The root as one opaque parcel under local anchors, so its composed floor bounds the cut.
+        var local: JSONObject = [:]
+        for var cell in oldCells {
+            guard let binding = own[Arrangement.anchorKey(cell)] else { continue }
+            cell.displayId = 0; local[Arrangement.anchorKey(cell)] = binding
+        }
+        let rootMin = Arrangement.allocationMinimum(.object(["nested": .object([
+            "segments": .array(bag.segments.map(\.json)), "bindings": .object(local)])]), frame: canvas, gap: gap)
+        let vertical = edge == "east" || edge == "west", sourceLow = edge == "west" || edge == "north"
+        let along = { (minimum: (w: Double, h: Double)) in vertical ? minimum.w : minimum.h }
+        let across = { (minimum: (w: Double, h: Double)) in vertical ? minimum.h : minimum.w }
+        guard let interval = Arrangement.feasibleCutInterval(canvas: canvas, vertical: vertical,
+            lowMinimum: along(sourceLow ? sourceMin : rootMin), highMinimum: along(sourceLow ? rootMin : sourceMin),
+            lowPerpendicularMinimum: across(sourceLow ? sourceMin : rootMin), highPerpendicularMinimum: across(sourceLow ? rootMin : sourceMin),
+            gap: gap, ownerCanvas: canvas) else { return nil }
+        let cut = min(max(vertical ? canvas.x + canvas.w / 2 : canvas.y + canvas.h / 2, interval.lower), interval.upper)
+        var remainder = canvas, inserted = canvas
+        if vertical {
+            remainder.x = sourceLow ? cut : canvas.x; remainder.w = sourceLow ? canvas.maxX - cut : cut - canvas.x
+            inserted.x = sourceLow ? canvas.x : cut; inserted.w = canvas.w - remainder.w
+        } else {
+            remainder.y = sourceLow ? cut : canvas.y; remainder.h = sourceLow ? canvas.maxY - cut : cut - canvas.y
+            inserted.y = sourceLow ? canvas.y : cut; inserted.h = canvas.h - remainder.h
+        }
+        let moved = Arrangement.transformedOwnerBag(.object(["segments": .array(bag.segments.map(\.json)),
+            "bindings": .object(own)]), from: canvas, to: remainder)
+        guard let cutSegment = Seg(.object(["axis": .string(vertical ? "v" : "h"), "coord": .double(cut),
+            "lo": .double(vertical ? canvas.y : canvas.x), "hi": .double(vertical ? canvas.maxY : canvas.maxX),
+            "relation": .string("pinned")])) else { return nil }
+        let segments = Arrangement.parseSegs(moved.at(path: "segments")) + [cutSegment]
+        let newCells = Arrangement.cells(segments, canvas).map { cell -> Arrangement.Comp in
+            var cell = cell; cell.displayId = displayID; return cell
+        }
+        func cell(at frame: Frame) -> String? {
+            newCells.first { Geometry.frameEq($0.frame, frame, tol: Arrangement.fitSlack) }.map(Arrangement.anchorKey)
+        }
+        var rebound = bindings.filter { !$0.key.hasPrefix(prefix) }
+        let movedBindings = moved.at(path: "bindings")?.objectValue ?? [:]
+        for old in oldCells {
+            guard let binding = movedBindings[Arrangement.anchorKey(old)] else { continue }
+            let f = old.frame
+            let target = vertical
+                ? Frame(x: remainder.x + (f.x - canvas.x) * remainder.w / canvas.w, y: f.y, w: f.w * remainder.w / canvas.w, h: f.h)
+                : Frame(x: f.x, y: remainder.y + (f.y - canvas.y) * remainder.h / canvas.h, w: f.w, h: f.h * remainder.h / canvas.h)
+            guard let anchor = cell(at: target), rebound[anchor] == nil else { return nil }
+            rebound[anchor] = binding
+        }
+        guard let sourceAnchor = cell(at: inserted), rebound[sourceAnchor] == nil else { return nil }
+        rebound[sourceAnchor] = sourceMember
+        var store = base.objectValue ?? [:]
+        store["segments"] = .array((split.bags.filter { $0.displayId != displayID }.flatMap(\.segments)
+            + split.rejected + segments).map(\.json))
+        store["bindings"] = .object(rebound)
+        return Arrangement.bridgeArrangementNative(store: .object(store), topo: topology)
     }
 
     /// Rebuild only the owning parcel; complete nested and stack bindings remain opaque values.
@@ -421,10 +478,10 @@ extension ResidentPlanner {
             guard let canvas = canvases.first(where: { $0.displayId == piece.displayID })?.rect else { return nil }
             let f = piece.frame
             for (axis, coordinate, lo, hi, interior) in [
-                ("v", f.x, f.y, f.maxY, abs(f.x - canvas.x) > 4),
-                ("v", f.maxX, f.y, f.maxY, abs(f.maxX - canvas.maxX) > 4),
-                ("h", f.y, f.x, f.maxX, abs(f.y - canvas.y) > 4),
-                ("h", f.maxY, f.x, f.maxX, abs(f.maxY - canvas.maxY) > 4)] where interior {
+                ("v", f.x, f.y, f.maxY, abs(f.x - canvas.x) > Arrangement.coordinateTolerance),
+                ("v", f.maxX, f.y, f.maxY, abs(f.maxX - canvas.maxX) > Arrangement.coordinateTolerance),
+                ("h", f.y, f.x, f.maxX, abs(f.y - canvas.y) > Arrangement.coordinateTolerance),
+                ("h", f.maxY, f.x, f.maxX, abs(f.maxY - canvas.maxY) > Arrangement.coordinateTolerance)] where interior {
                 let segment: JSONValue = .object(["axis": .string(axis), "coord": .double(coordinate),
                     "lo": .double(lo), "hi": .double(hi), "relation": .string("pinned")])
                 if !segments.contains(segment) { segments.append(segment) }
@@ -435,10 +492,10 @@ extension ResidentPlanner {
         let cells = Arrangement.cellsMd(parsed, normalized)
         var bindings: JSONObject = [:]
         for piece in pieces {
-            guard let cell = cells.first(where: { $0.displayId == piece.displayID && Geometry.frameEq($0.frame, piece.frame, tol: 0.5) }) else { return nil }
+            guard let cell = cells.first(where: { $0.displayId == piece.displayID && Geometry.frameEq($0.frame, piece.frame, tol: Arrangement.fitSlack) }) else { return nil }
             if let binding = piece.binding {
-                guard bindings[key(cell)] == nil else { return nil }
-                bindings[key(cell)] = binding
+                guard bindings[Arrangement.anchorKey(cell)] == nil else { return nil }
+                bindings[Arrangement.anchorKey(cell)] = binding
             }
         }
         var result = prior.objectValue ?? [:]
@@ -450,7 +507,7 @@ extension ResidentPlanner {
     /// The fixed 40-point pulse is clamped by the complete nested participant minima.
     static func resize(arrangement: JSONValue, topology: JSONValue, sourceID: Int64,
                        direction: NavDirection, step: Double) -> JSONValue? {
-        guard let source = Arrangement.allocatedCells(arrangement, topo: topology).first(where: { $0.topWindowID == sourceID }) else { return nil }
+        guard let source = Arrangement.allocatedCells(arrangement, topo: topology).topped(by: sourceID) else { return nil }
         let vertical = direction == .east || direction == .west
         let axis = vertical ? "v" : "h"
         let preferred = direction == .east ? source.frame.maxX : direction == .west ? source.frame.x
@@ -465,8 +522,8 @@ extension ResidentPlanner {
             for path in paths {
                 guard let bag = Arrangement.ownerBag(arrangement, path: path) else { return nil }
                 let segments = Arrangement.parseSegs(bag.at(path: "segments"))
-                let hit = segments.indices.filter { segments[$0].axis == axis && abs(segments[$0].coord - coordinate) <= 4
-                    && min(segments[$0].hi, hi) - max(segments[$0].lo, lo) > 4 }
+                let hit = segments.indices.filter { segments[$0].axis == axis && abs(segments[$0].coord - coordinate) <= Arrangement.coordinateTolerance
+                    && min(segments[$0].hi, hi) - max(segments[$0].lo, lo) > Arrangement.coordinateTolerance }
                 if !hit.isEmpty { chosen = (path, bag, coordinate, hit); break }
             }
             if chosen != nil { break }
@@ -475,20 +532,18 @@ extension ResidentPlanner {
         func draft(distance: Double) -> JSONValue? {
             let segments = Arrangement.translatedSegments(Arrangement.parseSegs(chosen.bag.at(path: "segments")),
                 indices: chosen.hit, distance: distance * sign)
-            guard let canvas = ownerCanvas(arrangement: arrangement, topology: topology, displayID: source.displayID, path: chosen.path) else { return nil }
+            guard let canvas = Arrangement.ownerCanvas(arrangement, topo: topology, displayID: source.displayID, path: chosen.path) else { return nil }
             let local = chosen.path.isEmpty ? topology : Arrangement.localTopology(canvas: canvas, displayID: 0, gap: Project.normTopology(topology).gap)
-            guard Arrangement.validMd(segments, Project.normTopology(local)).at(path: "ok")?.boolValue == true else { return nil }
+            guard Arrangement.segmentsValid(segments, topology: local) else { return nil }
             var bag = chosen.bag.objectValue ?? [:]; bag["segments"] = .array(segments.map(\.json))
-            // Rekey by old allocation origin, so a moving divider cannot swap leaf identity.
-            let oldCells = Arrangement.cellsMd(Arrangement.parseSegs(chosen.bag.at(path: "segments")), Project.normTopology(local))
-            let newCells = Arrangement.cellsMd(segments, Project.normTopology(local))
-            let bindings = chosen.bag.at(path: "bindings")?.objectValue ?? [:]
-            guard oldCells.count == newCells.count else { return nil }
-            var rebound: JSONObject = [:]
-            for (index, cell) in oldCells.enumerated() { if let binding = bindings[key(cell)] { rebound[key(newCells[index])] = binding } }
+            let original = Arrangement.parseSegs(chosen.bag.at(path: "segments"))
+            guard let rebound = Arrangement.reboundAfterTranslation(chosen.bag.at(path: "bindings")?.objectValue ?? [:],
+                segments: original, indices: chosen.hit, distance: distance * sign,
+                from: Arrangement.cellsMd(original, topology: local),
+                to: Arrangement.cellsMd(segments, topology: local)) else { return nil }
             bag["bindings"] = .object(rebound)
             guard let changed = Arrangement.replacingOwnerBag(arrangement, path: chosen.path, bag: .object(bag)) else { return nil }
-            return minFit(Arrangement.bridgeArrangementNative(store: changed, topo: topology), topology)
+            return minFit(Arrangement.bridgeArrangementNative(store: changed, topo: topology), topology, prior: arrangement)
         }
         if let full = draft(distance: step) { return full }
         var low = 0.0, high = step

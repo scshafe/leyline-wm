@@ -6,7 +6,6 @@ private final class CacheAuditFixture: TargetedProjectionWindowReading, Projecti
     let condition = NSCondition()
     var onEvent: ((AccessibilityFocusEvent) -> Void)?
     var onHealthChanged: ((AccessibilityObserverHealth) -> Void)?
-    var worldOnEvent: (@Sendable (AccessibilityFocusEvent) -> Void)?
     var records: [Int64: TargetedWindowObservation] = [:]
     var handles: [Int64: ProjectionWindowHandle] = [:]
     var mode = "clean"
@@ -132,7 +131,7 @@ private final class CacheAuditRig {
             })
         let snapshot = snapshot
         feed = ProjectionInputFeed(observer: data, captureTargeted: { request in data.captures.append(request.reason); return snapshot.capture(request) },
-            executeOnMain: { data.enqueue($0) }, recoverySessionGeneration: { data.session }, recoveryObservationEpoch: { data.epoch },
+            executeOnObservationLane: { data.enqueue($0) }, recoverySessionGeneration: { data.session }, recoveryObservationEpoch: { data.epoch },
             recoveryPermitted: { data.live }, deliver: { data.delivery($0) })
         audit = ProjectionCacheIntegrityAudit(executeCompletion: { data.enqueue($0) }, permitted: { seed in data.live && data.epoch == seed.observationEpoch && data.session == seed.sessionGeneration },
             schedule: { data.deadline($0, $1) })
@@ -146,7 +145,7 @@ private final class CacheAuditRig {
 
 /// Actual provider/feed/utility coordinator. All Window/Space/display backends are local fixtures.
 func runCacheIntegrityAuditScenarios(test: inout SelfTest) {
-    let path = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Fixtures/cache_audit/validation.json")
+    let path = SelfTestFixtures.url("cache_audit/validation.json")
     guard let data = try? Data(contentsOf: path), let fixture = try? JSONValue.parse(data) else { test.check(false, "cache-audit/fixture-load"); return }
     test.check(fixture.at(path: "managed_count")?.intValue == 20 && fixture.at(path: "scenarios")?.arrayValue?.count == 10
         && fixture.at(path: "deadline_milliseconds")?.intValue == Int64(ProjectionCacheIntegrityAudit.deadlineMilliseconds), "cache-audit/nonvacuous-twenty-window-ten-scenario-one-shot-fixture")

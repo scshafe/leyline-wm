@@ -1,7 +1,6 @@
-// A minimal client for leyline-reframe serve's Unix socket — 4-byte
-// big-endian length-prefixed JSON frames (the leyline-sock-client.c wire
-// format). Shadow requests stay read-only; the CLI sends only registered
-// resident actions through the CoreServer mutation surface.
+// One-shot client for the resident's Unix socket: 4-byte big-endian
+// length-prefixed JSON frames. The CLI sends only registered resident
+// actions through the CoreServer mutation surface.
 import Foundation
 import LeylineModel
 

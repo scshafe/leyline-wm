@@ -11,6 +11,22 @@ struct CoreCommittedSnapshot: Equatable, Sendable {
     var borderPlan: BorderPlan { BorderProjection.plan(world: world) }
 }
 
+/// World-state facts the resident reads at every boundary, spelled once.
+extension JSONValue {
+    /// The event that produced this world state; "" when it names none.
+    var worldEvent: String { at(path: "event")?.stringValue ?? "" }
+    /// Management is on unless the state says otherwise.
+    var managementEnabled: Bool { at(path: "management_enabled")?.boolValue != false }
+    /// The observation's own completeness claim; nil when it made none.
+    var worldComplete: Bool? { at(path: "observation.world_complete")?.boolValue }
+    /// A window record that is eligible, on a visible enabled Space and still present.
+    var isLiveEnabledWindow: Bool {
+        at(path: "eligible")?.boolValue == true && at(path: "space_visible")?.boolValue == true
+            && at(path: "space_enabled")?.boolValue == true
+            && at(path: "minimized")?.boolValue != true && at(path: "destroyed")?.boolValue != true
+    }
+}
+
 /// The sole bounded bridge from authoritative commits to presentation. There is
 /// at most one executing render and one pending latest snapshot. The executor
 /// must enqueue asynchronously; observation and authority never wait for it.
@@ -39,17 +55,6 @@ final class CorePresentationMailbox: @unchecked Sendable {
         latest = snapshot
         if pending != nil { replaced &+= 1 }
         pending = snapshot
-        let needsScheduling = !scheduled
-        scheduled = true
-        lock.unlock()
-        if needsScheduling { execute { [self] in drainOne() } }
-    }
-
-    /// Remount replays the current valid revision, never a cached older plan.
-    func replayLatest() {
-        lock.lock()
-        guard let latest else { lock.unlock(); return }
-        pending = latest
         let needsScheduling = !scheduled
         scheduled = true
         lock.unlock()

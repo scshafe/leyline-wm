@@ -3,25 +3,9 @@
   "synthetic": true,
   "live_certification": false,
   "source_inventory_counts": {
-    "native_actions": 27
+    "native_actions": 26
   },
   "rows": [
-    {
-      "id": "native-action:layout.regutter",
-      "source": "leylined/Sources/leylined/ResidentActionController.swift",
-      "source_key": "native_actions",
-      "source_id": "layout.regutter",
-      "disposition": "keep",
-      "event_source": "resident_input_or_typed_menu_action",
-      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
-      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
-      "scenarios": [
-        "warm_six_windows",
-        "stress_twenty_windows",
-        "repeat_burst_final_intent"
-      ],
-      "owner": "resident"
-    },
     {
       "id": "native-action:move.cancel",
       "source": "leylined/Sources/leylined/ResidentInput.swift",
@@ -812,13 +796,13 @@
       "owner": "resident"
     },
     {
-      "id": "capability:gutter_configuration",
-      "source": "leylined/Sources/leylined/ResidentControls.swift",
+      "id": "capability:status_icon",
+      "source": "leylined/Sources/leylined/ResidentStatusIcon.swift",
       "source_key": null,
       "source_id": null,
-      "source_symbol": "setGlobalGutter",
+      "source_symbol": "enum ResidentStatusIcon",
       "disposition": "keep",
-      "event_source": "global_gutter_menu_or_directory_settings_event",
+      "event_source": "committed_current_Space_and_resident_health",
       "generation_rule": "immutable_request_candidate_revision_observer_epoch_window_lifetime_space_display_topology",
       "failure": "explicit_refusal_missing_or_stale_evidence_never_certifies_success",
       "scenarios": [
@@ -828,10 +812,11 @@
         "hostile_ax_reads"
       ],
       "correctness_cases": [
-        "zero_default_custom_gutter",
-        "replace_safe_settings",
-        "no_double_inset",
-        "invalid_geometry_refusal"
+        "empty_OFF_tiles",
+        "green_ON_fill",
+        "red_error_fill",
+        "menu_tracking_current_status",
+        "light_and_dark_native_drawing"
       ],
       "budget_refs": [
         "lifecycle"
@@ -840,13 +825,13 @@
       "owner": "resident"
     },
     {
-      "id": "capability:gutter_reapply",
-      "source": "leylined/Sources/leylined/ResidentControlsState.swift",
+      "id": "capability:fixed_border_spacing",
+      "source": "leylined/Sources/LeylineModel/BorderProjection.swift",
       "source_key": null,
       "source_id": null,
-      "source_symbol": "regutterAction",
+      "source_symbol": "public static let thickness = 1",
       "disposition": "keep",
-      "event_source": "retained_menu_original_space_action",
+      "event_source": "immutable_shipping_border_constant",
       "generation_rule": "immutable_request_candidate_revision_observer_epoch_window_lifetime_space_display_topology",
       "failure": "explicit_refusal_missing_or_stale_evidence_never_certifies_success",
       "scenarios": [
@@ -856,10 +841,11 @@
         "hostile_ax_reads"
       ],
       "correctness_cases": [
-        "original_space_target",
-        "inactive_or_OFF_refusal",
-        "all_affected_frames_verified",
-        "raw_partition_conserved"
+        "fixed_one_point",
+        "one_shared_buffer",
+        "outer_stroke_fits",
+        "nested_no_double_inset",
+        "no_width_preference_or_menu_control"
       ],
       "budget_refs": [
         "lifecycle"
@@ -1320,7 +1306,7 @@
     {
       "id": "repeat_burst_final_intent",
       "windows": 6,
-      "expected": "one_in_flight_latest_pending_relative_accumulation_ordered_barriers"
+      "expected": "one_in_flight_latest_pending_ordered_barriers"
     },
     {
       "id": "menu_tracking",
@@ -1367,6 +1353,7 @@
     "leylined/Sources/LeylineModel/MoveCandidate.swift",
     "leylined/Sources/leylined/ResidentActionController.swift",
     "leylined/Sources/leylined/ResidentPerformanceTrace.swift",
-    "leylined/Sources/leylined/ResidentSpaceManagement.swift"
+    "leylined/Sources/leylined/ResidentSpaceManagement.swift",
+    "leylined/Sources/leylined/ResidentStatusIcon.swift"
   ]
 }

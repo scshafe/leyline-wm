@@ -1,5 +1,5 @@
 // self-test projection — the border projection's pure half over a RECORDED
-// revision stream (cutover plan step 4). Hermetic by construction: it drives
+// revision stream. Hermetic by construction: it drives
 // `BorderProjection.plan` and `BorderPalette`, touches no window server, no
 // AX, no world. Renderer lifecycle is driven through its hermetic output
 // surface, leaving the AppKit panels themselves outside this suite.
@@ -26,7 +26,7 @@ private final class RecordingBorderRenderSurface: BorderRenderSurface {
 
 private func focusWorld(_ wid: Int64, _ x: Double, _ y: Double, _ w: Double, _ h: Double,
                         mode: String? = nil, tiled: Bool? = nil,
-                        stacked: Bool? = nil, framework: Bool? = nil) -> JSONValue {
+                        framework: Bool? = nil) -> JSONValue {
     var focus: JSONObject = [:]
     focus["window_id"] = .int(wid)
     focus["managed"] = .bool(tiled != false && framework != true)
@@ -38,7 +38,6 @@ private func focusWorld(_ wid: Int64, _ x: Double, _ y: Double, _ w: Double, _ h
     focus["observer_generation"] = .int(1)
     focus["frame"] = .object(["x": .double(x), "y": .double(y), "w": .double(w), "h": .double(h)])
     if let tiled { focus["tiled"] = .bool(tiled) }
-    if let stacked { focus["stacked"] = .bool(stacked) }
     if let framework { focus["framework"] = .bool(framework) }
     var world: JSONObject = [:]
     world["focus"] = .object(focus)
@@ -51,15 +50,9 @@ private func focusWorld(_ wid: Int64, _ x: Double, _ y: Double, _ w: Double, _ h
     return .object(world)
 }
 
-func runProjectionSelfTest() -> Int32 {
-    var pass = 0
-    var fail = 0
-    func check(_ name: String, _ ok: Bool) {
-        if ok { pass += 1 } else {
-            fail += 1
-            FileHandle.standardError.write(Data("self-test projection FAIL: \(name)\n".utf8))
-        }
-    }
+func runProjectionSelfTest(sampleDirectory: String? = nil) -> Int32 {
+    var test = SelfTest()
+    func check(_ name: String, _ ok: Bool) { test.check(ok, name) }
 
     // ── a recorded focus-follow stream: the S1 drill set in miniature ──
     // click → same-app focus → Cmd-Tab → close (focus gone) → refocus.
@@ -96,9 +89,6 @@ func runProjectionSelfTest() -> Int32 {
     check("move mode never decorates an unmanaged window",
           BorderProjection.plan(world: focusWorld(1, 0, 0, 10, 10, mode: "move", tiled: false))
             .rings.isEmpty)
-    check("stacked tile → stacked role",
-          BorderProjection.plan(world: focusWorld(1, 0, 0, 10, 10, tiled: true, stacked: true))
-            .rings.first?.role == .stacked)
     check("framework windows are ignored",
           BorderProjection.plan(world: focusWorld(1, 0, 0, 10, 10, tiled: false, framework: true))
             .rings.isEmpty)
@@ -112,7 +102,7 @@ func runProjectionSelfTest() -> Int32 {
           BorderProjection.plan(world: .object(["focus": .object(["window_id": .int(9)])])).rings.isEmpty)
     check("empty world → no ring",
           BorderProjection.plan(world: .object([:])).rings.isEmpty)
-    runMovePreviewProjectionScenarios(check: check)
+    runMovePreviewProjectionScenarios(sampleDirectory: sampleDirectory, check: check)
 
     // ── palette: defaults, override precedence, malformed-override rejection ──
     check("default focus colour",
@@ -125,10 +115,10 @@ func runProjectionSelfTest() -> Int32 {
           BorderPalette.color(.focus, store: malformed) == "0xff39ff14")
     check("every role resolves to a well-formed colour",
           BorderRole.allCases.allSatisfy { BorderPalette.isWellFormedColor(BorderPalette.color($0, store: nil)) })
-    check("thickness/radius defaults + override",
-          BorderPalette.thickness(store: nil) == 1
-            && BorderPalette.radius(store: nil) == 12
-            && BorderPalette.thickness(store: .object(["width": .int(5)])) == 5)
+    check("fixed thickness and configurable corner radius",
+          BorderPalette.thickness == 1 && BorderPalette.radius(store: nil) == 12
+            && BorderPalette.radius(store: .object(["border_radius": .int(5)])) == 5)
+    check("menu status icon drawing", runResidentStatusIconSelfTest(sampleDirectory: sampleDirectory))
 
     let rendererFacts = MainActor.assumeIsolated { () -> (
         CoreProjectionHealth, CoreProjectionHealth, CoreProjectionHealth,
@@ -209,8 +199,6 @@ func runProjectionSelfTest() -> Int32 {
             && remountFacts.renderedPlans[0] == remountFacts.renderedPlans[1]
             && remountFacts.clearCount == 1)
 
-    check("publication and blocked-renderer isolation", runPresentationSelfTest() == 0)
 
-    print("self-test projection: \(pass)/\(pass + fail) ok")
-    return fail == 0 ? 0 : 1
+    return test.finish("projection")
 }

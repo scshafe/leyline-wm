@@ -9,7 +9,7 @@ this contract defines their geometry and authority.
 Entry captures the focused managed source, its origin frame, identities and
 revision atomically. It requires complete reconciled observation in an enabled
 visible Space and a legal useful destination. A trustworthy source with no useful
-destination refuses with “Nothing to move to”; incomplete identity or convergence
+destination refuses with `nothing_to_move_to`; incomplete identity or convergence
 reports unavailability. Entry never adopts ignored windows or enables an OFF Space.
 
 The cursor initially selects the source. H/J/K/L cursoring uses the same stitched
@@ -32,8 +32,9 @@ With an edge staged, H/J/K/L walks its finite collinear run in geometric order.
 Perpendicular movement and walking beyond an endpoint are no-ops. Edge scope selects
 one edge; run/parent scope moves the cursor without enlarging the displayed scope.
 U explicitly widens edge → complete contiguous run → actual owning parent, one
-ancestor per press. I restores the recorded preceding selection, including its
-anchor and ordered members. The root has no wider parent.
+ancestor per press, up to and including the display root. I restores the recorded
+preceding selection, including its anchor and ordered members. The root has no
+wider parent.
 
 A gap, corner-only contact, changed coordinate, opposite side, excluded/OFF member
 or display seam terminates a run. Resolve a child's outer edge to the parent-owned
@@ -52,14 +53,28 @@ interval refuses without mutation.
 Existing participants retain perpendicular order and far-side geometry. Unrelated
 boundaries remain unchanged except explicit source reclaim. Nested owners compose
 through parent frames and child minima rather than flattening their identities.
+The display root has no enclosing piece: its remaining lines compress
+proportionally beside one new cut across the display, which starts at the display
+midpoint and is clamped by the source and the root's composed minima. A cut is
+stored once; overlapping collinear pieces merge, while abutting pieces stay
+independent.
 A span stays inside one display owner. Swap/insert can cross concurrently visible
 identifiable enabled display-local Spaces; inactive-Space transfer is unsupported.
 
 Solid source/cursor rings and the selection boundary show intent. Dashed ghosts
-show every affected destination frame, including reclaim. One immutable candidate
+show every affected destination frame, including reclaim. The moved window's
+destination is tinted and carries an arrow badge naming LEFT, RIGHT, ABOVE or
+BELOW. The side comes from the canonical selection and the tint covers the exact
+source destination, updating with rotation and scope changes. Cancellation or
+invalid provenance clears the entire cue. One immutable candidate
 carries the arrangement, rounded targets, ordered participants, selection scope and
 base provenance. Preview never authors layout. Commit consumes this exact candidate
 rather than independently calculating another arrangement.
+
+An insertion edge that cannot fit retains its staged selection and reports the
+constraint. A red side badge says WON'T FIT; there is no destination tint, ghost
+or commit candidate. C or U/I can select a feasible placement. Return or a second
+D leaves unavailable intent in place without writing frames. Escape unstages it.
 
 ## Commit, cancel and invalidation
 

@@ -1,0 +1,9 @@
+{
+  "_doc": "West: 100 direct (overlapping, reaches 29 past x=30; perp_overlap_y=600). East: 300 direct (edge 357). South: 400 direct (edge 2); 100 reaches only 1 past and is excluded. North: no direct (100 reaches -1); wrap to the bottom band ranks 400 (wrap edge 1) before 100 (603).",
+  "results": {
+    "north": { "outcome": "wrap",   "winner": 400, "ranked": [400, 100] },
+    "east":  { "outcome": "direct", "winner": 300, "ranked": [300] },
+    "south": { "outcome": "direct", "winner": 400, "ranked": [400] },
+    "west":  { "outcome": "direct", "winner": 100, "ranked": [100] }
+  }
+}

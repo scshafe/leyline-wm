@@ -1,0 +1,9 @@
+{
+  "_doc": "West: 200 (overlapping, edge -94, reaches 480 past x=961) before 100 (edge 481). East: no direct; wrap to the left band ranks 100 (x 1) before 200 (x 481). South: 500 direct (edge 1); 200 reaches 0 past and is excluded. North: no direct; wrap to the bottom band ranks 500 (wrap edge 1) before 200 (603); 400 has no x overlap.",
+  "results": {
+    "north": { "outcome": "wrap",   "winner": 500, "ranked": [500, 200] },
+    "east":  { "outcome": "wrap",   "winner": 100, "ranked": [100, 200] },
+    "south": { "outcome": "direct", "winner": 500, "ranked": [500] },
+    "west":  { "outcome": "direct", "winner": 200, "ranked": [200, 100] }
+  }
+}

@@ -1,4 +1,59 @@
-# Leyline 1.0.0
+# Release notes
+
+## 1.0.1
+
+Changes since 1.0.0:
+
+- Borders are fixed at 1 point; the border-width setting and its menu override are
+  removed. An existing `width` or `global_gutter_width` key is ignored.
+- The menu-bar icon reflects the focused Space: empty when OFF, green when ON and
+  red when an error needs attention.
+- Move previews show the insertion side and destination; an edge that cannot fit
+  shows **WON'T FIT** and keeps move mode active.
+- Directional focus keeps working after recovery renews window identities.
+- Fixed: Hyper + A never fired because the US decode table lacked the A key.
+- Fixed: new installs seeded border colors in a shape the renderer ignored, and
+  the Windows menu did not show application names.
+- A window whose minimum size exceeds its tile gets room by moving split lines,
+  inner splits before the main split. When no cut fits every known minimum, the
+  lines that can still move do and the window overlaps the window it was split
+  from, keeping its unshared edges, or, when that cannot hold it, its neighbours,
+  instead of collapsing the display into one stack. Only a minimum larger than the
+  display still stacks. Leyline learns the minimum of a window that refuses any shrink.
+- Fixed: directional focus skipped a window that overlapped the focused one.
+- Fixed: an app with enhanced accessibility enabled could ignore window moves.
+- Fixed: resizing one half of a split line could swap the windows below it.
+- Fixed: Leyline stopped at startup ("Recovery needed") when an app refused to
+  shrink to its tile; that confirmed shortfall now counts as a completed start.
+- Fixed: after an app quit or launched, Hyper + M and Hyper + R could refuse
+  until another window opened. A layout pass that loses a commit race is now
+  replanned, and a refused command schedules the owed repair.
+- Fixed: an app launching or quitting could undo window moves by re-tiling the
+  Space in window-ID order. A window of the same app that still covers its tile
+  keeps it when Leyline renews window identities.
+- Fixed: a window already at its minimum size could fail to have that minimum
+  learned when its other side was one point short, turning the menu-bar icon red.
+- Fixed: moving a window to another Space in Mission Control left its old Space
+  untiled until you switched away and back. Leyline now re-tiles that Space when
+  the window server reports the move.
+- Fixed: Leyline could stop at startup ("Recovery needed") when an app settled
+  one point from its tile, such as a 960-point minimum width asked for 959.
+- Move mode's U now widens up to the whole display, so one move turns two windows
+  over one into one window beside two, and back.
+- Fixed: after some moves, closing a window or the next layout pass could fail
+  and turn the menu-bar icon red, because a split line was stored as overlapping
+  pieces. Existing layouts with such lines recover.
+- Fixed: a running app that macOS lists without a process (Xcode's Device Hub
+  can stay that way for hours) stopped all tiling with "world observation
+  incomplete" on every Space.
+- Windows with a fixed aspect ratio, such as the iOS Simulator's device window,
+  stay untiled. Leyline learns the application the first time a window refuses
+  its tile's shape, instead of stopping at startup ("Recovery needed").
+- Removed CLI commands: `ley perf` (the resident publishes no distributions),
+  `ley validate`, the top-level `ley trace` (use `ley resident trace`) and
+  `ley ctl recovery` (use Leyline Recovery.app).
+
+## 1.0.0
 
 Version 1.0.0 is the official initial feature baseline.
 
@@ -22,7 +77,7 @@ Version 1.0.0 is the official initial feature baseline.
   Public ownership is disclosed; private paths, user state and credentials are excluded.
 - The project and packaged resources use the [MIT License](../LICENSE).
 
-## Supported scope and limitations
+### Supported scope and limitations
 
 macOS 14 or later is required. Universal binary slices, automated native suites
 and package installation are checked on Apple Silicon and Intel macOS runners.

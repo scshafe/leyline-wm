@@ -90,10 +90,8 @@ private final class ResidentClientServerFixture: @unchecked Sendable {
 
 func runResidentClientSelfTest(_ args: [String]) -> Int32 {
     var test = SelfTest()
-    let home = ProcessInfo.processInfo.environment["LEYLINE_HOME"]
-        ?? URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-            .deletingLastPathComponent().deletingLastPathComponent().path
-    let fixturePath = home + "/leylined/Fixtures/client/responses.json"
+    let home = SelfTestFixtures.repositoryRoot(arguments: args)
+    let fixturePath = SelfTestFixtures.path("client/responses.json", root: home)
     runResidentControlsClientScenarios(home: home, test: &test)
     guard let bytes = FileManager.default.contents(atPath: fixturePath),
           let responses = (try? JSONValue.parse(bytes))?.objectValue else {
@@ -111,8 +109,6 @@ func runResidentClientSelfTest(_ args: [String]) -> Int32 {
     let missing = ResidentCommandClient.execute(operation: "act", arguments: [action, "--socket", directory + "/absent.sock"])
     test.check(missing.exitCode == 69 && missing.value.at(path: "error.code")?.stringValue == "core_not_running",
                "client/missing-core-has-typed-error-without-mutation-fallback")
-    test.check(missing.value.at(path: "meta.mutation_fallback")?.boolValue == false,
-               "client/missing-core-never-routes-to-legacy-command")
     for invalid in ["-1", "+1", "1.5", "1e3", "9223372036854775808", ""] {
         let reply = ResidentCommandClient.execute(operation: "act", arguments: [action, "--expected-revision", invalid])
         test.check(reply.exitCode == 64 && reply.value.at(path: "error.code")?.stringValue == "expected_revision_invalid",
@@ -203,11 +199,9 @@ func runResidentClientSelfTest(_ args: [String]) -> Int32 {
             test.check(rejected.exitCode != 0 && rejected.value.at(path: "data.reason")?.stringValue == "trace_arguments_invalid",
                 "client/trace-invalid-shape-or-bound-refuses: \(invalid)")
         }
-        let performance = ResidentCommandClient.execute(operation: "perf", arguments: ["--socket", reads.path])
-        test.check(performance.exitCode == 69 && performance.value.at(path: "error.code")?.stringValue == "performance_distributions_unavailable"
-            && performance.value.at(path: "data.release_evidence")?.boolValue == false
-            && performance.value.at(path: "data.distributions") == .null,
-                   "client/perf-unmeasured-is-explicit-and-never-release-certified")
+        let removed = ResidentCommandClient.execute(operation: "perf", arguments: ["--socket", reads.path])
+        test.check(removed.exitCode == 64 && removed.value.at(path: "error.code")?.stringValue == "operation_invalid",
+                   "client/unmeasured-perf-operation-is-not-offered")
     } else { test.check(false, "client/read-server-start") }
     return test.finish("resident-client")
 }

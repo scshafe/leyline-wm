@@ -1,11 +1,15 @@
 # Independent regression oracles
 
-These frozen scene/model answers retain their original bytes. `fixtures.sha256.json`
-pins every relocated fixture. They are test inputs, never runtime authority.
+These frozen scene/model answers keep their original bytes; `fixtures.sha256.json`
+pins every file. They are test inputs, never runtime authority. Each check runs
+the production model code through the developer runner (`bin/leylined-tests`).
 
-`frozen-models.sh` evaluates pure JQ fixtures; `arrangement-model-tests.sh` compares
-native targets, bridge, author, prune, adopt and function seams against JQ and frozen
-goldens; `navigation-tests.sh` compares native/JQ navigation to frozen scenes;
-`landed-equiv.sh` catches write-echo false convergence; `test_largest_first_insertion.py`
-checks geometry, conservation and native/JQ equality. All required checks fail on
-missing corpus or binary. The JQ module closure is private to these tests.
+`model-tests.sh` runs each fixture's `.fn` (grid cells/validity, display bags,
+recursive targets, tileability, display assignment, minimum learning and
+even-reclaim prune) and compares the frozen `.expect`. `navigation-tests.sh`
+ranks the frozen scenes in every direction. `test_largest_first_insertion.py`
+checks insertion geometry, conservation, batch/single equality, refusals and
+managed overload of newcomers with no feasible cut.
+
+The prune expectations were frozen from the retired jq reference engine before
+it was removed. All checks fail on a missing corpus or runner.

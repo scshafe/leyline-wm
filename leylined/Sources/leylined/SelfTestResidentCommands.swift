@@ -288,6 +288,20 @@ private final class ResidentCommandsRig: @unchecked Sendable {
     let socketPath: String
     private(set) var bootstrapResult: JSONValue?
 
+    /// The fixture's display list in the shape the model reads: `usable` from `usable_frame`.
+    static func nativeDisplays(_ raw: [JSONValue]) -> [JSONValue] {
+        raw.map { value in
+            var object = value.objectValue ?? [:]; object["usable"] = object["usable_frame"]; return .object(object)
+        }
+    }
+
+    static func fixtureTopology(displays raw: [JSONValue], gap: JSONValue, outerGap: JSONValue) -> JSONValue {
+        .object(["displays": .array(nativeDisplays(raw)), "gap": gap, "outer_gap": outerGap])
+    }
+
+    /// The topology the rig seeded its arrangement with.
+    let topology: JSONValue
+
     init(fixture: JSONValue, complete: Bool = true, failJournal: Bool = false,
          initialRevision: UInt64 = 0, checkpoint: JSONValue? = nil, normalizeBootstrap: Bool = true, outerGap: Int? = 0,
          stateOnlyAppend: @escaping @Sendable (JSONValue, ResidentEffectorFileJournal) throws -> Void = { try $1.append($0) }) throws {
@@ -296,10 +310,9 @@ private final class ResidentCommandsRig: @unchecked Sendable {
         socketPath = "/tmp/leyline-tests-\(getpid())/lcmd-\(UUID().uuidString.prefix(12)).sock"
         journal = ResidentEffectorFileJournal(path: directory.appendingPathComponent(failJournal ? "missing/journal.jsonl" : "journal.jsonl").path)
         var raw = fixture.at(path: "world")!.objectValue!
-        let displays = (raw["topology"]?.arrayValue ?? []).map { value -> JSONValue in
-            var object = value.objectValue ?? [:]; object["usable"] = object["usable_frame"]; return .object(object)
-        }
-        let topology: JSONValue = .object(["displays": .array(displays), "gap": fixture.at(path: "gap")!, "outer_gap": fixture.at(path: "outer_gap")!])
+        let topology = Self.fixtureTopology(displays: raw["topology"]?.arrayValue ?? [],
+                                            gap: fixture.at(path: "gap")!, outerGap: fixture.at(path: "outer_gap")!)
+        self.topology = topology
         let arrangement = Arrangement.bridgeArrangementNative(store: fixture.at(path: "store")!, topo: topology)
         raw["model_state"] = checkpoint ?? .object(["arrangement": arrangement])
         raw["observation"] = .object(["ready": .bool(complete), "world_complete": .bool(complete),
@@ -311,7 +324,7 @@ private final class ResidentCommandsRig: @unchecked Sendable {
             spaces: ResidentCommandsUnusedSpaces())
         controller = ResidentActionController(server: server, snapshots: snapshots,
             observationQueue: DispatchQueue(label: "leylined.test.resident.commands.observation"),
-            journal: journal, gap: Int(fixture.at(path: "gap")!.intValue!), outerGap: outerGap, effectPort: port, stateOnlyAppend: stateOnlyAppend)
+            journal: journal, gap: fixture.requiredInt("gap"), outerGap: outerGap, effectPort: port, stateOnlyAppend: stateOnlyAppend)
         port.server = server
         port.health = { [weak controller] in controller?.health ?? .object([:]) }
         port.mayIssue = { [weak controller] request in controller?.mayIssueEffect(request) == true }
@@ -343,32 +356,33 @@ private final class ResidentCommandsRig: @unchecked Sendable {
         ServeClient.request(socketPath: socketPath, body: ["op": .string("act"), "action_id": .string(action),
             "request_id": .string(id), "args": arguments])
     }
+    /// One socket round-trip for a request's current result, whatever its phase.
+    func currentResult(_ id: String) -> JSONValue? {
+        ServeClient.request(socketPath: socketPath, body: ["op": .string("result"), "request_id": .string(id)])
+    }
     func result(_ id: String, timeout: Double = 3) -> JSONValue? {
-        let deadline = Date(timeIntervalSinceNow: timeout)
-        while Date() < deadline {
-            if let value = ServeClient.request(socketPath: socketPath, body: ["op": .string("result"), "request_id": .string(id)]),
-               value.at(path: "phase")?.stringValue == "completed" { return value }
-            usleep(500)
+        var value: JSONValue?
+        let completed = selfTestWaitUntil(seconds: timeout) {
+            value = currentResult(id)
+            return value?.at(path: "phase")?.stringValue == "completed"
         }
-        return nil
+        return completed ? value : nil
     }
     func waitForPending(_ count: Int64) -> Bool {
-        let deadline = Date(timeIntervalSinceNow: 2)
-        while Date() < deadline {
-            if controller.health.at(path: "pending_count")?.intValue == count { return true }
-            usleep(500)
-        }
-        return false
+        selfTestWaitUntil { controller.health.at(path: "pending_count")?.intValue == count }
     }
     func waitForProcessed(_ revision: UInt64) -> Bool {
-        let deadline = Date(timeIntervalSinceNow: 2)
-        while Date() < deadline {
-            if controller.health.at(path: "generation_causes")?.arrayValue?.contains(where: {
+        selfTestWaitUntil {
+            controller.health.at(path: "generation_causes")?.arrayValue?.contains(where: {
                 $0.at(path: "event_id")?.stringValue == "revision:\(revision)"
-            }) == true { return true }
-            usleep(500)
+            }) == true
         }
-        return false
+    }
+    /// Wait for the controller's IO lanes to drain.
+    func waitForIOQuiescent(seconds: Int = 2) -> Bool {
+        let drained = DispatchSemaphore(value: 0)
+        controller.whenIOQuiescent { drained.signal() }
+        return drained.wait(timeout: .now() + .seconds(seconds)) == .success
     }
 }
 
@@ -377,14 +391,14 @@ private final class ResidentCommandsRig: @unchecked Sendable {
 func runResidentCommandsSelfTest() -> Int32 {
     var test = SelfTest()
     runBorderSpacingScenarios(test: &test)
-    let path = responsivenessRepositoryRoot() + "/leylined/Fixtures/resident_commands/two_spaces.json"
+    let path = SelfTestFixtures.path("resident_commands/two_spaces.json")
     guard let data = FileManager.default.contents(atPath: path), let fixture = try? JSONValue.parse(data) else {
-        print("not ok resident-commands/fixture-missing"); return 1
+        test.check(false, "resident-commands/fixture-missing"); return test.finish("resident-commands")
     }
     let scenarios = (fixture.at(path: "scenarios")?.arrayValue ?? []).compactMap(\.stringValue)
     test.check(scenarios.count == 27 && Set(scenarios).count == 27, "resident-commands/nonempty-frozen-twenty-seven-scenario-inventory")
     runResidentGutterScenarios(fixture: fixture, test: &test)
-    runResidentBorderWidthScenarios(fixture: fixture, test: &test)
+    runResidentFixedBorderScenarios(fixture: fixture, test: &test)
     runResidentSpacePreferenceToggleScenarios(fixture: fixture, test: &test)
     runResidentCrossGenerationGoalScenarios(test: &test)
     runResidentStateOnlyScenarios(fixture: fixture, test: &test)
@@ -395,6 +409,9 @@ func runResidentCommandsSelfTest() -> Int32 {
     runResidentReleasedInputScenarios(fixture: fixture, test: &test)
     runResidentModeReleasePublicationScenarios(fixture: fixture, test: &test)
     runResidentKeyboardMoveContinuationScenarios(fixture: fixture, test: &test)
+    runInfeasibleInsertionKeyboardScenarios(test: &test)
+    runFocusNavigationRecoveryScenarios(test: &test)
+    runStaleCheckpointRepairScenarios(test: &test)
     runResidentFrameContinuityScenarios(fixture: fixture, test: &test)
     runResidentLifecycleDeadlineScenarios(fixture: fixture, test: &test)
     runResidentOwnFocusHandoffScenarios(fixture: fixture, test: &test)
@@ -404,6 +421,9 @@ func runResidentCommandsSelfTest() -> Int32 {
     runResidentMinimumCheckpointScenario(fixture: fixture, test: &test)
     runResidentProductCompletionScenarios(fixture: fixture, test: &test)
     runResidentStartupReconciliationScenarios(fixture: fixture, test: &test)
+    runStartupRevisionContentionScenarios(fixture: fixture, test: &test)
+    runStartupAdmissionContentionScenarios(fixture: fixture, test: &test)
+    runStartupDesktopSpaceAwaitScenarios(test: &test)
     runReactiveLifecycleRefocusScenarios(fixture: fixture, test: &test)
     do {
         let navigation = try ResidentCommandsRig(fixture: fixture)
@@ -462,10 +482,8 @@ func runResidentCommandsSelfTest() -> Int32 {
             print("diagnostic resize result=\((finalResult ?? .null).canonical()) first=\(firstIssued) pending=\(pending) issued=\(resize.port.issued.count) health=\(resize.controller.health.canonical())")
         }
         let finalState = resize.server.worldState.at(path: "model_state.arrangement") ?? .null
-        let finalFrames = Arrangement.arrangementTargets(bridge: finalState, topo: .object([
-            "displays": .array((fixture.at(path: "world.topology")?.arrayValue ?? []).map { value in
-                var object = value.objectValue!; object["usable"] = object["usable_frame"]; return .object(object)
-            }), "gap": fixture.at(path: "gap")!, "outer_gap": fixture.at(path: "outer_gap")!]))
+        let finalFrames = Arrangement.arrangementTargetsRec(bridge: finalState, topo: ResidentCommandsRig.fixtureTopology(
+            displays: fixture.at(path: "world.topology")?.arrayValue ?? [], gap: fixture.at(path: "gap")!, outerGap: fixture.at(path: "outer_gap")!))
         test.check(finalResult?.at(path: "status")?.stringValue == "accepted"
             && finalFrames.at(path: "1.frame.w") == fixture.at(path: "expected.three_resize_source_width"),
             "resident-commands/held-resize-final-request-accumulates-all-three-forty-point-steps")
@@ -526,9 +544,7 @@ func runResidentCommandsSelfTest() -> Int32 {
         invalidation.port.release("obsolete-resize"); invalidation.port.drainPublications()
         invalidation.publications.releaseHeldResult("obsolete-resize")
         let terminalPublicationObserved = invalidation.publications.waitForResult("obsolete-resize")
-        let quiescent = DispatchSemaphore(value: 0)
-        invalidation.controller.whenIOQuiescent { quiescent.signal() }
-        let terminalProducersQuiescent = quiescent.wait(timeout: .now() + .seconds(2)) == .success
+        let terminalProducersQuiescent = invalidation.waitForIOQuiescent()
         let terminalPublications = invalidation.publications.results(for: "obsolete-resize")
         let cachedTerminal = invalidation.result("obsolete-resize")
         let exactlyOneTerminal = terminalPublicationHeld && completedBeforePublication
@@ -666,12 +682,7 @@ private func runResidentScopedActivationScenarios(fixture: JSONValue, test: inou
 
 private func runResidentStateOnlyModeEntryScenarios(fixture: JSONValue, test: inout SelfTest) {
     do {
-        var unscopedFixture = fixture.objectValue!, store = fixture.at(path: "store")!.objectValue!
-        store["segments"] = .array(store["segments"]!.arrayValue!.map { segment -> JSONValue in
-            var row = segment.objectValue!; row.removeValue(forKey: "display_id"); return .object(row)
-        })
-        unscopedFixture["store"] = .object(store)
-        let rig = try ResidentCommandsRig(fixture: .object(unscopedFixture), normalizeBootstrap: false)
+        let rig = try ResidentCommandsRig(fixture: residentUnscopedModeFixture(fixture), normalizeBootstrap: false)
         let unscoped = rig.server.worldState.at(path: "model_state.arrangement.segments")?.arrayValue
         _ = rig.act("resize.start", id: "unscoped-mode-start")
         let result = rig.result("unscoped-mode-start")
@@ -711,6 +722,7 @@ private final class ResidentCommandsStateOnlyJournalGate: @unchecked Sendable {
     private var active: Bool
     init(actionID: String = "resize.start", active: Bool = true) { self.actionID = actionID; self.active = active }
     func arm() { lock.lock(); active = true; lock.unlock() }
+    func disarm() { lock.lock(); active = false; lock.unlock() }
     var requestID: String? { lock.lock(); defer { lock.unlock() }; return heldID }
     func append(_ record: JSONValue, journal: ResidentEffectorFileJournal) throws {
         try journal.append(record)
@@ -759,8 +771,7 @@ private func runResidentStartupReconciliationScenarios(fixture: JSONValue, test:
             }
             _ = rig.server.applyWorldDelta(["event": .string("world_seed"),
                 "observation": .object(["ready": .bool(true), "world_complete": .bool(true)])])
-            let drained = DispatchSemaphore(value: 0); rig.controller.whenIOQuiescent { drained.signal() }
-            let quiescent = drained.wait(timeout: .now() + .seconds(2)) == .success
+            let quiescent = rig.waitForIOQuiescent()
             test.check(quiescent && rig.server.worldState.at(path: "last_result") == beforeSeed
                 && rig.controller.health.at(path: "controller_nonterminal_request_ids")?.arrayValue?.isEmpty == true,
                 "resident-commands/\(hard ? "reset" : "soft")-OFF-world-seed-does-not-enqueue-doomed-reconciliation")
@@ -795,6 +806,25 @@ private func runResidentStartupReconciliationScenarios(fixture: JSONValue, test:
                 && !CoreRuntimeServices.startupReconciliationMatches(confirmed, requestID: id,
                     baselineRevision: baseline.revision, world: .object(changed)),
                 "resident-commands/\(hard ? "reset" : "soft")-readiness-refuses-wrong-request-and-new-window-lifetime")
+            var clamped = confirmed.objectValue ?? [:]
+            clamped["status"] = .string("failed"); clamped["reason"] = .string("minimum_constraint")
+            clamped["desired_state_committed_revision"] = .int(Int64(clamping: baseline.revision + 1))
+            var timedOut = clamped; timedOut["reason"] = .string("targeted_evidence_timeout")
+            var uncommitted = clamped; uncommitted["desired_state_committed_revision"] = .null
+            var shaped = clamped; shaped["reason"] = .string("fixed_aspect_constraint")
+            test.check(CoreRuntimeServices.startupReconciliationMatches(.object(clamped), requestID: id,
+                    baselineRevision: baseline.revision, world: current)
+                && CoreRuntimeServices.startupReconciliationMatches(.object(shaped), requestID: id,
+                    baselineRevision: baseline.revision, world: current)
+                && !CoreRuntimeServices.startupReconciliationMatches(.object(timedOut), requestID: id,
+                    baselineRevision: baseline.revision, world: current)
+                && !CoreRuntimeServices.startupReconciliationMatches(.object(uncommitted), requestID: id,
+                    baselineRevision: baseline.revision, world: current),
+                "resident-commands/\(hard ? "reset" : "soft")-readiness-accepts-only-a-committed-confirmed-minimum-shortfall")
+            test.check(ResidentActionController.startupDefersMinimumLearning(.object(["resident_starting": .bool(true), "resident_running": .bool(false)]))
+                && !ResidentActionController.startupDefersMinimumLearning(.object(["resident_starting": .bool(false), "resident_running": .bool(false)]))
+                && !ResidentActionController.startupDefersMinimumLearning(.object(["resident_starting": .bool(false), "resident_running": .bool(true)])),
+                "resident-commands/\(hard ? "reset" : "soft")-only-a-starting-resident-defers-constraint-learning-instead-of-dropping-it")
             _ = rig.server.applyWorldDelta(["event": .string("resident_start_completed"), "resident_starting": .bool(false)])
             _ = rig.act("resize.start", id: id + "-next-resize")
             test.check(rig.result(id + "-next-resize")?.at(path: "status")?.stringValue == "accepted"
@@ -802,6 +832,19 @@ private func runResidentStartupReconciliationScenarios(fixture: JSONValue, test:
                 "resident-commands/\(hard ? "reset" : "soft")-completed-start-admits-next-resize-without-manual-reconcile")
         } catch { test.check(false, "resident-commands/startup-reconciliation: \(error)") }
     }
+}
+
+/// Every window and the focus marked managed under the world's observer generation.
+private func residentPositiveFixture(_ fixture: JSONValue) -> JSONValue {
+    var value = fixture.objectValue!, world = fixture.at(path: "world")!.objectValue!
+    let generation = world["observer_generation"]!
+    world["windows"] = .array(world["windows"]!.arrayValue!.map { row in
+        var window = row.objectValue!; window["managed"] = .bool(true); window["observer_generation"] = generation
+        return .object(window)
+    })
+    var focus = world["focus"]!.objectValue!
+    focus["managed"] = .bool(true); focus["observer_generation"] = generation
+    world["focus"] = .object(focus); value["world"] = .object(world); return .object(value)
 }
 
 private func residentUnscopedModeFixture(_ fixture: JSONValue) -> JSONValue {
@@ -813,7 +856,7 @@ private func residentUnscopedModeFixture(_ fixture: JSONValue) -> JSONValue {
 }
 
 private func runResidentStateOnlyCancellationScenarios(fixture: JSONValue, test: inout SelfTest) {
-    let path = responsivenessRepositoryRoot() + "/leylined/Fixtures/resident_commands/state_only_cancellation.json"
+    let path = SelfTestFixtures.path("resident_commands/state_only_cancellation.json")
     guard let bytes = FileManager.default.contents(atPath: path), let proof = try? JSONValue.parse(bytes),
           proof.at(path: "scenarios")?.arrayValue?.count == 5 else {
         test.check(false, "resident-commands/state-only-cancellation-fixture"); return
@@ -857,7 +900,7 @@ private func runResidentStateOnlyCancellationScenarios(fixture: JSONValue, test:
             let before = rig.server.worldState.at(path: "model_state")
             let modeDelayed = DispatchSemaphore(value: 0), modePermit = DispatchSemaphore(value: 0)
             let epoch = UUID().uuidString
-            let input = try ResidentInput.load(home: responsivenessRepositoryRoot(), dispatchAction: { action, complete in
+            let input = try ResidentInput.load(home: SelfTestFixtures.repositoryRoot(), dispatchAction: { action, complete in
                 rig.controller.dispatch(action, completion: complete)
             }, onModeChanged: { mode, generation, _ in
                 if mode == "default" { modeDelayed.signal(); _ = modePermit.wait(timeout: .now() + .seconds(3)) }
@@ -866,12 +909,12 @@ private func runResidentStateOnlyCancellationScenarios(fixture: JSONValue, test:
             return true })
             defer { modePermit.signal(); input.routing.flushForSelfTest() }
             rig.controller.setInputGenerationReader { [weak input] in input?.routing.generation }
-            if inputRelease { _ = input.inject(chord: proof.at(path: "entry_chord")!.stringValue!) }
+            if inputRelease { _ = input.inject(chord: proof.requiredString("entry_chord")) }
             else { _ = rig.act("resize.start", id: "journal-admission-fence") }
             let held = gate.entered.wait(timeout: .now() + .seconds(2)) == .success
             let id = gate.requestID ?? "missing-journal-intent"
             let sourceGeneration = input.routing.generation
-            if inputRelease { input.routing.release(reason: "action_deadline") }
+            if inputRelease { input.routing.release(reason: .actionDeadline) }
             else { rig.controller.invalidate(cause: "cancel") }
             let delayed = !inputRelease || modeDelayed.wait(timeout: .now() + .seconds(1)) == .success
             gate.permit.signal()
@@ -900,10 +943,10 @@ private func runResidentStateOnlyCancellationScenarios(fixture: JSONValue, test:
     do {
         let rig = try ResidentCommandsRig(fixture: fixture)
         let actions = ResidentCommandsInputActionBox()
-        let input = try ResidentInput.load(home: responsivenessRepositoryRoot(), dispatchAction: { action, complete in
+        let input = try ResidentInput.load(home: SelfTestFixtures.repositoryRoot(), dispatchAction: { action, complete in
             actions.record(action); complete(0)
         }, onModeChanged: { _, _, _ in return true })
-        _ = input.inject(chord: proof.at(path: "entry_chord")!.stringValue!); input.routing.flushForSelfTest()
+        _ = input.inject(chord: proof.requiredString("entry_chord")); input.routing.flushForSelfTest()
         guard let action = actions.last else { test.check(false, "resident-commands/direct-commit-routed-action"); return }
         let held = DispatchSemaphore(value: 0), releaseTransition = DispatchSemaphore(value: 0)
         let sourceChecked = DispatchSemaphore(value: 0), completed = DispatchSemaphore(value: 0)
@@ -932,7 +975,7 @@ private func runResidentStateOnlyCancellationScenarios(fixture: JSONValue, test:
         let id = rig.controller.health.at(path: "controller_nonterminal_request_ids")?.arrayValue?.first?.stringValue ?? "missing-direct-request"
         let admitted = rig.controller.handle(["op": .string("result"), "request_id": .string(id)])
         let initialChecked = sourceChecked.wait(timeout: .now() + .seconds(1)) == .success
-        input.routing.release(reason: "action_deadline")
+        input.routing.release(reason: .actionDeadline)
         releaseTransition.signal()
         let result = rig.result(id)
         test.check(transitionHeld && initialChecked && completed.wait(timeout: .now() + .seconds(1)) == .success
@@ -967,7 +1010,7 @@ private func runResidentEffectPublicationCancellationScenario(fixture: JSONValue
         let rig = try ResidentCommandsRig(fixture: fixture)
         _ = rig.act("resize.start", id: "effect-guard-mode"); _ = rig.result("effect-guard-mode")
         let actions = ResidentCommandsInputActionBox()
-        let input = try ResidentInput.load(home: responsivenessRepositoryRoot(), dispatchAction: { action, complete in
+        let input = try ResidentInput.load(home: SelfTestFixtures.repositoryRoot(), dispatchAction: { action, complete in
             actions.record(action); complete(0)
         }, onModeChanged: { _, _, _ in return true })
         _ = input.inject(chord: "cmd + ctrl + alt + shift - r"); input.routing.flushForSelfTest()
@@ -1000,7 +1043,7 @@ private func runResidentEffectPublicationCancellationScenario(fixture: JSONValue
         rig.controller.dispatch(action) { _ in }
         let checked = prechecked.wait(timeout: .now() + .seconds(2)) == .success
         let id = rig.controller.health.at(path: "controller_nonterminal_request_ids")?.arrayValue?.first?.stringValue ?? "missing-effect-guard"
-        input.routing.release(reason: "action_deadline")
+        input.routing.release(reason: .actionDeadline)
         permitPrecheck.signal(); permitAuthority.signal()
         let result = rig.result(id)
         test.check(authorityHeld && checked && result?.at(path: "status")?.stringValue == "refused"
@@ -1021,10 +1064,8 @@ private func runResidentMinimumCheckpointScenario(fixture: JSONValue, test: inou
             var object = value.objectValue!; object["app"] = .string("minimum-fixture-app"); return .object(object)
         })
         prepared["world"] = .object(world)
-        let displays = world["topology"]!.arrayValue!.map { value -> JSONValue in
-            var object = value.objectValue!; object["usable"] = object["usable_frame"]; return .object(object)
-        }
-        let topology: JSONValue = .object(["displays": .array(displays), "gap": fixture.at(path: "gap")!, "outer_gap": fixture.at(path: "outer_gap")!])
+        let topology = ResidentCommandsRig.fixtureTopology(displays: world["topology"]!.arrayValue!,
+                                                           gap: fixture.at(path: "gap")!, outerGap: fixture.at(path: "outer_gap")!)
         let initialCheckpoint: JSONValue = .object([
             "arrangement": Arrangement.bridgeArrangementNative(store: fixture.at(path: "store")!, topo: topology),
             "minimum_sizes": .object(["minimum-fixture-app": .object(["w": .int(5000)])])])
@@ -1032,8 +1073,7 @@ private func runResidentMinimumCheckpointScenario(fixture: JSONValue, test: inou
         rig.port.emitMinimumEvidence = true
         _ = rig.act("resize.start", id: "minimum-mode"); _ = rig.result("minimum-mode")
         _ = rig.act("resize.adjust.east", id: "minimum-write"); let result = rig.result("minimum-write")
-        let deadline = Date().addingTimeInterval(2)
-        while Date() < deadline && rig.controller.health.at(path: "minimum_learning_status")?.stringValue != "known_floor_self_healed" { usleep(500) }
+        _ = selfTestWaitUntil { rig.controller.health.at(path: "minimum_learning_status")?.stringValue == "known_floor_self_healed" }
         let current = rig.server.worldState.at(path: "model_state")!
         let checkpoint = try rig.journal.recoverCheckpoint()
         let learned = result?.at(path: "status")?.stringValue == "accepted"
@@ -1078,7 +1118,7 @@ private func runResidentCachedLandingScenarios(fixture: JSONValue, test: inout S
             "focus": matchingWindows.first!, "observation_window_id": .int(Int64(request.windowID)!),
             "observation_completed_uptime_ns": .int(Int64(stamp))])
         let processed = rig.waitForProcessed(cache.revision.value)
-        let pending = ServeClient.request(socketPath: rig.socketPath, body: ["op": .string("result"), "request_id": .string(request.requestID)])
+        let pending = rig.currentResult(request.requestID)
         let allFramesCached = request.frameTargets.allSatisfy { id, target in
             matchingWindows.first { $0.at(path: "window_id")?.intValue.map(String.init) == id }.flatMap { Frame.from($0.at(path: "frame")) } == target
         }
@@ -1117,7 +1157,7 @@ private func runResidentReleasedInputScenarios(fixture: JSONValue, test: inout S
         let actions = ResidentCommandsInputActionBox()
         let delayedModeEntered = DispatchSemaphore(value: 0), deliverMode = DispatchSemaphore(value: 0)
         let delayedModeCompleted = DispatchSemaphore(value: 0)
-        guard let input = try? ResidentInput.load(home: responsivenessRepositoryRoot(), dispatchAction: { action, complete in
+        guard let input = try? ResidentInput.load(home: SelfTestFixtures.repositoryRoot(), dispatchAction: { action, complete in
             if action.actionId == "resize.start" { complete(0); return }
             actions.record(action); rig.controller.dispatch(action, completion: complete)
         }, onModeChanged: { mode, generation, _ in
@@ -1131,18 +1171,18 @@ private func runResidentReleasedInputScenarios(fixture: JSONValue, test: inout S
         defer { deliverMode.signal(); input.routing.flushForSelfTest() }
         rig.controller.setInputGenerationReader { [weak input] in input?.routing.generation }
         rig.port.mayIssue = { [weak controller = rig.controller] in controller?.mayIssueEffect($0) == true }
-        let entered = input.inject(chord: fixture.at(path: "input_generation_regression.entry_chord")!.stringValue!)
+        let entered = input.inject(chord: fixture.requiredString("input_generation_regression.entry_chord"))
         input.routing.flushForSelfTest()
         let liveGeneration = input.routing.generation
         rig.port.hold(true)
-        let adjusted = input.inject(chord: fixture.at(path: "input_generation_regression.adjust_chord")!.stringValue!)
+        let adjusted = input.inject(chord: fixture.requiredString("input_generation_regression.adjust_chord"))
         input.routing.flushForSelfTest()
         let issued = rig.port.waitForIssues(1)
         guard let request = rig.port.issued.first, let oldAction = actions.last else {
             test.check(false, "resident-commands/released-input-requires-real-routed-and-issued-action"); return
         }
         let beforeReleaseAllowed = rig.controller.mayIssueEffect(request)
-        input.routing.release(reason: "action_deadline")
+        input.routing.release(reason: .actionDeadline)
         let notificationDelayed = delayedModeEntered.wait(timeout: .now() + .seconds(1)) == .success
         let releasedGeneration = input.routing.generation
         let refusedBeforeMode = !rig.controller.mayIssueEffect(request)
@@ -1226,9 +1266,7 @@ private func runResidentInputProgressScenarios(fixture: JSONValue, test: inout S
                 "observation": .object(["ready": .bool(true), "world_complete": .bool(true),
                     "read_started_uptime_ns": .int(Int64(stamp)), "read_completed_uptime_ns": .int(Int64(stamp))])])
             _ = rig.waitForProcessed(event.revision.value)
-            let drained = DispatchSemaphore(value: 0)
-            rig.controller.whenIOQuiescent { drained.signal() }
-            _ = drained.wait(timeout: .now() + .seconds(2))
+            _ = rig.waitForIOQuiescent()
             return stamp
         }
         let firstTarget = observe(1)
@@ -1278,7 +1316,7 @@ private func runResidentOwnFocusHandoffScenarios(fixture: JSONValue, test: inout
             delta["focus"] = .object(focus); delta["windows"] = .array(windows)
             let observed = rig.server.applyWorldDelta(delta); _ = rig.waitForProcessed(observed.revision.value)
             if mutation == "valid" {
-                let queued = ServeClient.request(socketPath: rig.socketPath, body: ["op": .string("result"), "request_id": .string(request.requestID)])
+                let queued = rig.currentResult(request.requestID)
                 test.check(queued?.at(path: "phase")?.stringValue == "queued" && rig.port.cancelledIDs.isEmpty
                     && rig.controller.observationGeneration(for: request) == generation,
                     "resident-commands/own-frontmost-handoff-preserves-only-fresh-intended-focus-goal-while-raise-ACK-is-pending")
@@ -1338,7 +1376,7 @@ private func runResidentLifecycleDeadlineScenarios(fixture: JSONValue, test: ino
                 "reason": .string("ax_window_created"), "source_receipt_uptime_ns": .int(Int64(popupReceipt)),
                 "read_completed_uptime_ns": .int(Int64(popupReceipt + 1))])])
         let processed = rig.waitForProcessed(created.revision.value)
-        let cache = ServeClient.request(socketPath: rig.socketPath, body: ["op": .string("result"), "request_id": .string(request.requestID)])
+        let cache = rig.currentResult(request.requestID)
         test.check(processed && cache?.at(path: "phase")?.stringValue == "queued"
             && rig.port.deadlineIsArmed(request.requestID) && rig.port.cancelledIDs.isEmpty
             && rig.controller.mayIssueEffect(request),
@@ -1397,7 +1435,7 @@ private func runResidentFrameContinuityScenarios(fixture: JSONValue, test: inout
             "observer_generation": .int(Int64(nextGeneration)),
             "focus": rig.server.worldState.at(path: "windows")!.arrayValue![1]])
         let processed = rig.waitForProcessed(activation.revision.value)
-        let admission = ServeClient.request(socketPath: rig.socketPath, body: ["op": .string("result"), "request_id": .string(request.requestID)])
+        let admission = rig.currentResult(request.requestID)
         test.check(pendingBeforeRebind && processed && rig.controller.mayIssueEffect(request)
             && rig.controller.observationGeneration(for: request) == nextGeneration
             && rig.port.cancelledIDs.isEmpty && rig.port.writeCount == 0
@@ -1460,11 +1498,8 @@ private func runResidentFrameContinuityScenarios(fixture: JSONValue, test: inout
         let recovered = recovery.server.applyWorldDelta(["event": .string("app_activated"),
             "observer_generation": .int(9), "observation": .object(["ready": .bool(true), "world_complete": .bool(true), "world_recovered": .bool(false)])])
         _ = recovery.waitForProcessed(recovered.revision.value)
-        let deadline = Date(timeIntervalSinceNow: 2)
-        while recovery.server.worldState.at(path: "model_state.space_partitions.schema") == nil && Date() < deadline { usleep(500) }
-        let quiescent = DispatchSemaphore(value: 0)
-        recovery.controller.whenIOQuiescent { quiescent.signal() }
-        let durable = quiescent.wait(timeout: .now() + .seconds(2)) == .success
+        _ = selfTestWaitUntil { recovery.server.worldState.at(path: "model_state.space_partitions.schema") != nil }
+        let durable = recovery.waitForIOQuiescent()
         let checkpoint = try recovery.journal.recoverCheckpoint()
         test.check(durable && recovery.server.worldState.at(path: "model_state.space_partitions.schema")?.stringValue == "leyline/resident-space-partitions/v1"
             && checkpoint.state?.at(path: "space_partitions.schema")?.stringValue == "leyline/resident-space-partitions/v1"
@@ -1578,19 +1613,40 @@ private func runResidentSpaceSwitchScenarios(fixture: JSONValue, test: inout Sel
         test.check(returnRestored,
             "resident-commands/return-to-actual-Space-restores-manual-geometry-and-durable-dormant-cache")
     } catch { test.check(false, "resident-commands/Space-switch-fixture: \(error)") }
+    do {
+        // Mission Control moves window 2 to another Space; the active Spaces stay.
+        let rig = try ResidentCommandsRig(fixture: fixture)
+        let departedKey = "display-A/space-C"
+        let windows = rig.server.worldState.at(path: "windows")!.arrayValue!.map { window -> JSONValue in
+            guard window.at(path: "window_id")?.intValue == 2 else { return window }
+            var row = window.objectValue!
+            row["space_key"] = .string(departedKey); row["space_visible"] = .bool(false)
+            row["onscreen"] = .bool(false); row["eligible"] = .bool(false); row["managed"] = .bool(false)
+            return .object(row)
+        }
+        let receipt = DispatchTime.now().uptimeNanoseconds
+        let moved = rig.server.applyWorldDelta(["event": .string("window_space_changed"), "windows": .array(windows)])
+        let result = rig.publications.waitForInternalReconcile(after: receipt - 1)
+        let bound = Set((rig.server.worldState.at(path: "model_state.arrangement.bindings")?.objectValue ?? [:]).values
+            .compactMap { $0.at(path: "window_id")?.intValue })
+        test.check(moved.status == .accepted && result?.at(path: "status")?.stringValue == "accepted" && bound == [1],
+            "resident-commands/window-moved-to-another-Space-reconciles-its-origin-without-a-Space-switch")
+    } catch { test.check(false, "resident-commands/window-Space-move-fixture: \(error)") }
 }
 
 private func runResidentGutterScenarios(fixture: JSONValue, test: inout SelfTest) {
-    let displays = (fixture.at(path: "world.topology")?.arrayValue ?? []).map { value -> JSONValue in
-        var object = value.objectValue!; object["usable"] = object["usable_frame"]; return .object(object)
+    let displays = ResidentCommandsRig.nativeDisplays(fixture.at(path: "world.topology")?.arrayValue ?? [])
+    // The same two-window store with 590x700 minimums must keep identical frames.
+    var constrained = fixture.at(path: "store")!.objectValue!
+    var constrainedBindings = constrained["bindings"]!.objectValue!
+    for (key, value) in constrainedBindings {
+        var binding = value.objectValue!; binding["min_size"] = .object(["w": .int(590), "h": .int(700)])
+        constrainedBindings[key] = .object(binding)
     }
-    let tree: JSONValue = .object(["root_id": .string("root"), "nodes": .object([
-        "root": .object(["id": .string("root"), "mode": .string("region"), "children": .array([.string("d:1")])]),
-        "d:1": .object(["id": .string("d:1"), "mode": .string("row"), "display_id": .int(1),
-            "frame_source": .string("pinned"), "children": .array([.string("w:1"), .string("w:2")])]),
-        "w:1": .object(["id": .string("w:1"), "window_id": .int(1), "min_size": .object(["w": .int(590), "h": .int(700)])]),
-        "w:2": .object(["id": .string("w:2"), "window_id": .int(2), "min_size": .object(["w": .int(590), "h": .int(700)])]),
-    ])])
+    constrained["bindings"] = .object(constrainedBindings)
+    func targets(_ store: JSONValue, _ topology: JSONValue) -> JSONValue {
+        Arrangement.arrangementTargetsRec(bridge: Arrangement.bridgeArrangementNative(store: store, topo: topology), topo: topology)
+    }
     let gutterCases = fixture.at(path: "gutter_cases")?.arrayValue ?? []
     test.check(gutterCases.compactMap { $0.at(path: "gap")?.intValue } == [0, 8, 20],
         "resident-commands/gutter-fixture-discovery-exact-and-nonempty")
@@ -1601,24 +1657,23 @@ private func runResidentGutterScenarios(fixture: JSONValue, test: inout SelfTest
         let cells = Arrangement.cellsMd(Arrangement.parseSegs(fixture.at(path: "store.segments")), normalized)
         let area = cells.reduce(0) { $0 + $1.frame.w * $1.frame.h }
         let usableArea = normalized.displays.reduce(0) { $0 + $1.usable.w * $1.usable.h }
-        let bridge = Arrangement.bridgeArrangementNative(store: fixture.at(path: "store")!, topo: topology)
-        let targets = Arrangement.arrangementTargets(bridge: bridge, topo: topology)
-        let first = Frame.from(targets.at(path: "1.frame")), second = Frame.from(targets.at(path: "2.frame"))
+        let plain = targets(fixture.at(path: "store")!, topology)
+        let first = Frame.from(plain.at(path: "1.frame")), second = Frame.from(plain.at(path: "2.frame"))
         test.check(abs(area - usableArea) < 0.5 && first != nil && second != nil
             && first!.x == 0 && first!.y == 30 && first!.maxY == 800 && second!.maxX == 1200
             && abs(second!.x - first!.maxX - Double(gap)) < 0.5,
             "resident-commands/gutter-\(gap)-covers-raw-usable-canvas-with-only-interior-inset")
-        let projected = Project.reconcileTargets(tree: tree, topo: topology)
-        let projectedFirst = Frame.from(projected.at(path: "1.frame")), projectedSecond = Frame.from(projected.at(path: "2.frame"))
-        test.check(projectedFirst == first && projectedSecond == second && projectedFirst!.w >= 590
-            && projectedSecond!.w >= 590 && projectedFirst!.h >= 700,
-            "resident-commands/gutter-\(gap)-native-and-tree-min-fit-agree-without-double-reservations")
+        let minimum = targets(.object(constrained), topology)
+        let minimumFirst = Frame.from(minimum.at(path: "1.frame")), minimumSecond = Frame.from(minimum.at(path: "2.frame"))
+        test.check(minimumFirst == first && minimumSecond == second && minimumFirst!.w >= 590
+            && minimumSecond!.w >= 590 && minimumFirst!.h >= 700,
+            "resident-commands/gutter-\(gap)-minimums-fit-without-double-reservations")
     }
     let legacy: JSONValue = .object(["displays": .array(displays), "gap": .int(8)])
     let explicitLegacy: JSONValue = .object(["displays": .array(displays), "gap": .int(8), "outer_gap": .int(8)])
     test.check(Project.normTopology(legacy).outerGap == 8 && !Project.normTopology(legacy).hasExplicitOuterGap
-        && Project.reconcileTargets(tree: tree, topo: legacy) == Project.reconcileTargets(tree: tree, topo: explicitLegacy),
-        "resident-commands/missing-outer-gap-preserves-legacy-projection-exactly")
+        && targets(.object(constrained), legacy) == targets(.object(constrained), explicitLegacy),
+        "resident-commands/missing-outer-gap-defaults-to-the-interior-gap")
 }
 
 private func runResidentSpacePreferenceToggleScenarios(fixture: JSONValue, test: inout SelfTest) {
@@ -1627,13 +1682,13 @@ private func runResidentSpacePreferenceToggleScenarios(fixture: JSONValue, test:
         let target = ResidentSpaceTarget(spaceKey: "display-A/space-A", displayId: "display-A")
         let path = rig.directory.appendingPathComponent("space-settings.json").path
         try ResidentSettingsStore.write(path: path, spacesEnabled: [target.spaceKey: true, "display-B/space-B": false],
-            desiredRunning: true, globalGutterWidth: 1)
+            desiredRunning: true)
         let off = try ResidentSpaceManagement.toggle(target: target, world: rig.server.worldState,
             settingsPath: path, desiredRunning: true, commit: { rig.server.setSpaceEnabled($0, enabled: $1) })
         let disabled = ResidentSettingsStore.read(path: path)
         test.check(!off && !rig.server.spaceIsEnabled(target.spaceKey) && disabled.spacesEnabled[target.spaceKey] == false
             && disabled.spacesEnabled["display-B/space-B"] == false && !rig.server.spaceIsEnabled("display-B/space-B")
-            && disabled.desiredRunning && disabled.globalGutterWidth == 1,
+            && disabled.desiredRunning,
             "space-shortcut/native-off-persists-only-target-and-preserves-global-settings")
         let on = try ResidentSpaceManagement.toggle(target: target, world: rig.server.worldState,
             settingsPath: path, desiredRunning: true, commit: { rig.server.setSpaceEnabled($0, enabled: $1) })
@@ -1665,51 +1720,23 @@ private func runResidentSpacePreferenceToggleScenarios(fixture: JSONValue, test:
     } catch { test.check(false, "space-shortcut/native-integration: \(error)") }
 }
 
-/// Production-default outer policy must use the configured stroke width even
-/// though older fixed-geometry integration specimens declare outer_gap0.
-private func runResidentBorderWidthScenarios(fixture: JSONValue, test: inout SelfTest) {
-    let path = responsivenessRepositoryRoot() + "/leylined/Fixtures/projection/border-spacing.json"
+/// Shipping spacing and renderer share the fixed 1-point width.
+private func runResidentFixedBorderScenarios(fixture: JSONValue, test: inout SelfTest) {
+    let path = SelfTestFixtures.path("projection/border-spacing.json")
     guard let bytes = FileManager.default.contents(atPath: path), let spacing = try? JSONValue.parse(bytes),
-          let cases = spacing.at(path: "resident_cases")?.arrayValue, cases.count == 5 else {
-        test.check(false, "resident-border/fixture-load"); return
-    }
-    for scenario in cases {
-        do {
-            var configured = fixture.objectValue!
-            let width = scenario.at(path: "width")!.intValue!
-            configured["gap"] = .int(width)
-            let rig = try ResidentCommandsRig(fixture: .object(configured), outerGap: nil)
-            let windows = rig.server.worldState.at(path: "windows")!.arrayValue!
-            test.check(Frame.from(windows.first { $0.at(path: "window_id") == .int(1) }?.at(path: "frame"))
-                == Frame.from(scenario.at(path: "expected_left"))
-                && Frame.from(windows.first { $0.at(path: "window_id") == .int(2) }?.at(path: "frame"))
-                == Frame.from(scenario.at(path: "expected_right")),
-                "resident-border/width-\(width)-real-controller-journal-effect-uses-border-spacing")
-        } catch { test.check(false, "resident-border/integration: \(error)") }
-    }
+          let scenario = spacing.at(path: "resident_cases")?.arrayValue?.first(where: {
+              $0.at(path: "width")?.intValue == Int64(BorderPalette.thickness)
+          }) else { test.check(false, "resident-border/fixed-spacing-fixture"); return }
     do {
-        let rig = try ResidentCommandsRig(fixture: fixture, outerGap: nil)
-        for scenario in cases.reversed() where scenario.at(path: "width")?.intValue != 8 {
-            let width = scenario.at(path: "width")!.intValue!
-            let receipt = DispatchTime.now().uptimeNanoseconds
-            rig.controller.setGap(Int(width))
-            let result = rig.publications.waitForInternalReconcile(after: receipt)
-            let windows = rig.server.worldState.at(path: "windows")!.arrayValue!
-            test.check(result?.at(path: "status")?.stringValue == "accepted"
-                && Frame.from(windows.first { $0.at(path: "window_id") == .int(1) }?.at(path: "frame"))
-                    == Frame.from(scenario.at(path: "expected_left"))
-                && Frame.from(windows.first { $0.at(path: "window_id") == .int(2) }?.at(path: "frame"))
-                    == Frame.from(scenario.at(path: "expected_right")),
-                "resident-border/width-change-to-\(width)-reflows-same-resident-with-shared-spacing")
-        }
-    } catch { test.check(false, "resident-border/responsive-configuration: \(error)") }
-}
-
-private final class ResidentCommandsOutcomeBox: @unchecked Sendable {
-    private let lock = NSLock()
-    private var values: [ResidentEffectOutcome] = []
-    func record(_ value: ResidentEffectOutcome) { lock.lock(); values.append(value); lock.unlock() }
-    var last: ResidentEffectOutcome? { lock.lock(); defer { lock.unlock() }; return values.last }
+        var configured = fixture.objectValue!; configured["gap"] = .int(Int64(BorderPalette.thickness))
+        let rig = try ResidentCommandsRig(fixture: .object(configured), outerGap: nil)
+        let windows = rig.server.worldState.at(path: "windows")!.arrayValue!
+        test.check(Frame.from(windows.first { $0.at(path: "window_id") == .int(1) }?.at(path: "frame"))
+            == Frame.from(scenario.at(path: "expected_left"))
+            && Frame.from(windows.first { $0.at(path: "window_id") == .int(2) }?.at(path: "frame"))
+            == Frame.from(scenario.at(path: "expected_right")),
+            "resident-border/fixed-one-point-spacing-through-real-journal-and-effects")
+    } catch { test.check(false, "resident-border/integration: \(error)") }
 }
 
 private func runResidentCrossGenerationGoalScenarios(test: inout SelfTest) {
@@ -1721,10 +1748,10 @@ private func runResidentCrossGenerationGoalScenarios(test: inout SelfTest) {
         let context = ResidentEffectContext(revision: 3, observerGeneration: 8, activeSpaceKey: "display-A/space-A",
             topologyRevision: 4, trusted: true, complete: true, spaceEnabled: true)
         let port = ResidentCommandsPort(); port.hold(true)
-        let outcomes = ResidentCommandsOutcomeBox()
+        let outcomes = Recorded<ResidentEffectOutcome>()
         let observationClock = ResidentAtomic<UInt64>(100)
         let effector = ResidentEffector(context: context, journal: journal, port: port,
-            now: { observationClock.load(ordering: .acquiring) }, onOutcome: { outcomes.record($0) })
+            now: { observationClock.load(ordering: .acquiring) }, onOutcome: { outcomes.append($0) })
         var request = ResidentEffectRequest(requestID: "generation-goal", actionID: "nav.focus.east", windowID: "2",
             expectedRevision: 3, observerGeneration: 8, activeSpaceKey: "display-A/space-A", topologyRevision: 4,
             receiptNanos: 10, frame: Frame(x: 604, y: 30, w: 596, h: 770))
@@ -1760,20 +1787,11 @@ private func runResidentCrossGenerationGoalScenarios(test: inout SelfTest) {
 /// Actual Controller/journal/effect route over independently delivered mock AX
 /// observations. These cases prove state/provenance semantics, not live pixels.
 private func runResidentProductCompletionScenarios(fixture sourceFixture: JSONValue, test: inout SelfTest) {
-    let path = responsivenessRepositoryRoot() + "/leylined/Fixtures/resident_commands/product_completion.json"
+    let path = SelfTestFixtures.path("resident_commands/product_completion.json")
     guard let bytes = FileManager.default.contents(atPath: path), let product = try? JSONValue.parse(bytes) else {
         test.check(false, "product/fixture-load"); return
     }
-    var positiveFixture = sourceFixture.objectValue!, positiveWorld = sourceFixture.at(path: "world")!.objectValue!
-    let observerGeneration = positiveWorld["observer_generation"]!
-    positiveWorld["windows"] = .array(positiveWorld["windows"]!.arrayValue!.map { row -> JSONValue in
-        var window = row.objectValue!; window["managed"] = .bool(true); window["observer_generation"] = observerGeneration
-        return .object(window)
-    })
-    var positiveFocus = positiveWorld["focus"]!.objectValue!
-    positiveFocus["managed"] = .bool(true); positiveFocus["observer_generation"] = observerGeneration
-    positiveWorld["focus"] = .object(positiveFocus); positiveFixture["world"] = .object(positiveWorld)
-    let fixture = JSONValue.object(positiveFixture)
+    let fixture = residentPositiveFixture(sourceFixture)
     let previewActions = product.at(path: "preview_actions")!.arrayValue!.compactMap(\.stringValue)
     func preparePreview(_ rig: ResidentCommandsRig, prefix: String) -> Bool {
         for (index, action) in previewActions.enumerated() {
@@ -1783,11 +1801,7 @@ private func runResidentProductCompletionScenarios(fixture sourceFixture: JSONVa
         }
         return true
     }
-    func wait(_ predicate: () -> Bool) -> Bool {
-        let deadline = Date().addingTimeInterval(3)
-        while !predicate() { if Date() >= deadline { return false }; usleep(500) }
-        return true
-    }
+    func wait(_ predicate: () -> Bool) -> Bool { selfTestWaitUntil(seconds: 3, predicate) }
     do {
         let preview = try ResidentCommandsRig(fixture: fixture)
         let initial = preview.server.worldState.at(path: "model_state.arrangement")
@@ -1805,7 +1819,7 @@ private func runResidentProductCompletionScenarios(fixture sourceFixture: JSONVa
                 return $0.frame.json == (target?.at(path: "effect_frame") ?? target?.at(path: "frame"))
             },
             "product/native-staged-preview-shares-current-revision-and-keeps-every-actual-window-stationary")
-        _ = preview.act(product.at(path: "preview_commit")!.stringValue!, id: "exact-confirm")
+        _ = preview.act(product.requiredString("preview_commit"), id: "exact-confirm")
         let confirmed = preview.result("exact-confirm")
         let expected = candidate?.at(path: "targets")?.objectValue ?? [:]
         let issued = preview.port.issued.last
@@ -1822,7 +1836,7 @@ private func runResidentProductCompletionScenarios(fixture sourceFixture: JSONVa
         updated["minimum_sizes"] = product.at(path: "stale_minimums")
         let delta = stale.server.applyWorldDelta(["event": .string("fixture_floor_changed"), "model_state": .object(updated)])
         _ = stale.waitForProcessed(delta.revision.value)
-        _ = stale.act(product.at(path: "preview_commit")!.stringValue!, id: "stale-confirm")
+        _ = stale.act(product.requiredString("preview_commit"), id: "stale-confirm")
         let replacement = stale.result("stale-confirm")
         test.check(replacement?.at(path: "reason")?.stringValue == "candidate_replaced_requires_confirmation"
             && stale.port.issued.isEmpty && stale.server.worldState.at(path: "model_state.interaction.candidate.candidate_id") != oldID
@@ -1835,7 +1849,7 @@ private func runResidentProductCompletionScenarios(fixture sourceFixture: JSONVa
         let refocus = stale.server.applyWorldDelta(["event": .string("app_activated"), "observer_generation": .int(9),
             "windows": .array(refocusedWindows), "focus": refocusedWindows.first { $0.at(path: "window_id") == .int(2) }!])
         _ = stale.waitForProcessed(refocus.revision.value)
-        _ = stale.act(product.at(path: "preview_commit")!.stringValue!, id: "refocused-confirm")
+        _ = stale.act(product.requiredString("preview_commit"), id: "refocused-confirm")
         test.check(stale.result("refocused-confirm")?.at(path: "reason") == .string("candidate_replaced_requires_confirmation")
             && stale.server.worldState.at(path: "model_state.interaction.source_window_id") == .int(1)
             && stale.port.issued.isEmpty,
@@ -1883,28 +1897,6 @@ private func runResidentProductCompletionScenarios(fixture sourceFixture: JSONVa
             && member.server.worldState.at(path: "focus.window_id") == .int(4)
             && member.port.issued.last?.requiresFocus == true,
             "product/menu-reframes-and-focuses-exact-obscured-member-after-unrelated-tracking-revision")
-        var driftedWindows = member.server.worldState.at(path: "windows")!.arrayValue!
-        let driftedIndex = driftedWindows.firstIndex { $0.at(path: "window_id") == .int(4) }!
-        var drifted = driftedWindows[driftedIndex].objectValue!
-        let oldFrame = Frame.from(drifted["frame"])!
-        drifted["frame"] = Frame(x: oldFrame.x + 20, y: oldFrame.y, w: oldFrame.w, h: oldFrame.h).json
-        driftedWindows[driftedIndex] = .object(drifted)
-        let drift = member.server.applyWorldDelta(["event": .string("fixture_unsettled_geometry"), "windows": .array(driftedWindows)])
-        _ = member.waitForProcessed(drift.revision.value)
-        let regutter = ResidentMenuAction(actionID: "layout.regutter", arguments: .object([:]),
-            target: target, expectedRevision: member.server.currentRevision)
-        _ = member.controller.handleMenuAction(regutter, requestID: "regutter-original-space")
-        let regutterResult = member.result("regutter-original-space")
-        let regutterRequest = member.port.issued.last(where: { $0.requestID == "regutter-original-space" })
-        if regutterResult?.at(path: "status")?.stringValue != "accepted" || regutterRequest == nil {
-            print("regutter-diagnostic: " + (regutterResult?.canonical() ?? "missing")
-                + " issued=" + member.port.issued.map(\.requestID).joined(separator: ","))
-        }
-        test.check(regutterResult?.at(path: "status")?.stringValue == "accepted"
-            && regutterResult?.at(path: "verified_nanos")?.intValue != nil
-            && regutterRequest != nil
-            && regutterRequest?.windowSpaceKeys.values.allSatisfy { $0 == target.spaceKey } == true,
-            "product/menu-regutter-routes-through-native-verified-effect-on-original-space-only")
         let badAction = ResidentMenuAction(actionID: "window.select", arguments: .object(["window_id": .int(4), "expected_pid": .int(999)]),
             target: target, expectedRevision: member.server.currentRevision)
         let issueCount = member.port.issued.count
@@ -1923,11 +1915,10 @@ private func runResidentProductCompletionScenarios(fixture sourceFixture: JSONVa
         _ = member.result("history-focus")
         let historyReady = wait { member.server.worldState.at(path: "model_state.confirmed_focus_window_id") == .int(2) }
         _ = member.act("resize.start", id: "history-new-mode"); let historyMode = member.result("history-new-mode")
-        let quiet = DispatchSemaphore(value: 0); member.controller.whenIOQuiescent { quiet.signal() }
-        _ = quiet.wait(timeout: .now() + .seconds(2))
+        _ = member.waitForIOQuiescent()
         let checkpoint = try member.journal.recoverCheckpoint()
         let history = member.server.worldState.at(path: "model_state.focus_history")?.arrayValue ?? []
-        let historyPassed = historyReady && history.count == Int(product.at(path: "history_depth")!.intValue!)
+        let historyPassed = historyReady && history.count == product.requiredInt("history_depth")
             && Set(history.compactMap { $0.at(path: "window_id")?.intValue }).count == history.count
             && history.first?.at(path: "window_id") == .int(2) && history.first?.at(path: "pid") == .int(502)
             && checkpoint.state?.at(path: "focus_history") == .array(history)
@@ -1954,7 +1945,7 @@ private func runResidentProductCompletionScenarios(fixture sourceFixture: JSONVa
             clamp.port.emitMinimumEvidence = true; clamp.port.confirmMinimumClamps = true; clamp.port.hold(true)
             if manual { _ = preparePreview(clamp, prefix: "clamped-preview") }
             else { _ = clamp.act("resize.start", id: "clamped-resize-start"); _ = clamp.result("clamped-resize-start") }
-            let action = manual ? product.at(path: "preview_commit")!.stringValue! : "resize.adjust.east"
+            let action = manual ? product.requiredString("preview_commit") : "resize.adjust.east"
             _ = clamp.act(action, id: "clamped-original")
             guard clamp.port.waitForIssues(1), let request = clamp.port.issued.first,
                   let targetFrame = request.frameTargets[String(clampID)],
@@ -1974,7 +1965,7 @@ private func runResidentProductCompletionScenarios(fixture sourceFixture: JSONVa
             else { clamp.port.minimumHeightOverrides = [String(clampID): floor] }
             clamp.port.hold(false); clamp.port.release(request.requestID)
             let failed = clamp.result("clamped-original")
-            let learned = wait { clamp.server.worldState.at(path: "model_state.minimum_sizes")?.objectValue?[product.at(path: "minimum_application")!.stringValue!]?.at(path: axis)?.numberValue == floor }
+            let learned = wait { clamp.server.worldState.at(path: "model_state.minimum_sizes")?.objectValue?[product.requiredString("minimum_application")]?.at(path: axis)?.numberValue == floor }
             test.check(learned && failed?.at(path: "status")?.stringValue == "failed"
                 && failed?.at(path: "reason")?.stringValue == "minimum_constraint" && failed?.at(path: "verified_nanos") == .null,
                 "product/confirmed-clamp-journals-exact-current-floor-and-preserves-honest-original-result-\(manual)")
@@ -2013,7 +2004,7 @@ private func runResidentProductCompletionScenarios(fixture sourceFixture: JSONVa
 /// Real lifecycle publications traverse controller planning, native journal,
 /// compound effects and matching readback. Direct planner calls cannot certify it.
 private func runReactiveLifecycleRefocusScenarios(fixture sourceFixture: JSONValue, test: inout SelfTest) {
-    let path = responsivenessRepositoryRoot() + "/leylined/Fixtures/resident_commands/reactive_lifecycle_refocus.json"
+    let path = SelfTestFixtures.path("resident_commands/reactive_lifecycle_refocus.json")
     guard let bytes = FileManager.default.contents(atPath: path), let fixture = try? JSONValue.parse(bytes),
           let cases = fixture.at(path: "cases")?.arrayValue else {
         test.check(false, "reactive-lifecycle/fixture-load"); return
@@ -2033,12 +2024,8 @@ private func runReactiveLifecycleRefocusScenarios(fixture sourceFixture: JSONVal
         return result
     }
     func makeFixture(_ row: JSONValue) -> JSONValue {
-        var value = sourceFixture.objectValue!, world = sourceFixture.at(path: "world")!.objectValue!
-        let generation = world["observer_generation"]!
-        var windows = world["windows"]!.arrayValue!.map { raw -> JSONValue in
-            var window = raw.objectValue!; window["managed"] = .bool(true); window["observer_generation"] = generation
-            return .object(window)
-        }
+        var value = residentPositiveFixture(sourceFixture).objectValue!, world = value["world"]!.objectValue!
+        var windows = world["windows"]!.arrayValue!
         if row.at(path: "store")?.stringValue != "two" {
             var extra = windows.first { $0.at(path: "window_id") == .int(2) }!.objectValue!
             for (key, field) in fixture.at(path: "extra_window")!.objectValue! { extra[key] = field }
@@ -2056,18 +2043,13 @@ private func runReactiveLifecycleRefocusScenarios(fixture sourceFixture: JSONVal
         value["world"] = .object(world)
         return .object(value)
     }
-    func quiet(_ rig: ResidentCommandsRig) -> Bool {
-        let completed = DispatchSemaphore(value: 0)
-        rig.controller.whenIOQuiescent { completed.signal() }
-        return completed.wait(timeout: .now() + .seconds(3)) == .success
-    }
+    func quiet(_ rig: ResidentCommandsRig) -> Bool { rig.waitForIOQuiescent(seconds: 3) }
     func nativeTopology(_ rig: ResidentCommandsRig) -> JSONValue {
-        .object(["displays": .array(rig.initialWorld.at(path: "topology")!.arrayValue!.map { raw in
-            var display = raw.objectValue!; display["usable"] = display["usable_frame"]; return .object(display)
-        }), "gap": sourceFixture.at(path: "gap")!, "outer_gap": sourceFixture.at(path: "outer_gap")!])
+        ResidentCommandsRig.fixtureTopology(displays: rig.initialWorld.at(path: "topology")!.arrayValue!,
+                                            gap: sourceFixture.at(path: "gap")!, outerGap: sourceFixture.at(path: "outer_gap")!)
     }
     for row in cases {
-        let name = row.at(path: "name")!.stringValue!
+        let name = row.requiredString("name")
         do {
             let traceStart = UInt64(max(0, ResidentPerformanceTrace.shared.snapshot().at(path: "last_sequence")?.intValue ?? 0))
             let rig = try ResidentCommandsRig(fixture: makeFixture(row))
@@ -2108,12 +2090,12 @@ private func runReactiveLifecycleRefocusScenarios(fixture sourceFixture: JSONVal
             }
             if let expected = row.at(path: "expected_absorber") {
                 let proof = Arrangement.pruneAllocatedWindow(store: rig.server.worldState.at(path: "model_state.arrangement")!,
-                    windowID: row.at(path: "notification_window_id")!.intValue!, topo: nativeTopology(rig), focused: nil)
+                    windowID: row.at(path: "notification_window_id")!.intValue!, topo: nativeTopology(rig))
                 test.check(proof?.at(path: "absorber") == expected,
                     "reactive-lifecycle/\(name)-independent-fixture-proves-absorber-before-real-event")
             }
             let issuedBefore = rig.port.issued.count
-            let event = row.at(path: "event")!.stringValue!
+            let event = row.requiredString("event")
             let removed = Set(row.at(path: "removed_ids")!.arrayValue!.compactMap(\.intValue))
             let windows = rig.server.worldState.at(path: "windows")!.arrayValue!.compactMap { raw -> JSONValue? in
                 guard let id = raw.at(path: "window_id")?.intValue, removed.contains(id) else { return raw }
@@ -2138,8 +2120,7 @@ private func runReactiveLifecycleRefocusScenarios(fixture sourceFixture: JSONVal
                   let requestID = result.at(path: "request_id")?.stringValue else {
                 test.check(false, "reactive-lifecycle/\(name)-real-reactive-completion"); continue
             }
-            let quiet = DispatchSemaphore(value: 0); rig.controller.whenIOQuiescent { quiet.signal() }
-            _ = quiet.wait(timeout: .now() + .seconds(2))
+            _ = rig.waitForIOQuiescent()
             let requests = Array(rig.port.issued.dropFirst(issuedBefore))
             let requiresFocus = row.at(path: "requires_focus")!.boolValue!
             let expectedFocus = row.at(path: "expected_focus")?.intValue
@@ -2164,10 +2145,8 @@ private func runReactiveLifecycleRefocusScenarios(fixture sourceFixture: JSONVal
             let remaining = Set((rig.server.worldState.at(path: "windows")?.arrayValue ?? []).filter {
                 $0.at(path: "space_enabled")?.boolValue == true && $0.at(path: "minimized")?.boolValue != true
             }.compactMap { $0.at(path: "window_id")?.intValue })
-            let topology = rig.initialWorld.at(path: "topology")!.arrayValue!
-            let nativeTopology: JSONValue = .object(["displays": .array(topology.map { raw in
-                var display = raw.objectValue!; display["usable"] = display["usable_frame"]; return .object(display)
-            }), "gap": sourceFixture.at(path: "gap")!, "outer_gap": sourceFixture.at(path: "outer_gap")!])
+            let nativeTopology = ResidentCommandsRig.fixtureTopology(displays: rig.initialWorld.at(path: "topology")!.arrayValue!,
+                                                                     gap: sourceFixture.at(path: "gap")!, outerGap: sourceFixture.at(path: "outer_gap")!)
             let model = rig.server.worldState.at(path: "model_state.arrangement") ?? .null
             test.check(Set(Arrangement.allocatedWindowIDs(model, topo: nativeTopology)) == remaining
                 && checkpoint.state?.at(path: "arrangement") == model,
@@ -2261,16 +2240,7 @@ private final class ResidentCommandsModeInputBox: @unchecked Sendable {
 /// Real routing/mode publications plus native focus history must not revive ghost geometry.
 private func runResidentModeReleasePublicationScenarios(fixture: JSONValue, test: inout SelfTest) {
     do {
-        var positive = fixture.objectValue!, world = fixture.at(path: "world")!.objectValue!
-        let generation = world["observer_generation"]!
-        world["windows"] = .array(world["windows"]!.arrayValue!.map { value in
-            var row = value.objectValue!; row["managed"] = .bool(true); row["observer_generation"] = generation
-            return .object(row)
-        })
-        var focus = world["focus"]!.objectValue!
-        focus["managed"] = .bool(true); focus["observer_generation"] = generation
-        world["focus"] = .object(focus); positive["world"] = .object(world)
-        let rig = try ResidentCommandsRig(fixture: .object(positive))
+        let rig = try ResidentCommandsRig(fixture: residentPositiveFixture(fixture))
         for (action, id) in [("move.start", "release-move-start"), ("move.cursor.east", "release-move-cursor"), ("move.drop", "release-move-stage")] {
             _ = rig.act(action, id: id)
             guard rig.result(id)?.at(path: "status") == .string("accepted") else {
@@ -2291,9 +2261,7 @@ private func runResidentModeReleasePublicationScenarios(fixture: JSONValue, test
         let retained = rig.server.worldState.at(path: "model_state.interaction.mode") == .string("move")
         _ = rig.act("nav.focus.east", id: "release-history-focus")
         let navigated = rig.result("release-history-focus")
-        let deadline = Date(timeIntervalSinceNow: 2)
-        while Date() < deadline,
-              rig.server.worldState.at(path: "model_state.confirmed_focus_window_id") != .int(2) { usleep(500) }
+        _ = selfTestWaitUntil { rig.server.worldState.at(path: "model_state.confirmed_focus_window_id") == .int(2) }
         let recorded = rig.server.committedSnapshot
         test.check(retained && navigated?.at(path: "status") == .string("accepted")
             && recorded.world.at(path: "model_state.confirmed_focus_window_id") == .int(2)
@@ -2306,7 +2274,7 @@ private func runResidentModeReleasePublicationScenarios(fixture: JSONValue, test
 
         // Forced release uses the real atomic mailbox-contention path and current-generation guard.
         let box = ResidentCommandsModeInputBox(), sequence = ResidentAtomic<UInt64>(0)
-        guard let input = try? ResidentInput.load(home: responsivenessRepositoryRoot(), dispatchAction: { _, complete in complete(0) },
+        guard let input = try? ResidentInput.load(home: SelfTestFixtures.repositoryRoot(), dispatchAction: { _, complete in complete(0) },
             onModeChanged: { mode, inputGeneration, reset in
                 let next = sequence.load(ordering: .acquiring) + 1
                 let publication = rig.server.applyModeFrame(.init(type: .changed, epoch: "release-history-fixture",
@@ -2318,7 +2286,7 @@ private func runResidentModeReleasePublicationScenarios(fixture: JSONValue, test
             }) else { test.check(false, "mode-release/native-routing-required"); return }
         box.input = input
         _ = input.inject(chord: "cmd + ctrl + alt + shift - m"); input.routing.flushForSelfTest()
-        input.routing.withMailboxLockForSelfTest { input.releaseModal(reason: "external_context_invalidated") }
+        input.routing.withMailboxLockForSelfTest { input.releaseModal(reason: .externalContextInvalidated) }
         input.routing.flushForSelfTest()
         let cleared = rig.server.committedSnapshot
         _ = rig.waitForProcessed(cleared.revision)
@@ -2350,28 +2318,37 @@ private final class ResidentCommandsKeyboardFeedback: @unchecked Sendable {
     }
 }
 
+/// The same real routing/controller wiring is shared by ordinary and constrained move cases.
+private func makeResidentCommandKeyboardInput(rig: ResidentCommandsRig,
+    feedback: ResidentCommandsKeyboardFeedback, epoch: String) -> ResidentInput? {
+    let box = ResidentCommandsModeInputBox(), sequence = ResidentAtomic<UInt64>(0)
+    _ = rig.server.applyModeFrame(.init(type: .snapshot, epoch: epoch, sequence: 0, mode: "default", resetsInteraction: true))
+    guard let input = try? ResidentInput.load(home: SelfTestFixtures.repositoryRoot(), dispatchAction: { action, complete in
+        if ["move.cancel", "move.off", "resize.off"].contains(action.actionId) { rig.controller.invalidate(cause: "cancel") }
+        rig.controller.dispatch(action) { rc in complete(rc); feedback.record(action.actionId, rc) }
+    }, onModeChanged: { mode, generation, reset in
+        let next = sequence.load(ordering: .acquiring) + 1
+        let result = rig.server.applyModeFrame(.init(type: .changed, epoch: epoch, sequence: Int64(clamping: next),
+        mode: mode, resetsInteraction: reset, inputGeneration: generation),
+        commitGuard: { box.input?.routing.generation == generation ? nil : "input_generation_released" })
+        guard result.status == .accepted else { return false }
+        sequence.store(next, ordering: .releasing)
+        if mode == "default" { rig.controller.invalidate(cause: "cancel") }
+        return true
+    }) else { return nil }
+    box.input = input
+    rig.controller.setInputGenerationReader { box.input?.routing.generation }
+    return input
+}
+
 /// Keyboard predicates consume the actual controller's return code, not a fake rc0 handler.
 private func runResidentKeyboardMoveContinuationScenarios(fixture: JSONValue, test: inout SelfTest) {
     do {
         let rig = try ResidentCommandsRig(fixture: fixture)
-        let box = ResidentCommandsModeInputBox(), sequence = ResidentAtomic<UInt64>(0)
-        let feedback = ResidentCommandsKeyboardFeedback(), epoch = "keyboard-move-continuation"
-        _ = rig.server.applyModeFrame(.init(type: .snapshot, epoch: epoch, sequence: 0, mode: "default", resetsInteraction: true))
-        guard let input = try? ResidentInput.load(home: responsivenessRepositoryRoot(), dispatchAction: { action, complete in
-            if ["move.cancel", "move.off", "resize.off"].contains(action.actionId) { rig.controller.invalidate(cause: "cancel") }
-            rig.controller.dispatch(action) { rc in complete(rc); feedback.record(action.actionId, rc) }
-        }, onModeChanged: { mode, generation, reset in
-            let next = sequence.load(ordering: .acquiring) + 1
-            let result = rig.server.applyModeFrame(.init(type: .changed, epoch: epoch, sequence: Int64(clamping: next),
-                mode: mode, resetsInteraction: reset, inputGeneration: generation),
-                commitGuard: { box.input?.routing.generation == generation ? nil : "input_generation_released" })
-            guard result.status == .accepted else { return false }
-            sequence.store(next, ordering: .releasing)
-            if mode == "default" { rig.controller.invalidate(cause: "cancel") }
-            return true
-        }) else { test.check(false, "keyboard-move/actual-routing-required"); return }
-        box.input = input
-        rig.controller.setInputGenerationReader { box.input?.routing.generation }
+        let feedback = ResidentCommandsKeyboardFeedback()
+        guard let input = makeResidentCommandKeyboardInput(rig: rig, feedback: feedback, epoch: "keyboard-move-continuation") else {
+            test.check(false, "keyboard-move/actual-routing-required"); return
+        }
         func key(_ chord: String) -> ResidentCommandsKeyboardFeedback.Entry? {
             let count = feedback.count
             guard input.inject(chord: chord) == .claimed else { return nil }
@@ -2409,4 +2386,431 @@ private func runResidentKeyboardMoveContinuationScenarios(fixture: JSONValue, te
             && rig.server.worldState.at(path: "model_state.interaction") == nil && rig.port.writeCount > 0,
             "keyboard-move/second-D-confirms-real-effects-and-exits-after-accepted-completion")
     } catch { test.check(false, "keyboard-move/actual-controller-fixture: \(error)") }
+}
+
+/// Independent2x2 fixture reproduces the user's M/J/D path through actual predicates.
+private func runInfeasibleInsertionKeyboardScenarios(test: inout SelfTest) {
+    do {
+        let path = SelfTestFixtures.path("resident_commands/infeasible_insert_2x2.json")
+        let fixture = try JSONValue.parse(Data(contentsOf: URL(fileURLWithPath: path)))
+        let rig = try ResidentCommandsRig(fixture: fixture, outerGap: fixture.requiredInt("outer_gap"))
+        let before = rig.server.committedSnapshot
+        var model = before.world.at(path: "model_state")!.objectValue!
+        let topology = ResidentCommandsRig.fixtureTopology(displays: before.world.at(path: "topology")!.arrayValue!,
+                                                           gap: fixture.at(path: "gap")!, outerGap: fixture.at(path: "outer_gap")!)
+        let arrangement = Arrangement.bridgeArrangementNative(store: fixture.at(path: "store")!, topo: topology)
+        model["arrangement"] = arrangement; model["minimum_sizes"] = fixture.at(path: "minimum_sizes")
+        var cache = model["space_partitions"]!.objectValue!, partitions = cache["partitions"]!.objectValue!
+        for (key, value) in partitions where value.at(path: "space_key") == fixture.at(path: "world.active_context.space_key") {
+            var entry = value.objectValue!; entry["arrangement"] = arrangement; partitions[key] = .object(entry)
+        }
+        cache["partitions"] = .object(partitions); model["space_partitions"] = .object(cache)
+        let revision = rig.server.applyWorldDelta(["event": .string("fixture_constrained_2x2"),
+            "windows": fixture.at(path: "world.windows")!, "focus": fixture.at(path: "world.focus")!, "model_state": .object(model)])
+        guard rig.waitForProcessed(revision.revision.value) else { test.check(false, "infeasible-insert/fixture-ready"); return }
+        let writes = rig.port.writeCount, feedback = ResidentCommandsKeyboardFeedback()
+        guard let input = makeResidentCommandKeyboardInput(rig: rig, feedback: feedback, epoch: "infeasible-insert") else {
+            test.check(false, "infeasible-insert/actual-routing-required"); return
+        }
+        func key(_ chord: String) -> ResidentCommandsKeyboardFeedback.Entry? {
+            let count = feedback.count
+            guard input.inject(chord: chord) == .claimed else { return nil }
+            let reply = feedback.wait(after: count); input.routing.flushForSelfTest(); return reply
+        }
+        guard key("cmd + ctrl + alt + shift - m")?.rc == 0, key("j")?.rc == 0 else {
+            test.check(false, "infeasible-insert/M-J-entry-and-cursor-required"); return
+        }
+        let dropped = key("d"), blocked = rig.server.committedSnapshot
+        test.check(dropped?.rc == 3 && input.routing.mode == "move" && blocked.world.at(path: "mode") == .string("move")
+            && blocked.world.at(path: "model_state.interaction.staged_edge") == fixture.at(path: "preferred_side")
+            && blocked.world.at(path: "model_state.interaction.candidate") == nil
+            && blocked.world.at(path: "last_result.reason") == .string("move_partition_or_min_fit_refused")
+            && rig.port.writeCount == writes,
+            "infeasible-insert/M-J-D-retains-unavailable-edge-without-ghosts-or-window-writes")
+        test.check(blocked.borderPlan.insertionPreview?.isAvailable == false
+            && blocked.borderPlan.insertionPreview?.side.rawValue == fixture.at(path: "preferred_side")?.stringValue
+            && blocked.borderPlan.previewCandidateID == nil && !blocked.borderPlan.rings.contains { $0.stroke == .dashed },
+            "infeasible-insert/unavailable-cue-is-explicit-and-promises-no-destination")
+        let noCommit = key("0x24")
+        test.check(noCommit?.rc == 1 && input.routing.mode == "move" && rig.port.writeCount == writes,
+            "infeasible-insert/Return-cannot-consume-previous-swap-candidate-or-exit-mode")
+        let rotated = key("c"), valid = rig.server.committedSnapshot
+        test.check(rotated?.rc == 0 && input.routing.mode == "move"
+            && valid.world.at(path: "model_state.interaction.staged_edge") == fixture.at(path: "feasible_side")
+            && valid.borderPlan.insertionPreview?.isAvailable == true && valid.borderPlan.previewCandidateID != nil
+            && valid.world.at(path: "model_state.interaction.candidate_unavailable_reason") == nil,
+            "infeasible-insert/C-selects-feasible-side-and-replaces-unavailable-hint")
+        _ = key("c"); let rejectedAgain = rig.server.committedSnapshot
+        let noDropCommit = key("d")
+        test.check(rejectedAgain.borderPlan.insertionPreview?.isAvailable == false && noDropCommit?.rc == 1
+            && input.routing.mode == "move" && rig.port.writeCount == writes,
+            "infeasible-insert/C-through-another-infeasible-side-keeps-controls-and-blocks-second-D")
+        _ = key("c")
+        let candidate = rig.server.worldState.at(path: "model_state.interaction.candidate")
+        let confirmed = key("0x24")
+        test.check(candidate?.at(path: "selection.boundary.side") == fixture.at(path: "commit_side")
+            && confirmed?.rc == 0 && input.routing.mode == "default" && rig.port.writeCount > writes,
+            "infeasible-insert/feasible-confirmation-commits-only-the-displayed-candidate")
+        _ = key("cmd + ctrl + alt + shift - m"); _ = key("j"); _ = key("d")
+        let partial = key("0x35"), final = key("0x35")
+        test.check(partial?.rc == 3 && final?.rc == 0 && input.routing.mode == "default"
+            && rig.server.worldState.at(path: "model_state.interaction") == nil,
+            "infeasible-insert/Escape-unstages-then-clears-unavailable-intent")
+        for field in ["observer_generation", "topology_revision"] {
+            var changed = blocked.world.objectValue!; changed[field] = .int((changed[field]?.intValue ?? 0) + 1)
+            test.check(BorderProjection.plan(world: .object(changed)).insertionPreview == nil,
+                "infeasible-insert/stale-\(field)-clears-unavailable-cue")
+        }
+        var reused = blocked.world.objectValue!
+        reused["windows"] = .array(reused["windows"]!.arrayValue!.map { value in
+            var window = value.objectValue!
+            if window["window_id"] == fixture.at(path: "cursor_id") { window["window_generation"] = .int(99) }
+            return .object(window)
+        })
+        test.check(BorderProjection.plan(world: .object(reused)).insertionPreview == nil,
+            "infeasible-insert/reused-cursor-lifetime-clears-unavailable-cue")
+    } catch { test.check(false, "infeasible-insert/fixture-error: \(error)") }
+}
+
+/// Recovery must not couple focus-only navigation to retired layout lifetimes.
+private func runFocusNavigationRecoveryScenarios(test: inout SelfTest) {
+    do {
+        let path = SelfTestFixtures.path("resident_commands/focus_navigation_recovery.json")
+        let fixture = try JSONValue.parse(Data(contentsOf: URL(fileURLWithPath: path)))
+        let rig = try ResidentCommandsRig(fixture: fixture, outerGap: fixture.requiredInt("outer_gap"))
+        let topology = rig.topology
+        let arrangement = Arrangement.bridgeArrangementNative(store: fixture.at(path: "store")!, topo: topology)
+        var model = rig.server.worldState.at(path: "model_state")!.objectValue!
+        model["arrangement"] = arrangement; model["minimum_sizes"] = fixture.at(path: "minimum_sizes")
+        var cache = model["space_partitions"]!.objectValue!, parts = cache["partitions"]!.objectValue!
+        for (key, row) in parts {
+            var part = row.objectValue!; part["arrangement"] = arrangement; parts[key] = .object(part)
+        }
+        cache["partitions"] = .object(parts); model["space_partitions"] = .object(cache)
+        let renewed = fixture.at(path: "world.windows")!.arrayValue!.map { row -> JSONValue in
+            var window = row.objectValue!; window["window_generation"] = fixture.at(path: "renewed_lifetime"); return .object(window)
+        }
+        let revision = rig.server.applyWorldDelta(["event": .string("fixture_lifetime_renewal"),
+            "windows": .array(renewed), "focus": renewed[0], "model_state": .object(model)])
+        guard rig.waitForProcessed(revision.revision.value) else { test.check(false, "focus-recovery/fixture-ready"); return }
+        let stale = rig.server.worldState.at(path: "model_state")!, writes = rig.port.writeCount
+        let priorIssues = rig.port.issued.count
+        var world = fixture.at(path: "world")!.objectValue!
+        world["windows"] = .array(renewed.map { row in
+            var window = row.objectValue!; window["display"] = .int(1); window["display_id"] = .int(1)
+            window["space_uuid"] = window["space_key"]; return .object(window)
+        })
+        world["complete"] = .bool(true); world["trusted"] = .bool(true); world["space_enabled"] = .bool(true)
+        world["active_space_key"] = fixture.at(path: "world.active_context.space_key")
+        world["focused_window_id"] = renewed[0].at(path: "window_id"); world["topology"] = topology
+        world["observer_epoch"] = rig.server.worldState.at(path: "observer_epoch")
+        world["space_contexts"] = .array(fixture.at(path: "world.space_contexts")!.arrayValue!.map { row in
+            var context = row.objectValue!; context["display_id"] = .int(1); context["space_uuid"] = context["space_key"]; return .object(context)
+        })
+        let layoutCommand = ResidentPlanner.plan(actionID: "resize.start", state: stale, world: .object(world))
+        test.check(layoutCommand.status == .refused && layoutCommand.reason == "space_partitions_require_reconcile"
+            && layoutCommand.targets == .object([:]) && layoutCommand.state == stale,
+            "focus-recovery/stale-layout-still-refuses-geometry-and-preserves-checkpoint")
+        let feedback = ResidentCommandsKeyboardFeedback()
+        guard let input = makeResidentCommandKeyboardInput(rig: rig, feedback: feedback, epoch: "focus-recovery") else {
+            test.check(false, "focus-recovery/routing-required"); return
+        }
+        for step in fixture.at(path: "focus_sequence")!.arrayValue! {
+            let count = feedback.count
+            let claimed = input.inject(chord: step.requiredString("chord")) == .claimed
+            let result = claimed ? feedback.wait(after: count) : nil
+            input.routing.flushForSelfTest()
+            test.check(claimed && result?.rc == 0 && rig.server.worldState.at(path: "focus.window_id") == step.at(path: "target")
+                && input.routing.mode == "default" && rig.port.writeCount == writes,
+                "focus-recovery/\(step.requiredString("chord"))-confirms-current-focus-with-zero-frame-writes")
+        }
+        test.check(rig.server.worldState.at(path: "model_state.arrangement") == stale.at(path: "arrangement")
+            && rig.server.worldState.at(path: "model_state.space_partitions") == stale.at(path: "space_partitions"),
+            "focus-recovery/navigation-keeps-stale-layout-checkpoint-honest")
+        let navigationIssues = Array(rig.port.issued.dropFirst(priorIssues))
+        test.check(navigationIssues.count == fixture.at(path: "focus_sequence")!.arrayValue!.count
+            && navigationIssues.allSatisfy { $0.effectKind == .focus && $0.frameTargets.isEmpty
+                && Set($0.windowGenerations.values) == [fixture.requiredUInt64("renewed_lifetime")] },
+            "focus-recovery/navigation-binds-only-current-lifetimes-with-no-frame-targets")
+        var relocated = world, relocatedWindows = world["windows"]!.arrayValue!
+        let swapped = fixture.at(path: "observed_swap_ids")!.arrayValue!.compactMap(\.intValue)
+        let left = relocatedWindows.firstIndex { $0.at(path: "window_id")?.intValue == swapped[0] }!
+        let right = relocatedWindows.firstIndex { $0.at(path: "window_id")?.intValue == swapped[1] }!
+        var first = relocatedWindows[left].objectValue!, second = relocatedWindows[right].objectValue!
+        let oldFrame = first["frame"]; first["frame"] = second["frame"]; second["frame"] = oldFrame
+        relocatedWindows[left] = .object(first); relocatedWindows[right] = .object(second); relocated["windows"] = .array(relocatedWindows)
+        let currentGeometry = ResidentPlanner.plan(actionID: "nav.focus.east", state: stale, world: .object(relocated))
+        test.check(currentGeometry.status == .accepted && currentGeometry.focusTarget == fixture.at(path: "observed_east_target")?.intValue
+            && currentGeometry.state == stale && currentGeometry.targets == .object([:]),
+            "focus-recovery/ranking-uses-current-observed-position-instead-of-saved-layout-position")
+        for failure in ["incomplete", "untrusted", "unknown-Space", "missing-lifetime", "duplicate-identity", "invalid-frame"] {
+            var invalid = world
+            if failure == "incomplete" { invalid["complete"] = .bool(false) }
+            else if failure == "untrusted" { invalid["trusted"] = .bool(false) }
+            else if failure == "unknown-Space" {
+                invalid["space_contexts"] = .array(invalid["space_contexts"]!.arrayValue!.map { row in
+                    var context = row.objectValue!; context["space_identity_available"] = .bool(false); return .object(context)
+                })
+            } else {
+                var windows = invalid["windows"]!.arrayValue!
+                if failure == "duplicate-identity" { windows.append(windows[0]) }
+                else {
+                    var window = windows[2].objectValue!
+                    if failure == "missing-lifetime" { window["window_generation"] = .int(0) }
+                    else { var frame = window["frame"]!.objectValue!; frame["w"] = .int(-1); window["frame"] = .object(frame) }
+                    windows[2] = .object(window)
+                }
+                invalid["windows"] = .array(windows)
+            }
+            let refused = ResidentPlanner.plan(actionID: "nav.focus.east", state: stale, world: .object(invalid))
+            test.check(refused.status == .refused && refused.state == stale && refused.targets == .object([:]) && refused.focusTarget == nil,
+                "focus-recovery/\(failure)-cannot-author-focus")
+        }
+        for hidden in ["offscreen", "minimized", "OFF", "outside-displays"] {
+            var filtered = world, windows = world["windows"]!.arrayValue!, target = windows[2].objectValue!
+            if hidden == "offscreen" { target["onscreen"] = .bool(false) }
+            else if hidden == "minimized" { target["minimized"] = .bool(true) }
+            else if hidden == "OFF" { target["space_enabled"] = .bool(false) }
+            else { var frame = target["frame"]!.objectValue!; frame["x"] = .int(10_000); target["frame"] = .object(frame) }
+            windows[2] = .object(target); filtered["windows"] = .array(windows)
+            let plan = ResidentPlanner.plan(actionID: "nav.focus.east", state: stale, world: .object(filtered))
+            test.check(plan.focusTarget != target["window_id"]?.intValue && plan.targets == .object([:]),
+                "focus-recovery/\(hidden)-window-is-never-a-navigation-target")
+        }
+        rig.controller.reconcile(requestID: "renewed-layout-reconcile")
+        let reconciled = rig.result("renewed-layout-reconcile")
+        let current = rig.server.worldState.at(path: "model_state")!
+        let expected = Set(renewed.compactMap { $0.at(path: "window_id")?.intValue })
+        test.check(reconciled?.at(path: "status") == .string("accepted")
+            && Set(Arrangement.allocatedWindowIDs(current.at(path: "arrangement")!, topo: topology)) == expected
+            && current.at(path: "space_partitions.partitions")!.objectValue!.values.allSatisfy { part in
+                part.at(path: "window_identities")!.objectValue!.values.allSatisfy {
+                    $0.at(path: "window_generation") == fixture.at(path: "renewed_lifetime")
+                }
+            }, "focus-recovery/all-renewed-2x2-identities-retire-without-invalid-intermediate-pruning-and-reconcile")
+        let healthy = rig.server.worldState
+        let ids = Set((healthy.at(path: "windows")?.arrayValue ?? []).compactMap { $0.at(path: "window_id")?.intValue })
+        test.check(ids == expected && current.at(path: "space_partitions") != stale.at(path: "space_partitions"),
+            "focus-recovery/reconciliation-replaces-old-lifetime-checkpoint-without-dropping-members")
+    } catch { test.check(false, "focus-recovery/fixture-error: \(error)") }
+}
+
+/// An app quit re-mints every window lifetime, and only a reconcile re-records them.
+/// A reconcile that loses an authority race is replanned; a layout command that
+/// still meets a stale checkpoint refuses honestly and schedules the owed repair.
+private func runStaleCheckpointRepairScenarios(test: inout SelfTest) {
+    do {
+        let path = SelfTestFixtures.path("resident_commands/focus_navigation_recovery.json")
+        let fixture = try JSONValue.parse(Data(contentsOf: URL(fileURLWithPath: path)))
+        let outerGap = fixture.requiredInt("outer_gap")
+        // Renew one lifetime of the settled world, so the reconcile is a pure checkpoint update.
+        func renewal(_ rig: ResidentCommandsRig) -> [JSONValue] {
+            rig.server.worldState.at(path: "windows")!.arrayValue!.map { row -> JSONValue in
+                var window = row.objectValue!
+                if window["window_id"]?.intValue == 4 { window["window_generation"] = fixture.at(path: "renewed_lifetime") }
+                return .object(window)
+            }
+        }
+        func recordsRenewal(_ rig: ResidentCommandsRig, _ renewed: [JSONValue]) -> Bool {
+            let expected = JSONObject(unordered: Dictionary(uniqueKeysWithValues: renewed.map { window in
+                (String(window.at(path: "window_id")!.intValue!),
+                 JSONValue.object(["pid": window.at(path: "pid")!, "window_generation": window.at(path: "window_generation")!]))
+            }))
+            return selfTestWaitUntil(seconds: 3, pollMicroseconds: 1000) {
+                let parts = rig.server.worldState.at(path: "model_state.space_partitions.partitions")?.objectValue ?? [:]
+                return parts.values.contains(where: { $0.at(path: "window_identities") == .object(expected) })
+            }
+        }
+
+        let gate = ResidentCommandsStateOnlyJournalGate(actionID: "world.reconcile", active: false)
+        let raced = try ResidentCommandsRig(fixture: fixture, outerGap: outerGap,
+            stateOnlyAppend: { try gate.append($0, journal: $1) })
+        defer { gate.permit.signal() }
+        let racedWindows = renewal(raced), racedIssues = raced.port.issued.count
+        gate.arm()
+        _ = raced.server.applyWorldDelta(["event": .string("app_terminated"), "windows": .array(racedWindows), "focus": racedWindows[0]])
+        guard gate.entered.wait(timeout: .now() + .seconds(2)) == .success, let heldID = gate.requestID else {
+            print("stale-checkpoint diagnostic: last_result=" + (raced.server.worldState.at(path: "last_result") ?? .null).canonical()
+                + " issued=\(raced.port.issued.count)")
+            test.check(false, "stale-checkpoint/app-quit-reconcile-held-at-journal-intent"); return
+        }
+        gate.disarm()
+        _ = raced.server.applyWorldDelta(["event": .string("fixture_neutral_telemetry"), "fixture_marker": .string("current")])
+        gate.permit.signal()
+        let lost = raced.result(heldID)
+        test.check(lost?.at(path: "status") == .string("refused")
+            && lost?.at(path: "reason") == .string("expected_revision_mismatch") && recordsRenewal(raced, racedWindows)
+            && raced.port.issued.count == racedIssues,
+            "stale-checkpoint/reconcile-lost-to-a-neutral-delta-replans-and-records-renewed-lifetimes")
+        _ = raced.act("resize.start", id: "raced-resize-start")
+        test.check(raced.result("raced-resize-start")?.at(path: "status") == .string("accepted"),
+            "stale-checkpoint/layout-mode-enters-after-the-replanned-reconcile")
+
+        let stale = try ResidentCommandsRig(fixture: fixture, outerGap: outerGap)
+        let staleWindows = renewal(stale), staleIssues = stale.port.issued.count
+        _ = stale.server.applyWorldDelta(["event": .string("fixture_lifetime_renewal"), "windows": .array(staleWindows), "focus": staleWindows[0]])
+        _ = stale.act("move.start", id: "stale-move-start")
+        let refused = stale.result("stale-move-start")
+        test.check(refused?.at(path: "status") == .string("refused")
+            && refused?.at(path: "reason") == .string("space_partitions_require_reconcile") && stale.port.issued.count == staleIssues,
+            "stale-checkpoint/layout-command-refuses-a-checkpoint-behind-current-lifetimes")
+        test.check(recordsRenewal(stale, staleWindows) && stale.port.issued.count == staleIssues,
+            "stale-checkpoint/refusal-schedules-the-owed-reconcile-with-zero-frame-writes")
+        _ = stale.act("move.start", id: "repaired-move-start")
+        test.check(stale.result("repaired-move-start")?.at(path: "status") == .string("accepted"),
+            "stale-checkpoint/next-layout-command-plans-against-the-repaired-checkpoint")
+    } catch { test.check(false, "stale-checkpoint/fixture-error: \(error)") }
+}
+
+/// A held real journal intent plus a harmless world delta reproduces startup's
+/// revision refusal; a bounded fresh plan retains every existing safety fence.
+private func runStartupRevisionContentionScenarios(fixture: JSONValue, test: inout SelfTest) {
+    do {
+        let path = SelfTestFixtures.path("startup/revision-contention.json")
+        let scene = try JSONValue.parse(Data(contentsOf: URL(fileURLWithPath: path)))
+        let gate = ResidentCommandsStateOnlyJournalGate(actionID: "world.reconcile", active: false)
+        let rig = try ResidentCommandsRig(fixture: fixture, stateOnlyAppend: { try gate.append($0, journal: $1) })
+        defer { gate.permit.signal() }
+        var model = rig.server.worldState.at(path: "model_state")!.objectValue!
+        model.removeValue(forKey: "space_partitions")
+        _ = rig.server.applyWorldDelta(["event": scene.at(path: "seed_event")!, "model_state": .object(model)])
+        guard rig.waitForIOQuiescent() else { test.check(false, "startup-contention/fixture-drain"); return }
+        let baseline = rig.server.committedSnapshot
+        let firstID = scene.requiredString("first_request"), first = ResidentCommandsStartupResult()
+        gate.arm(); rig.controller.reconcile(requestID: firstID) { first.record($0) }
+        guard gate.entered.wait(timeout: .now() + .seconds(2)) == .success else { test.check(false, "startup-contention/real-journal-held"); return }
+        _ = rig.server.applyWorldDelta(["event": scene.at(path: "neutral_event")!,
+            scene.requiredString("telemetry_key"): scene.at(path: "marker")!])
+        gate.permit.signal()
+        let completed = first.delivered.wait(timeout: .now() + .seconds(3)) == .success
+        let refused = first.value ?? .null, current = rig.server.worldState
+        let generation = scene.requiredUInt64("generation")
+        func canReplan(_ world: JSONValue, trusted: Bool = true, currentGeneration: UInt64? = nil, attempt: Int = 0) -> Bool {
+            CoreRuntimeServices.startupReconciliationCanReplan(refused, baseline: baseline.world, current: world,
+                trusted: trusted, generation: generation, currentGeneration: currentGeneration ?? generation, attempt: attempt)
+        }
+        test.check(completed && refused.at(path: "status") == .string("refused")
+            && refused.at(path: "reason") == .string("expected_revision_mismatch") && canReplan(current)
+            && rig.port.issued.isEmpty,
+            "startup-contention/neutral-delta-refuses-old-journal-intent-and-admits-one-fresh-plan")
+        for condition in scene.at(path: "negative_cases")!.arrayValue!.compactMap(\.stringValue) {
+            var changed = current.objectValue!
+            if condition == "stopped" { changed["management_enabled"] = .bool(false) }
+            if condition == "intent-OFF" { changed["desired_running"] = .bool(false) }
+            if condition == "partial" {
+                var observation = changed["observation"]!.objectValue!; observation["world_complete"] = .bool(false)
+                changed["observation"] = .object(observation)
+            }
+            if condition == "persistence" { changed["persistence_available"] = .bool(false) }
+            if condition == "geometry" { changed["geometry_available"] = .bool(false) }
+            if condition == "lifetime" {
+                var windows = changed["windows"]!.arrayValue!, window = changed["windows"]!.arrayValue![0].objectValue!
+                window["window_generation"] = .int(window["window_generation"]!.intValue! + 1)
+                windows[0] = .object(window); changed["windows"] = .array(windows)
+            }
+            if condition == "Space" { changed["space_contexts"] = .array([]) }
+            let retired = condition == "lifecycle" ? scene.requiredUInt64("retired_generation") : generation
+            test.check(!canReplan(.object(changed), trusted: condition != "untrusted", currentGeneration: retired,
+                attempt: condition == "repeat" ? CoreRuntimeServices.startupReconciliationRetryLimit : 0),
+                "startup-contention/\(condition)-cannot-retry-old-scope")
+        }
+        let secondID = scene.requiredString("second_request"), fresh = ResidentCommandsStartupResult()
+        gate.permit.signal()
+        rig.controller.reconcile(requestID: secondID) { fresh.record($0) }
+        let verified = fresh.delivered.wait(timeout: .now() + .seconds(3)) == .success
+        let result = fresh.value ?? .null
+        if !verified || !CoreRuntimeServices.startupReconciliationMatches(result, requestID: secondID,
+            baselineRevision: baseline.revision, world: rig.server.worldState) || !rig.port.issued.isEmpty {
+            print("startup-contention diagnostic: result=" + result.canonical() + " issued="
+                + rig.port.issued.map { $0.requestID + ":" + $0.effectKind.rawValue }.joined(separator: ","))
+        }
+        test.check(verified && CoreRuntimeServices.startupReconciliationMatches(result, requestID: secondID,
+            baselineRevision: baseline.revision, world: rig.server.worldState)
+            && ["accepted", "noop"].contains(result.at(path: "status")?.stringValue ?? "")
+            && rig.port.issued.isEmpty,
+            "startup-contention/fresh-reconciliation-publishes-current-checkpoint-and-readiness-without-frame-effects")
+    } catch { test.check(false, "startup-contention/fixture-error: \(error)") }
+}
+
+/// Startup on a native full-screen Space: the world is complete but no desktop
+/// Space is visible, so the reconcile refuses. Startup waits for the next sweep.
+private func runStartupDesktopSpaceAwaitScenarios(test: inout SelfTest) {
+    func refusal(_ reason: String, status: String = "refused", action: String = "world.reconcile") -> JSONValue {
+        .object(["ok": .bool(false), "status": .string(status), "phase": .string("completed"), "reason": .string(reason),
+                 "action_id": .string(action), "origin": .string("internal_reconcile"),
+                 "reconciliation_ready": .bool(false), "reconciliation_failure_reason": .string(reason)])
+    }
+    test.check(CoreRuntimeServices.startupAwaitsDesktopSpace(refusal("space_contexts_unavailable"))
+        && CoreRuntimeServices.startupAwaitsDesktopSpace(refusal("space_contexts_ambiguous_or_incomplete")),
+        "startup-desktop-space/full-screen-current-Space-waits-for-the-next-sweep")
+    test.check(!CoreRuntimeServices.startupAwaitsDesktopSpace(refusal("space_identity_unavailable"))
+        && !CoreRuntimeServices.startupAwaitsDesktopSpace(refusal("window_space_membership_or_identity_invalid"))
+        && !CoreRuntimeServices.startupAwaitsDesktopSpace(refusal("space_contexts_unavailable", status: "failed"))
+        && !CoreRuntimeServices.startupAwaitsDesktopSpace(refusal("space_contexts_unavailable", action: "move.start")),
+        "startup-desktop-space/other-refusals-still-park-recovery-needed")
+}
+
+/// A Space switch publishes `space_changed` (which wakes the startup seed gate)
+/// and then `app_activated`, whose observer-generation bump advances admission
+/// while startup's reconcile is still queued. The refusal is
+/// `queued_command_invalidated`; one fresh plan under the same scope recovers.
+/// A held reconcile occupies the serial planning queue so the bump lands
+/// deterministically between startup's admission and its freshness check.
+private func runStartupAdmissionContentionScenarios(fixture: JSONValue, test: inout SelfTest) {
+    do {
+        let path = SelfTestFixtures.path("startup/revision-contention.json")
+        let scene = try JSONValue.parse(Data(contentsOf: URL(fileURLWithPath: path)))
+        let gate = ResidentCommandsStateOnlyJournalGate(actionID: "world.reconcile", active: false)
+        let rig = try ResidentCommandsRig(fixture: fixture, stateOnlyAppend: { try gate.append($0, journal: $1) })
+        defer { gate.permit.signal() }
+        var model = rig.server.worldState.at(path: "model_state")!.objectValue!
+        model.removeValue(forKey: "space_partitions")
+        _ = rig.server.applyWorldDelta(["event": scene.at(path: "seed_event")!, "model_state": .object(model)])
+        guard rig.waitForIOQuiescent() else { test.check(false, "startup-admission/fixture-drain"); return }
+        let baseline = rig.server.committedSnapshot
+        let blocker = ResidentCommandsStartupResult(), first = ResidentCommandsStartupResult()
+        gate.arm(); rig.controller.reconcile(requestID: scene.requiredString("admission_blocker_request")) { blocker.record($0) }
+        guard gate.entered.wait(timeout: .now() + .seconds(2)) == .success else { test.check(false, "startup-admission/real-journal-held"); return }
+        gate.disarm()
+        rig.controller.reconcile(requestID: scene.requiredString("admission_first_request")) { first.record($0) }
+        let observerGeneration = baseline.world.at(path: "observer_generation")?.intValue ?? 0
+        _ = rig.server.applyWorldDelta(["event": scene.at(path: "admission_event")!,
+            "observer_generation": .int(observerGeneration + 1)])
+        gate.permit.signal()
+        let completed = blocker.delivered.wait(timeout: .now() + .seconds(3)) == .success
+            && first.delivered.wait(timeout: .now() + .seconds(3)) == .success
+        let refused = first.value ?? .null, current = rig.server.worldState
+        let generation = scene.requiredUInt64("generation")
+        func canReplan(_ result: JSONValue, attempt: Int = 0) -> Bool {
+            CoreRuntimeServices.startupReconciliationCanReplan(result, baseline: baseline.world, current: current,
+                trusted: true, generation: generation, currentGeneration: generation, attempt: attempt)
+        }
+        if refused.at(path: "reason") != .string("queued_command_invalidated") {
+            print("startup-admission diagnostic: result=" + refused.canonical())
+        }
+        test.check(completed && refused.at(path: "status") == .string("refused")
+            && refused.at(path: "reason") == .string("queued_command_invalidated") && canReplan(refused)
+            && canReplan(refused, attempt: CoreRuntimeServices.startupReconciliationRetryLimit - 1)
+            && !canReplan(refused, attempt: CoreRuntimeServices.startupReconciliationRetryLimit) && rig.port.issued.isEmpty,
+            "startup-admission/observer-generation-bump-refuses-old-intent-and-admits-one-fresh-plan")
+        var foreign = refused.objectValue ?? [:]; foreign["reason"] = .string("effect_identity_or_context_changed")
+        test.check(!canReplan(.object(foreign)), "startup-admission/identity-change-reason-is-not-startup-contention")
+        // Live 2026-10-13 02:5x: app_activated woke the gate first, startup issued
+        // frames, and the trailing space_changed cancelled them (status failed).
+        var cancelled = refused.objectValue ?? [:]
+        cancelled["status"] = .string("failed"); cancelled["reason"] = .string("invalidated_space_changed")
+        test.check(canReplan(.object(cancelled)), "startup-admission/space-switch-cancelled-startup-effect-admits-a-fresh-plan")
+        for reason in ["invalidated_cancel", "invalidated_resident_start_failed", "invalidated_global_stop"] {
+            var stop = cancelled; stop["reason"] = .string(reason)
+            test.check(!canReplan(.object(stop)), "startup-admission/\(reason)-is-not-startup-contention")
+        }
+        let fresh = ResidentCommandsStartupResult(), secondID = scene.requiredString("admission_second_request")
+        rig.controller.reconcile(requestID: secondID) { fresh.record($0) }
+        let verified = fresh.delivered.wait(timeout: .now() + .seconds(3)) == .success
+        let result = fresh.value ?? .null
+        test.check(verified && CoreRuntimeServices.startupReconciliationMatches(result, requestID: secondID,
+            baselineRevision: baseline.revision, world: rig.server.worldState)
+            && ["accepted", "noop"].contains(result.at(path: "status")?.stringValue ?? "") && rig.port.issued.isEmpty,
+            "startup-admission/fresh-reconciliation-verifies-readiness-without-frame-effects")
+    } catch { test.check(false, "startup-admission/fixture-error: \(error)") }
 }

@@ -43,6 +43,11 @@ Do not publish the private repository's history or change its remote as an
 anonymization shortcut. Inspect every file and metadata in the exact
 public archive rather than relying on `.gitignore` alone.
 
+Later releases omit `--anonymous-history`. Clone the public repository, replace
+its tracked tree with the new export, and add one commit per release with the same
+generic author, committer and fixed date, tagged `v<version>`. Public history is
+appended, never rewritten; existing tags stay valid.
+
 The project uses the [MIT License](../LICENSE), included in source and app
 packages. Version1 uses the [public source repository](https://github.com/scshafe/leyline-wm)
 and [Homebrew tap](https://github.com/scshafe/homebrew-tap). Ownership under this
@@ -62,7 +67,7 @@ Do not distribute that template as a working formula.
 
 ## Signing and publication
 
-The prepared 1.0.0 universal app is ad-hoc signed and unnotarized. Source and
+The prepared 1.0.1 universal app is ad-hoc signed and unnotarized. Source and
 Homebrew builds can remain anonymous with this local signing profile. Developer ID
 signatures expose the certificate's publisher identity. For normal direct-download
 Gatekeeper distribution, use the intended Developer ID certificate, hardened

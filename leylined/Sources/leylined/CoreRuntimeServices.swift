@@ -43,8 +43,6 @@ final class CoreRuntimeServices: @unchecked Sendable {
     private var modeSequence: Int64 = 0
     private var settingsFaulted = false
     private var desiredRunning = true // lifecycleQueue only
-    private var globalGutterWidth: Int? // lifecycleQueue only
-    private var baseGeometry: JSONValue = .object(["width": .int(Int64(BorderPalette.defaultThickness))]) // lifecycleQueue only
 
     init(server: CoreServer, home: String,
          observationQueue: DispatchQueue, feed: ProjectionInputFeed,
@@ -57,8 +55,9 @@ final class CoreRuntimeServices: @unchecked Sendable {
         do {
             let initial = ResidentSettingsStore.read(path: ResidentSettingsStore.defaultPath())
             desiredRunning = initial.errorCode == nil && initial.desiredRunning
-            globalGutterWidth = initial.globalGutterWidth
             settingsFaulted = initial.errorCode != nil
+            _ = server.applyWorldDelta(["event": .string("management_preference_loaded"),
+                "desired_running": initial.errorCode == nil ? .bool(initial.desiredRunning) : .null])
             if !desiredRunning {
                 _ = server.applyWorldDelta(["event": .string("settings_boot_disabled"), "management_enabled": .bool(false),
                     "resident_status": .string(initial.errorCode == nil ? "Stopped" : "Recovery needed"),
@@ -73,7 +72,7 @@ final class CoreRuntimeServices: @unchecked Sendable {
                 } else if action.actionId == ResidentInputConstants.spaceToggleActionID {
                     self.toggleFocusedSpace(action, completion: completion)
                 } else {
-                    if ["move.cancel", "move.off", "resize.off"].contains(action.actionId) {
+                    if ResidentActionIDs.cancelling.contains(action.actionId) {
                         self.actions.invalidate(cause: "cancel")
                     }
                     self.actions.dispatch(action, completion: completion)
@@ -112,7 +111,7 @@ final class CoreRuntimeServices: @unchecked Sendable {
                 server.updateResidentHealth(["input_unavailable_reason": .string("input_stop_waiter_overflow")])
             })
         do {
-            let path = (ResidentSettingsStore.defaultPath() as NSString).deletingLastPathComponent + "/borders.json"
+            let path = ResidentLayout.borders(config: ResidentPaths.config())
             geometryEvents = SettingsEvents(path: path, readSnapshot: Self.readGeometry,
                 onSnapshot: { [weak self] snapshot in self?.geometryChanged(snapshot) })
         }
@@ -125,13 +124,16 @@ final class CoreRuntimeServices: @unchecked Sendable {
             MainActor.assumeIsolated {
                 controls = ResidentControls(onToggleSpace: { [weak self] target in self?.toggleSpace(target) },
                     onLifecycle: { [weak self] action in self?.lifecycle(action) },
-                    onAction: { [weak self] action in self?.menuAction(action) },
-                    onGutter: { [weak self] width in self?.setGutter(width) })
+                    onAction: { [weak self] action in self?.menuAction(action) })
                 controls?.start()
             }
             controlsMailbox = CorePresentationMailbox(execute: { DispatchQueue.main.async(execute: $0) },
                 present: { [weak self] snapshot in
-                    MainActor.assumeIsolated { self?.controls?.receive(revision: snapshot.revision, world: snapshot.world) }
+                    MainActor.assumeIsolated {
+                        guard let self, let controls = self.controls else { return }
+                        controls.receive(revision: snapshot.revision, world: snapshot.world)
+                        server.updateResidentHealth(["controls": .object(controls.health())])
+                    }
                 })
             if let input {
                 faultNoticeMailbox = ResidentInputFaultMailbox(inputEpoch: input.inputEpoch,
@@ -145,9 +147,8 @@ final class CoreRuntimeServices: @unchecked Sendable {
             }
             settings = SettingsEvents(onSnapshot: { [weak self] snapshot in self?.settingsChanged(snapshot) })
             server.configureResidentControls { [weak self] request in
-                self?.handleControl(request) ?? .object(["ok": .bool(false), "status": .string("refused"),
-                    "phase": .string("completed"), "request_id": request["request_id"] ?? .null,
-                    "reason": .string("resident_control_unavailable")])
+                self?.handleControl(request) ?? ResidentReply.refused(requestID: request["request_id"] ?? .null,
+                    reason: "resident_control_unavailable")
             }
         }
     }
@@ -166,7 +167,7 @@ final class CoreRuntimeServices: @unchecked Sendable {
                 requests: self.controlRequests, lifecycleGeneration: self.lifecycleGeneration,
                 capabilityGate: self.inputCapabilityGate,
                 onTerminal: { self.cancelControlDeadline(intent.requestID, admissionSequence: intent.admissionSequence) },
-                releaseClaims: { self.input?.setClaimsAllowed(false, reason: "resident_control_timeout") },
+                releaseClaims: { self.input?.setClaimsAllowed(false, reason: .residentControlTimeout) },
                 cancelMaintenance: { _ = self.maintenance.cancel(requestID: intent.requestID) },
                 enqueue: { self.lifecycleQueue.async(execute: $0) },
                 continueStopping: { [weak self] timeout in self?.stopTimedOutControl(timeout) })
@@ -194,12 +195,12 @@ final class CoreRuntimeServices: @unchecked Sendable {
             }
             let action: ResidentLifecycleAction
             switch intent.action {
-            case "start": action = .start
-            case "stop": action = .stop
-            case "restart": action = .restart
-            default: action = intent.hard ? .hardReset : .restart
+            case .start: action = .start
+            case .stop: action = .stop
+            case .restart: action = .restart
+            case .reset: action = intent.hard ? .hardReset : .restart
             }
-            let resume: Bool? = (intent.action == "reset" || intent.action == "restart")
+            let resume: Bool? = (intent.action == .reset || intent.action == .restart)
                 ? (intent.resume ?? desiredRunning) : intent.resume
             performLifecycle(action, resumeOverride: resume, controlRequestID: intent.requestID,
                 controlAdmissionSequence: intent.admissionSequence,
@@ -260,17 +261,7 @@ final class CoreRuntimeServices: @unchecked Sendable {
         guard stopped.status == .accepted, current() else { return }
         inputStopBarrier.stop(resume: { [weak self] in
             guard let self, current() else { return }
-            self.observationQueue.async { [weak self] in
-                guard let self, current() else { return }
-                self.feed.stop(); self.snapshots.stop()
-                DispatchQueue.main.async { [weak self] in
-                    guard let self, current() else { return }
-                    MainActor.assumeIsolated {
-                        self.renderer?.unmount()
-                        if let renderer = self.renderer { self.server.updateProjectionHealth(renderer.health) }
-                    }
-                }
-            }
+            self.stopProjections(whileCurrent: { current() })
         })
     }
 
@@ -283,7 +274,7 @@ final class CoreRuntimeServices: @unchecked Sendable {
             lifecycleQueue.async { [self] in
                 guard let startup, desiredRunning, startupSeedGate.isCurrent(startup,
                     generation: lifecycleGeneration.load(ordering: .acquiring), observationEpoch: server.observationEpoch),
-                    server.worldState.at(path: "management_enabled")?.boolValue != false else { return }
+                    server.worldState.managementEnabled else { return }
                 _ = server.applyWorldDelta(["event": .string("resident_starting"), "resident_starting": .bool(true),
                     "resident_running": .bool(false), "resident_status": .string("Starting")])
             }
@@ -308,7 +299,7 @@ final class CoreRuntimeServices: @unchecked Sendable {
             // Space. The callback uses atomics and never takes this lock.
             if changed {
                 input?.routing.invalidateSpaceContext()
-                if inputSpaceTarget != nil { input?.releaseModal(reason: "external_context_invalidated") }
+                if inputSpaceTarget != nil { input?.releaseModal(reason: .externalContextInvalidated) }
             }
             inputSpaceTarget = target; inputSpaceObserverEpoch = epoch; readinessWorld = snapshot.world
         }
@@ -325,16 +316,19 @@ final class CoreRuntimeServices: @unchecked Sendable {
         if eligible || controlEligible, let input, input.health()["tap_installed"]?.boolValue != true,
            !inputStartAttempted.exchange(true, ordering: .acquiringAndReleasing) {
             lifecycleQueue.async { [self] in
-                guard desiredRunning, trustedProvider(), server.worldState.at(path: "management_enabled")?.boolValue != false,
+                // Deliberately NOT worldReady: a guard failure here leaves inputStartAttempted
+                // latched until a control stop/restart, so this recheck must stay exactly as
+                // narrow as it was (geometry is gated by inputCanClaim, not by tap startup).
+                guard desiredRunning, trustedProvider(), server.worldState.managementEnabled,
                       server.worldState.at(path: "persistence_available")?.boolValue != false,
-                      server.worldState.at(path: "observation.world_complete")?.boolValue == true else { return }
+                      server.worldState.worldComplete == true else { return }
                 _ = startInput(input)
             }
         }
-        inputCapabilityGate.perform { input?.setClaimsAllowed(eligible, spaceControlAllowed: controlEligible, reason: "world_or_focused_space_unavailable") }
+        inputCapabilityGate.perform { input?.setClaimsAllowed(eligible, spaceControlAllowed: controlEligible, reason: .worldOrFocusedSpaceUnavailable) }
         if let input, input.routing.mode != "default",
            Self.committedDefaultCanReleaseInput(snapshot.world, currentInputGeneration: input.routing.generation) {
-            input.releaseModal(reason: "committed_interaction_context_invalidated")
+            input.releaseModal(reason: .committedInteractionContextInvalidated)
         }
         input?.noteAuthorityProgress()
         controlsMailbox?.submit(snapshot)
@@ -355,12 +349,36 @@ final class CoreRuntimeServices: @unchecked Sendable {
         return published.map { $0 >= currentInputGeneration } ?? false
     }
 
+    /// Stop observation on its lane, then unmount the projection on main and publish
+    /// its health, re-checking `isCurrent` at every hop; `then` runs on main afterwards.
+    private func stopProjections(whileCurrent isCurrent: @escaping @Sendable () -> Bool,
+                                 then completion: (@Sendable (CoreRuntimeServices) -> Void)? = nil) {
+        observationQueue.async { [weak self] in
+            guard let self, isCurrent() else { return }
+            self.feed.stop(); self.snapshots.stop()
+            DispatchQueue.main.async { [weak self] in
+                guard let self, isCurrent() else { return }
+                MainActor.assumeIsolated {
+                    self.renderer?.unmount()
+                    if let renderer = self.renderer { self.server.updateProjectionHealth(renderer.health) }
+                }
+                completion?(self)
+            }
+        }
+    }
+
+    /// The four facts every readiness decision shares: a complete world, management
+    /// on, durable persistence and valid geometry. Each caller adds its own terms.
+    static func worldReady(_ world: JSONValue) -> Bool {
+        world.worldComplete == true && world.managementEnabled
+            && world.at(path: "persistence_available")?.boolValue != false
+            && world.at(path: "geometry_available")?.boolValue != false
+    }
+
     static func inputCanControlSpace(_ world: JSONValue, trusted: Bool) -> Bool {
-        guard trusted, world.at(path: "observation.world_complete")?.boolValue == true,
+        guard trusted, worldReady(world),
+              world.at(path: "desired_running")?.boolValue != false,
               world.at(path: "resident_starting")?.boolValue != true,
-              world.at(path: "management_enabled")?.boolValue != false,
-              world.at(path: "persistence_available")?.boolValue != false,
-              world.at(path: "geometry_available")?.boolValue != false,
               let target = ResidentSpaceTarget.focused(in: world), target.isVisible(in: world),
               ResidentSpaceTarget.focusedContext(in: world)?.at(path: "space_identity_available")?.boolValue == true,
               ResidentSpaceTarget.focusedContext(in: world)?.at(path: "space_visible")?.boolValue == true else { return false }
@@ -384,14 +402,21 @@ final class CoreRuntimeServices: @unchecked Sendable {
     }
 
     static func inputCanClaim(_ world: JSONValue, trusted: Bool) -> Bool {
-        trusted && world.at(path: "observation.world_complete")?.boolValue == true
+        trusted && worldReady(world)
+            && world.at(path: "desired_running")?.boolValue != false
             && world.at(path: "resident_starting")?.boolValue != true
-            && world.at(path: "management_enabled")?.boolValue != false
-            && world.at(path: "persistence_available")?.boolValue != false
-            && world.at(path: "geometry_available")?.boolValue != false
             && world.at(path: "focus.eligible")?.boolValue == true
             && world.at(path: "focus.space_enabled")?.boolValue == true
             && world.at(path: "focus.space_visible")?.boolValue == true
+    }
+
+    /// A committed reconcile whose only shortfall is a confirmed application minimum or
+    /// refused shape: every other frame landed, and the learned constraint replans the
+    /// layout once the resident runs.
+    static func isMinimumShortfall(_ result: JSONValue) -> Bool {
+        result.at(path: "status") == .string("failed")
+            && ["minimum_constraint", "fixed_aspect_constraint"].contains(result.at(path: "reason")?.stringValue ?? "")
+            && result.at(path: "desired_state_committed_revision")?.intValue != nil
     }
 
     static func startupReconciliationMatches(_ result: JSONValue, requestID: String, baselineRevision: UInt64,
@@ -399,10 +424,56 @@ final class CoreRuntimeServices: @unchecked Sendable {
         result.at(path: "request_id")?.stringValue == requestID && result.at(path: "phase")?.stringValue == "completed"
             && result.at(path: "action_id")?.stringValue == "world.reconcile"
             && result.at(path: "origin")?.stringValue == "internal_reconcile"
-            && ["accepted", "noop"].contains(result.at(path: "status")?.stringValue ?? "")
+            && (WmStatus(rawValue: result.at(path: "status")?.stringValue ?? "")?.isOK == true || isMinimumShortfall(result))
             && (result.at(path: "revision")?.intValue ?? -1) >= Int64(clamping: baselineRevision)
             && result.at(path: "reconciliation_ready")?.boolValue == true
             && result.at(path: "reconciliation_verified_scope") == ResidentActionController.reconciliationScope(world)
+    }
+
+    /// Contention a fresh startup plan may resolve. A Space switch publishes
+    /// `space_changed` and `app_activated` a few ms apart, in either order; the
+    /// first wakes the seed gate and the second (a) bumps the revision, (b) bumps
+    /// admission through the observer generation, or (c) cancels the startup
+    /// frame effect already issued (`invalidated_<event>`, status failed).
+    /// Identity/Space changes are excluded by the scope check, not by reason.
+    static let startupReconciliationContentionReasons: Set<String> = [
+        "expected_revision_mismatch", "queued_command_invalidated",
+        "invalidated_space_changed", "invalidated_app_activated"]
+
+    /// Startup shares the controller's reconcile retry bound: a retry can itself
+    /// collide with the reconcile the same Space-switch event scheduled.
+    static let startupReconciliationRetryLimit = ResidentActionController.reconciliationRetryLimit
+
+    /// A bounded fresh plan may resolve harmless revision/admission/invalidation
+    /// contention. The refused/cancelled intent stays aborted; changed
+    /// identities/Spaces or lifecycle authority cannot be retried under the old
+    /// startup scope.
+    static func startupReconciliationCanReplan(_ result: JSONValue, baseline: JSONValue, current: JSONValue,
+                                               trusted: Bool, generation: UInt64, currentGeneration: UInt64,
+                                               attempt: Int) -> Bool {
+        attempt < startupReconciliationRetryLimit && generation == currentGeneration && trusted
+            && result.at(path: "phase") == .string("completed")
+            && (result.at(path: "status") == .string("refused") || result.at(path: "status") == .string("failed"))
+            && result.at(path: "reason")?.stringValue.map(startupReconciliationContentionReasons.contains) == true
+            && result.at(path: "action_id") == .string("world.reconcile")
+            && result.at(path: "origin") == .string("internal_reconcile")
+            && worldReady(current)
+            && current.at(path: "desired_running")?.boolValue != false
+            && ResidentActionController.reconciliationScope(baseline) == ResidentActionController.reconciliationScope(current)
+    }
+
+    /// A display whose current Space is native full-screen (or another non-desktop
+    /// Space) has no desktop context, so planning refuses. That is a place the
+    /// operator is, not a fault: startup keeps waiting, and the next Space-switch
+    /// sweep with a complete world re-runs it instead of parking "Recovery needed".
+    static let startupDesktopSpaceAwaitReasons: Set<String> = [
+        "space_contexts_unavailable", "space_contexts_ambiguous_or_incomplete"]
+
+    static func startupAwaitsDesktopSpace(_ result: JSONValue) -> Bool {
+        result.at(path: "status") == .string("refused")
+            && result.at(path: "action_id") == .string("world.reconcile")
+            && (result.at(path: "reconciliation_failure_reason") ?? result.at(path: "reason"))?.stringValue
+                .map(startupDesktopSpaceAwaitReasons.contains) == true
     }
 
     /// Pure final authority guard. The publication mirror is updated in commit
@@ -411,10 +482,7 @@ final class CoreRuntimeServices: @unchecked Sendable {
                                           world: JSONValue, partitions: JSONValue?, generation: UInt64,
                                           currentGeneration: UInt64) -> String? {
         guard generation == currentGeneration else { return "startup_lifecycle_retired" }
-        guard world.at(path: "observation.world_complete")?.boolValue == true,
-              world.at(path: "management_enabled")?.boolValue != false,
-              world.at(path: "persistence_available")?.boolValue != false,
-              world.at(path: "geometry_available")?.boolValue != false,
+        guard worldReady(world), world.at(path: "desired_running")?.boolValue != false,
               startupReconciliationMatches(result, requestID: requestID, baselineRevision: baselineRevision, world: world),
               world.at(path: "model_state.space_partitions") == partitions else { return "startup_reconciliation_scope_changed" }
         return nil
@@ -430,7 +498,7 @@ final class CoreRuntimeServices: @unchecked Sendable {
     }
 
     func sessionUnavailable() {
-        input?.setClaimsAllowed(false, reason: "session_locked")
+        input?.setClaimsAllowed(false, reason: .sessionLocked)
         actions.invalidate(cause: "cancel")
         var delta: JSONObject = ["event": .string("session_locked"), "mode": .string("default"),
             "focus": .null, "observation": .object(["world_complete": .bool(false), "failure_code": .string("session_locked")])]
@@ -444,7 +512,7 @@ final class CoreRuntimeServices: @unchecked Sendable {
     }
 
     func sessionMayResume() -> Bool {
-        !maintenance.isExclusive && server.worldState.at(path: "management_enabled")?.boolValue != false
+        !maintenance.isExclusive && server.worldState.managementEnabled
     }
 
     private func startInput(_ input: ResidentInput) -> Bool {
@@ -460,21 +528,21 @@ final class CoreRuntimeServices: @unchecked Sendable {
     }
 
     private static func readGeometry(path: String, generation: UInt64) -> ResidentSettingsSnapshot {
-        var status = stat()
-        if path.withCString({ lstat($0, &status) }) != 0 {
-            let missing = errno == ENOENT
+        let loaded = ResidentSettingsStore.loadObject(path: path, maximumBytes: 65_536,
+            codes: ("GEOMETRY.STAT_FAILED", "GEOMETRY.INVALID", "GEOMETRY.INVALID"))
+        guard loaded.present else {
+            // An absent file is the empty configuration; a stat failure is not.
             return ResidentSettingsSnapshot(spacesEnabled: [:], desiredRunning: true, present: false,
-                errorCode: missing ? nil : "GEOMETRY.STAT_FAILED", generation: generation,
-                configuration: missing ? .object(["width": .int(Int64(BorderPalette.defaultThickness))]) : nil)
+                errorCode: loaded.errorCode, generation: generation,
+                configuration: loaded.errorCode == nil ? .object([:]) : nil)
         }
-        guard let data = FileManager.default.contents(atPath: path), data.count <= 65_536,
-              let value = try? JSONValue.parse(data), let object = value.objectValue,
-              object["width"] == nil || ((object["width"]?.intValue).map { (0...512).contains($0) } ?? false) else {
+        guard let object = loaded.object,
+              object["border_radius"] == nil || ((object["border_radius"]?.intValue).map { (0...512).contains($0) } ?? false) else {
             return ResidentSettingsSnapshot(spacesEnabled: [:], desiredRunning: true, present: true,
                 errorCode: "GEOMETRY.INVALID", generation: generation)
         }
         return ResidentSettingsSnapshot(spacesEnabled: [:], desiredRunning: true, present: true,
-            errorCode: nil, generation: generation, configuration: value)
+            errorCode: nil, generation: generation, configuration: .object(object))
     }
 
     private func geometryChanged(_ snapshot: ResidentSettingsSnapshot) {
@@ -488,14 +556,8 @@ final class CoreRuntimeServices: @unchecked Sendable {
                 "resident_unavailable_reason": snapshot.errorCode.map(JSONValue.string) ?? .string("geometry_unavailable")])
             return
         }
-        baseGeometry = store
-        var effective = store.objectValue ?? [:]
-        if let globalGutterWidth { effective["width"] = .int(Int64(globalGutterWidth)) }
-        let applied = JSONValue.object(effective)
-        actions.setGap(Int(applied.at(path: "width")?.intValue ?? Int64(BorderPalette.defaultThickness)))
-        _ = server.applyWorldDelta(["event": .string("geometry_preference_applied"),
-            "global_gutter_width": globalGutterWidth.map { .int(Int64($0)) } ?? .null,
-            "effective_gutter_width": applied.at(path: "width") ?? .int(Int64(BorderPalette.defaultThickness))])
+        let applied = store
+        _ = server.applyWorldDelta(["event": .string("border_palette_applied")])
         DispatchQueue.main.async { [renderer, server, applied] in
             MainActor.assumeIsolated {
                 renderer?.updateStore(applied)
@@ -518,7 +580,7 @@ final class CoreRuntimeServices: @unchecked Sendable {
                     settingsPath: ResidentSettingsStore.defaultPath(), desiredRunning: desiredRunning,
                     commit: { server.setSpaceEnabled($0, enabled: $1) })
                 _ = server.applyWorldDelta(["event": .string("space_control_result"),
-                    "space_control_last_result": .object(["status": .string("accepted"), "space_key": .string(target.spaceKey),
+                    "space_control_last_result": .object(["status": .string(WmStatus.accepted.rawValue), "space_key": .string(target.spaceKey),
                         "display_id": .string(target.displayId), "space_enabled": .bool(enabled),
                         "origin": .string(inputAction == nil ? "menu" : "input"),
                         "input_generation": inputAction.map { .int(Int64(clamping: $0.generation)) } ?? .null,
@@ -527,7 +589,7 @@ final class CoreRuntimeServices: @unchecked Sendable {
                 completion(0)
             } catch let error as ResidentInputError {
                 _ = server.applyWorldDelta(["event": .string("space_control_result"),
-                    "space_control_last_result": .object(["status": .string("refused"), "reason": .string(error.code),
+                    "space_control_last_result": .object(["status": .string(WmStatus.refused.rawValue), "reason": .string(error.code),
                         "space_key": .string(target.spaceKey), "display_id": .string(target.displayId)])])
                 completion(4)
             } catch { settingsFailure("SETTINGS.WRITE_FAILED"); completion(4) }
@@ -555,38 +617,24 @@ final class CoreRuntimeServices: @unchecked Sendable {
         }
     }
 
-    private func setGutter(_ width: Int?) {
-        lifecycleQueue.async { [self] in
-            let current = ResidentSettingsStore.read(path: ResidentSettingsStore.defaultPath())
-            guard current.errorCode == nil else { settingsFailure(current.errorCode!); return }
-            do {
-                try ResidentSettingsStore.write(path: ResidentSettingsStore.defaultPath(), spacesEnabled: current.spacesEnabled,
-                    desiredRunning: desiredRunning, globalGutterWidth: width)
-            } catch { settingsFailure("SETTINGS.WRITE_FAILED") }
-        }
-    }
-
     private func settingsChanged(_ snapshot: ResidentSettingsSnapshot) {
         lifecycleQueue.async { [self] in
             let actual = ResidentSettingsStore.read(path: ResidentSettingsStore.defaultPath())
             guard actual.errorCode == snapshot.errorCode, actual.spacesEnabled == snapshot.spacesEnabled,
-                  actual.desiredRunning == snapshot.desiredRunning, actual.globalGutterWidth == snapshot.globalGutterWidth else { return }
+                  actual.desiredRunning == snapshot.desiredRunning else { return }
             guard snapshot.errorCode == nil else {
                 settingsFaulted = true
                 actions.invalidate(cause: "settings-failure")
-                input?.releaseModal(reason: "settings-failure")
+                input?.releaseModal(reason: .settingsFailure)
                 _ = server.applyWorldDelta(["event": .string("settings_failed"), "management_enabled": .bool(false),
+                    "desired_running": .null,
                     "resident_unavailable_reason": .string(snapshot.errorCode!)])
                 return
             }
             let recovering = settingsFaulted
             settingsFaulted = false
-            if snapshot.globalGutterWidth != globalGutterWidth {
-                globalGutterWidth = snapshot.globalGutterWidth
-                applyGeometry(ResidentSettingsSnapshot(spacesEnabled: [:], desiredRunning: desiredRunning, present: true,
-                    errorCode: nil, generation: snapshot.generation, configuration: baseGeometry))
-            }
             _ = server.applyWorldDelta(["event": .string("settings_changed"),
+                "desired_running": .bool(snapshot.desiredRunning),
                 "space_activation": .object(JSONObject(unordered: snapshot.spacesEnabled.mapValues(JSONValue.bool))),
                 "resident_unavailable_reason": .null])
             if snapshot.desiredRunning != desiredRunning || (recovering && snapshot.desiredRunning) {
@@ -667,6 +715,9 @@ final class CoreRuntimeServices: @unchecked Sendable {
                     if action != .stop {
                         completion?(.failed, persistenceFailure, [:]); return
                     }
+                } else {
+                    _ = server.applyWorldDelta(["event": .string("management_preference_recorded"),
+                        "desired_running": .bool(persistDesired)])
                 }
             }
             let stopPersistenceFailure = persistenceFailure
@@ -679,21 +730,14 @@ final class CoreRuntimeServices: @unchecked Sendable {
                     "resident_starting": .bool(false), "resident_running": .bool(false), "resident_status": .string("Stopped"), "mode": .string("default")])
                 inputStopBarrier.stop(resume: { [weak self] in
                     guard let self, self.lifecycleGeneration.load(ordering: .acquiring) == generation else { return }
-                    self.observationQueue.async { [weak self] in
-                        guard let self, self.lifecycleGeneration.load(ordering: .acquiring) == generation else { return }
-                        self.feed.stop(); self.snapshots.stop()
-                        DispatchQueue.main.async { [weak self] in
-                            guard let self, self.lifecycleGeneration.load(ordering: .acquiring) == generation else { return }
-                            MainActor.assumeIsolated {
-                                self.renderer?.unmount()
-                                if let renderer = self.renderer { self.server.updateProjectionHealth(renderer.health) }
-                            }
-                            completion?(stopPersistenceFailure == nil ? .accepted : .failed, stopPersistenceFailure,
-                                ["management_enabled": .bool(false), "journal_preserved": .bool(true),
-                                "readiness_verified": .bool(false), "resident_process_alive": .bool(true),
-                                "desired_state_persisted": .bool(stopPersistenceFailure == nil)])
-                        }
-                    }
+                    self.stopProjections(whileCurrent: { [weak self] in
+                        self?.lifecycleGeneration.load(ordering: .acquiring) == generation
+                    }, then: { _ in
+                        completion?(stopPersistenceFailure == nil ? .accepted : .failed, stopPersistenceFailure,
+                            ["management_enabled": .bool(false), "journal_preserved": .bool(true),
+                            "readiness_verified": .bool(false), "resident_process_alive": .bool(true),
+                            "desired_state_persisted": .bool(stopPersistenceFailure == nil)])
+                    })
                 })
             case .start:
                 inputStartAttempted.store(false, ordering: .releasing)
@@ -717,18 +761,15 @@ final class CoreRuntimeServices: @unchecked Sendable {
                         completion?(status, reason, details.merging(["journal_preserved": .bool(true)]))
                     }) }
                     else {
-                        self.observationQueue.async { [weak self] in
-                            guard let self, self.lifecycleGeneration.load(ordering: .acquiring) == generation else { return }
-                            self.feed.stop(); self.snapshots.stop()
-                            DispatchQueue.main.async { [weak self] in
-                                guard let self, self.lifecycleGeneration.load(ordering: .acquiring) == generation else { return }
-                                MainActor.assumeIsolated { self.renderer?.unmount() }
-                                _ = self.server.applyWorldDelta(["event": .string("global_stop"), "management_enabled": .bool(false),
-                                    "resident_starting": .bool(false), "resident_status": .string("Stopped"), "resident_running": .bool(false)])
-                                completion?(.accepted, nil, ["management_enabled": .bool(false), "journal_preserved": .bool(true),
-                                    "readiness_verified": .bool(false), "resident_process_alive": .bool(true)])
-                            }
-                        }
+                        // Restart to OFF now publishes the unmounted projection's health like every other teardown.
+                        self.stopProjections(whileCurrent: { [weak self] in
+                            self?.lifecycleGeneration.load(ordering: .acquiring) == generation
+                        }, then: { services in
+                            _ = services.server.applyWorldDelta(["event": .string("global_stop"), "management_enabled": .bool(false),
+                                "resident_starting": .bool(false), "resident_status": .string("Stopped"), "resident_running": .bool(false)])
+                            completion?(.accepted, nil, ["management_enabled": .bool(false), "journal_preserved": .bool(true),
+                                "readiness_verified": .bool(false), "resident_process_alive": .bool(true)])
+                        })
                     }
                 })
             case .hardReset:
@@ -815,7 +856,8 @@ final class CoreRuntimeServices: @unchecked Sendable {
         }
     }
 
-    private func reconcileBaseline(generation: UInt64, completion: LifecycleCompletion?, startup: ResidentStartupSeedGate.Scope? = nil) {
+    private func reconcileBaseline(generation: UInt64, completion: LifecycleCompletion?, startup: ResidentStartupSeedGate.Scope? = nil,
+                                   contentionAttempt: Int = 0) {
         guard desiredRunning, lifecycleGeneration.load(ordering: .acquiring) == generation else { return }
         inputStartAttempted.store(true, ordering: .releasing)
         let baseline = server.committedSnapshot
@@ -828,26 +870,31 @@ final class CoreRuntimeServices: @unchecked Sendable {
                 let matched = result.at(path: "request_id")?.stringValue == requestID
                     && (result.at(path: "revision")?.intValue ?? -1) >= Int64(clamping: baseline.revision)
                 let beforeInput = server.committedSnapshot
+                if Self.startupReconciliationCanReplan(result, baseline: baseline.world, current: beforeInput.world,
+                    trusted: trustedProvider(), generation: generation,
+                    currentGeneration: lifecycleGeneration.load(ordering: .acquiring), attempt: contentionAttempt) {
+                    ResidentPerformanceTrace.shared.record("startup_reconcile_replan", fields: [
+                        "prior_request_id": .string(requestID), "attempt": .int(Int64(contentionAttempt + 1)),
+                        "revision": .int(Int64(clamping: beforeInput.revision)),
+                        "reason": result.at(path: "reason") ?? .null])
+                    reconcileBaseline(generation: generation, completion: completion, startup: startup,
+                        contentionAttempt: contentionAttempt + 1)
+                    return
+                }
                 let reconciled = Self.startupReconciliationMatches(result, requestID: requestID, baselineRevision: baseline.revision,
                     world: beforeInput.world)
-                let ready = reconciled && trustedProvider() && beforeInput.world.at(path: "observation.world_complete")?.boolValue == true
-                    && beforeInput.world.at(path: "management_enabled")?.boolValue != false
-                    && beforeInput.world.at(path: "persistence_available")?.boolValue != false
-                    && beforeInput.world.at(path: "geometry_available")?.boolValue != false
+                let ready = reconciled && trustedProvider() && Self.worldReady(beforeInput.world)
                 let inputStarted = ready && (input.map(startInput) ?? true)
                 guard lifecycleGeneration.load(ordering: .acquiring) == generation else { input?.stop(); return }
                 let verified = server.committedSnapshot
-                let started = inputStarted && trustedProvider() && verified.world.at(path: "observation.world_complete")?.boolValue == true
-                    && verified.world.at(path: "management_enabled")?.boolValue != false
-                    && verified.world.at(path: "persistence_available")?.boolValue != false
-                    && verified.world.at(path: "geometry_available")?.boolValue != false
+                let started = inputStarted && trustedProvider() && Self.worldReady(verified.world)
                     && result.at(path: "reconciliation_verified_scope") == ResidentActionController.reconciliationScope(verified.world)
                     && verified.world.at(path: "model_state.space_partitions") == beforeInput.world.at(path: "model_state.space_partitions")
                 let reason = started ? nil : !matched ? "startup_reconcile_stale" : !reconciled
                     ? result.at(path: "reconciliation_failure_reason")?.stringValue ?? result.at(path: "reason")?.stringValue ?? "world_reconcile_failed"
                     : !ready ? "world_incomplete" : "resident_input_unavailable"
                 if let startup, !started,
-                   (!trustedProvider() || verified.world.at(path: "observation.world_complete")?.boolValue != true),
+                   (!trustedProvider() || verified.world.worldComplete != true || Self.startupAwaitsDesktopSpace(result)),
                    startupSeedGate.waitForRecovery(startup, generation: generation, observationEpoch: server.observationEpoch) {
                     input?.stop()
                     return
@@ -890,6 +937,7 @@ final class CoreRuntimeServices: @unchecked Sendable {
                     "readiness_revision": .int(Int64(clamping: verified.revision)), "resident_process_alive": .bool(true),
                     "observer_generation": verified.world.at(path: "observer_generation") ?? .null,
                     "reconciliation_request_id": .string(requestID), "reconciliation_result": result])
+                if started { actions.resumeStartupMinimums() }
                 DispatchQueue.main.async { [weak self] in
                     guard let self, self.lifecycleGeneration.load(ordering: .acquiring) == generation else { return }
                     MainActor.assumeIsolated {

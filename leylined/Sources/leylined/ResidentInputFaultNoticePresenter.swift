@@ -75,7 +75,6 @@ final class ResidentInputFaultNoticePresenter {
     var health: JSONObject {
         ["visible": .bool(state.visibleEvent != nil), "surface_count": .int(surface == nil ? 0 : 1),
          "accepted_events": .int(Int64(acceptedCount)), "dismissal_jobs": .int(dismissalJob == nil ? 0 : 1),
-         "dismissal_milliseconds": .int(Int64(ResidentInputFaultNoticeConstants.dismissalMilliseconds)),
-         "recurring_poll_count": .int(0)]
+         "dismissal_milliseconds": .int(Int64(ResidentInputFaultNoticeConstants.dismissalMilliseconds))]
     }
 }

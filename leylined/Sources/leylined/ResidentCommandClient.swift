@@ -4,13 +4,15 @@ import Darwin
 import Foundation
 import LeylineModel
 
+/// The operations the native command client accepts; main.swift dispatches on the same set.
+let residentClientOperations = ["act", "result", "control", "control-result", "hello", "status", "snapshot", "health", "trace"]
+
 struct ResidentClientReply: Sendable {
     let value: JSONValue
     let exitCode: Int32
 }
 
 struct ResidentClientOptions: Sendable {
-    let operation: String
     let socketPath: String
     let requestID: String?
     let actionID: String?
@@ -76,12 +78,10 @@ private final class ResidentCommandStream: @unchecked Sendable {
 enum ResidentCommandClient {
     static func parse(operation: String, arguments: [String],
                       environment: [String: String] = ProcessInfo.processInfo.environment) throws -> ResidentClientOptions {
-        guard ["act", "result", "control", "control-result", "hello", "status", "snapshot", "health", "perf", "trace"].contains(operation) else {
+        guard residentClientOperations.contains(operation) else {
             throw ResidentClientArgumentError(code: "operation_invalid", message: "Unknown resident client operation")
         }
-        let root = environment["LEYLINE_ROOT"] ?? (NSHomeDirectory() + "/.config/leyline")
-        let runtime = environment["LEYLINE_RUNTIME_DIR"] ?? (root + "/runtime")
-        var path = environment["LEYLINE_CORE_SOCKET"] ?? (runtime + "/sockets/leylined.sock")
+        var path = environment["LEYLINE_CORE_SOCKET"] ?? ResidentPaths.socket(environment)
         var requestID: String?
         var actionID: String?
         var expected: Int64?
@@ -124,7 +124,6 @@ enum ResidentCommandClient {
                 timeout = seconds; index += 2
             case "--wait": waiting = true; index += 1
             case "--no-wait": waiting = false; index += 1
-            case "--json": index += 1
             default:
                 guard !argument.hasPrefix("-") else {
                     throw ResidentClientArgumentError(code: "argument_invalid", message: "Unknown option \(argument)")
@@ -139,13 +138,13 @@ enum ResidentCommandClient {
             throw ResidentClientArgumentError(code: "socket_path_invalid", message: "Socket path must fit the local Unix socket address")
         }
         if mutating {
-            guard let actionID, !actionID.isEmpty, actionID.utf8.count <= 256 else {
+            guard let actionID, !actionID.isEmpty, actionID.utf8.count <= ResidentProtocolLimits.identifierBytes else {
                 throw ResidentClientArgumentError(code: "action_id_missing", message: "Provide a registered action ID")
             }
             if requestID == nil { requestID = UUID().uuidString }
         }
         if mutating || queryingResult {
-            guard let requestID, !requestID.isEmpty, requestID.utf8.count <= 256 else {
+            guard let requestID, !requestID.isEmpty, requestID.utf8.count <= ResidentProtocolLimits.identifierBytes else {
                 throw ResidentClientArgumentError(code: "request_id_invalid", message: "Request ID must contain 1 to 256 UTF-8 bytes")
             }
         } else if requestID != nil || expected != nil || (operation != "trace" && payload != .object([:])) || waiting {
@@ -154,7 +153,7 @@ enum ResidentCommandClient {
         if !mutating, expected != nil || (operation != "trace" && payload != .object([:])) {
             throw ResidentClientArgumentError(code: "argument_invalid", message: "Expected revision and arguments require act or control")
         }
-        return ResidentClientOptions(operation: operation, socketPath: path, requestID: requestID,
+        return ResidentClientOptions(socketPath: path, requestID: requestID,
             actionID: actionID, expectedRevision: expected, arguments: payload,
             waitForCompletion: waiting, timeoutSeconds: timeout)
     }
@@ -164,8 +163,8 @@ enum ResidentCommandClient {
         let options: ResidentClientOptions
         do { options = try parse(operation: operation, arguments: arguments, environment: environment) }
         catch let error as ResidentClientArgumentError {
-            return failure(code: error.code, message: error.message, requestID: nil, exitCode: 64)
-        } catch { return failure(code: "argument_invalid", message: String(describing: error), requestID: nil, exitCode: 64) }
+            return failure(code: error.code, message: error.message, requestID: nil, exitCode: ResidentExitCode.usage)
+        } catch { return failure(code: "argument_invalid", message: String(describing: error), requestID: nil, exitCode: ResidentExitCode.usage) }
         signal(SIGPIPE, SIG_IGN)
         let deadline = DispatchTime.now().uptimeNanoseconds + UInt64(options.timeoutSeconds) * 1_000_000_000
         func request(_ body: JSONObject) -> JSONValue? {
@@ -175,12 +174,11 @@ enum ResidentCommandClient {
             return ServeClient.request(socketPath: options.socketPath, body: body, timeoutSeconds: remaining)
         }
         if !["act", "result", "control", "control-result"].contains(operation) {
-            var body: JSONObject = ["op": .string(operation == "perf" ? "health" : operation)]
+            var body: JSONObject = ["op": .string(operation)]
             if operation == "trace" { body["args"] = options.arguments }
             guard let response = request(body) else {
                 return failure(code: "core_not_running", message: "Resident core is not reachable", requestID: nil)
             }
-            if operation == "perf" { return performance(response) }
             guard response.objectValue != nil, response.at(path: "ok")?.boolValue != nil else {
                 return failure(code: "resident_protocol_invalid", message: "Resident read response is malformed", requestID: nil)
             }
@@ -260,15 +258,12 @@ enum ResidentCommandClient {
                     message: "Resident completion was not observed; query the same request ID without resubmitting a mutation",
                     requestID: options.requestID)
             }
-            if let eventEpoch = event.at(path: "epoch_ms")?.intValue, eventEpoch != epoch {
-                return failure(code: "resident_epoch_changed", message: "Resident authority changed during completion wait", requestID: options.requestID)
-            }
-            if event.at(path: "ok")?.boolValue == false || event.at(path: "type")?.stringValue == "revision_gap" {
+            if event.at(path: "ok")?.boolValue == false {
                 return failure(code: event.at(path: "error")?.stringValue ?? "completion_subscription_refused",
                     message: "Resident completion subscription was refused or lost its revision baseline", requestID: options.requestID)
             }
             let result = resultOperation == "control-result" ? event.at(path: "delta.control_last_result")
-                : event.at(path: "delta.last_result") ?? event.at(path: "result")
+                : event.at(path: "delta.last_result")
             if let result, result.at(path: "request_id")?.stringValue == options.requestID, isTerminal(result) {
                 return wrap(result, requestID: options.requestID, completed: true)
             }
@@ -289,27 +284,6 @@ enum ResidentCommandClient {
         return successOrAdmission && value.at(path: "request_id")?.stringValue != requestID
     }
 
-    private static func performance(_ response: JSONValue) -> ResidentClientReply {
-        guard response.at(path: "ok")?.boolValue == true else { return wrap(response, requestID: nil, completed: true) }
-        guard let health = response.at(path: "health"), health.objectValue != nil else {
-            return failure(code: "resident_protocol_invalid", message: "Resident performance health diagnostics are missing", requestID: nil)
-        }
-        let distributions = health.at(path: "resident.performance.distributions")
-            ?? health.at(path: "performance.distributions")
-        let diagnostic: JSONValue = .object([
-            "schema": .string("leyline/resident-performance/v1"),
-            "revision": response.at(path: "revision") ?? .null,
-            "epoch_ms": response.at(path: "epoch_ms") ?? .null,
-            "diagnostics": health, "distributions": distributions ?? .null,
-            "release_evidence": .bool(false), "live_certification": .bool(false),
-        ])
-        guard let distributions, let object = distributions.objectValue, !object.isEmpty else {
-            return failure(code: "performance_distributions_unavailable", message: "Resident distributions are unmeasured; health diagnostics are available",
-                           requestID: nil, data: diagnostic)
-        }
-        return ResidentClientReply(value: envelope(data: diagnostic, error: nil, requestID: nil, completed: true), exitCode: 0)
-    }
-
     private static func wrap(_ response: JSONValue, requestID: String?, completed: Bool) -> ResidentClientReply {
         guard response.objectValue != nil,
               response.at(path: "ok")?.boolValue != nil || response.at(path: "status")?.stringValue != nil else {
@@ -320,20 +294,18 @@ enum ResidentCommandClient {
         let reason = response.at(path: "reason")?.stringValue ?? response.at(path: "error")?.stringValue ?? "resident_refused"
         let error: JSONValue? = refused ? .object(["code": .string(reason), "message": .string("Resident request did not complete successfully")]) : nil
         return ResidentClientReply(value: envelope(data: response, error: error, requestID: requestID, completed: completed),
-                                   exitCode: refused ? 65 : 0)
+                                   exitCode: refused ? ResidentExitCode.refused : 0)
     }
 
-    private static func failure(code: String, message: String, requestID: String?, exitCode: Int32 = 69,
-                                data: JSONValue? = nil) -> ResidentClientReply {
-        ResidentClientReply(value: envelope(data: data, error: .object(["code": .string(code), "message": .string(message)]),
+    private static func failure(code: String, message: String, requestID: String?,
+                                exitCode: Int32 = ResidentExitCode.unavailable) -> ResidentClientReply {
+        ResidentClientReply(value: envelope(data: nil, error: .object(["code": .string(code), "message": .string(message)]),
                                            requestID: requestID, completed: false), exitCode: exitCode)
     }
 
     private static func envelope(data: JSONValue?, error: JSONValue?, requestID: String?, completed: Bool) -> JSONValue {
-        .object(["data": data ?? .null, "error": error ?? .null,
-                 "meta": .object(["transport": .string("resident_socket"),
-                    "request_id": requestID.map(JSONValue.string) ?? .null,
-                    "completed": .bool(completed), "mutation_fallback": .bool(false)])])
+        ResidentReply.cliEnvelope(data: data, error: error, meta: ["transport": .string("resident_socket"),
+            "request_id": requestID.map(JSONValue.string) ?? .null, "completed": .bool(completed)])
     }
 }
 

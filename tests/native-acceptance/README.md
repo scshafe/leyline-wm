@@ -8,9 +8,8 @@ other applications. Every UI action uses CUA or actual operator hardware input.
 The boundary-integration lens applies: real fixture windows exercise AppKit/AX;
 ScreenCaptureKit observes compositor pixels; genuine HID input and physical
 display scanout remain separate boundaries. Requirements come from
-[`core-window-manager-spec.md`](../../docs/contracts/core-window-manager-spec.md#acceptance-and-performance-contract),
-[`event-driven-responsiveness.md`](../../docs/contracts/event-driven-responsiveness.md),
-and the single-process plan's remaining acceptance table.
+[`core-window-manager-spec.md`](../../docs/contracts/core-window-manager-spec.md#evidence-boundaries)
+and [`event-driven-responsiveness.md`](../../docs/contracts/event-driven-responsiveness.md#numerical-requirements).
 
 ## Build and inspect without launching
 
@@ -21,9 +20,9 @@ bash tests/native-acceptance/build-fixture.sh /tmp/leyline-acceptance-build-uniq
 /usr/bin/python3 tests/native-acceptance/test_collect_and_validate.py
 ```
 
-The output directory must be new and under `/tmp`. Signing uses the stable
-`leyline-local-cert`, or `LEYLINE_CODESIGN_IDENTITY`; unavailable signing fails
-the build. No ad-hoc fallback or grant repair occurs.
+The output directory must be new and under `/tmp`. Signing is ad hoc unless
+`LEYLINE_CODESIGN_IDENTITY` names a certificate; a named identity that is
+unavailable fails the build. No grant repair occurs.
 
 `--preflight` calls only `CGPreflightScreenCaptureAccess`, returns an explicit
 `CAPTURE.SCREEN_RECORDING_REQUIRED` envelope and exit77 when missing, and never
@@ -286,9 +285,8 @@ The fixture does not exercise Safari/Chrome AX wrapper repair. Source admission
 exports must be honestly bound to the installed binary and runtime; matching
 JSON fields alone cannot attest their origin. Pixel probes establish selected
 pixels, not exhaustive raster correctness. Display capture cannot prove photons.
-These gaps follow the boundary-integration lens, including the Testineer memory
-`2026-05-kitty-graphics-case-sensitivity`: typed intent and backend output are
-separate proofs.
+These gaps follow the boundary-integration lens: typed intent and backend output
+are separate proofs.
 
 ## Ordinary launchd crash measurement
 

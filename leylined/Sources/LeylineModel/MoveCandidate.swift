@@ -42,11 +42,19 @@ public enum MoveCandidate {
             guard Int64(id).map({ $0 > 0 && String($0) == id }) == true, identity.objectValue != nil,
                   let window = observed.first(where: { $0.at(path: "window_id")?.intValue.map(String.init) == id }) else { return false }
             for (field, expected) in identity.objectValue ?? [:] where expected != .null {
-                let current = field == "display_id" && expected.stringValue != nil && window.at(path: field)?.intValue != nil
-                    ? window.at(path: "display_uuid") : window.at(path: field)
-                guard current == expected else { return false }
+                guard WindowIdentity.observedValue(field: field, expected: expected, in: window) == expected else { return false }
             }
         }
         return true
+    }
+}
+
+/// Recorded window identities compare field by field against the observed record.
+public enum WindowIdentity {
+    /// The observed value a recorded identity field compares against. A recorded
+    /// string `display_id` beside an observed integer one names the display UUID.
+    public static func observedValue(field: String, expected: JSONValue, in window: JSONValue) -> JSONValue? {
+        field == "display_id" && expected.stringValue != nil && window.at(path: field)?.intValue != nil
+            ? window.at(path: "display_uuid") : window.at(path: field)
     }
 }

@@ -1,9 +1,6 @@
 runtime/*
-!runtime/.gitkeep
 **/*.local.json
 **/*.local.sh
-plugins/*
-!plugins/.gitkeep
 bin/leylined
 bin/Leyline Recovery.app/
 .claude/**/*.local.md
@@ -15,7 +12,6 @@ bin/Leyline Recovery.app/
 **/.DS_Store
 __pycache__/
 leylined/.build/
-
 bin/leylined-tests
 dist/
 .release-build/

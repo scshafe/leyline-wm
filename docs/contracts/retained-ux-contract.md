@@ -14,7 +14,7 @@ version 1 capability to its implementation contract.
 | Close refocus and member conservation | [Reclaim](reclaim-policy.md) |
 | Role-colored borders and immutable previews | [Focus and borders](../focus-domain.md) |
 | Windows menu access to obscured managed members | [Core window manager](core-window-manager-spec.md) |
-| Configurable shared/outer border spacing | [Configuration](../configuration.md) |
+| Fixed 1-point borders, spacing and configurable colors | [Configuration](../configuration.md) |
 | Finder recovery and launchd controls | [Recovery](resident-recovery-spec.md) |
 
 The public result vocabulary is accepted/noop/refused/failed. Refusal makes no

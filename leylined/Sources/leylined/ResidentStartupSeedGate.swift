@@ -33,11 +33,10 @@ final class ResidentStartupSeedGate: @unchecked Sendable {
         lock.withLock {
             guard awaiting, !reconciling, let token = scope,
                   token.generation == generation, token.observationEpoch == observationEpoch,
-                  snapshot.world.at(path: "management_enabled")?.boolValue != false,
-                  snapshot.world.at(path: "observation.world_complete")?.boolValue == true else { return nil }
-            let event = snapshot.world.at(path: "event")?.stringValue ?? ""
-            let baseline = ["world_seed", "explicit_recovery", "wake_recovery", "topology_changed",
-                            "space_changed", "trust_changed", "application_launch_recovery"].contains(event)
+                  snapshot.world.managementEnabled,
+                  snapshot.world.worldComplete == true else { return nil }
+            let event = snapshot.world.worldEvent
+            let baseline = WorldEvent.sweep.contains(event)
                 || (event == "app_activated" && snapshot.world.at(path: "observation.world_recovered")?.boolValue == true)
             guard baseline else { return nil }
             reconciling = true

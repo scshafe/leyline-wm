@@ -24,7 +24,10 @@ cd "$builder_root"
 command -v swift >/dev/null || { printf 'Swift6 or newer is required (Xcode Command Line Tools).\n' >&2; exit 69; }
 [[ -n "$builder_scratch" ]] || builder_scratch="$builder_root/leylined/.build/$builder_profile-$builder_arch"
 if [[ "$builder_profile" == tests ]]; then export LEYLINE_BUILD_TESTS=1; else unset LEYLINE_BUILD_TESTS; fi
-builder_args=(--package-path "$builder_root/leylined" --scratch-path "$builder_scratch" -c release --triple "$builder_arch-apple-macosx14.0")
+# Package.swift derives the shipping profile's exclusions from a directory
+# listing, so a cached manifest evaluation goes stale the moment a SelfTest*
+# file is added or removed: it would compile the new file into production.
+builder_args=(--package-path "$builder_root/leylined" --scratch-path "$builder_scratch" -c release --triple "$builder_arch-apple-macosx14.0" --manifest-cache none)
 if (( builder_disable_sandbox )); then builder_args+=(--disable-sandbox); fi
 if [[ "$builder_profile" == production ]]; then
   builder_args+=(-Xswiftc -file-prefix-map -Xswiftc "$builder_root=/leyline"
@@ -41,6 +44,5 @@ cp "$builder_product" "$builder_candidate"
 chmod 0755 "$builder_candidate"
 if [[ "$builder_profile" == production ]]; then /usr/bin/strip -S "$builder_candidate"; fi
 "$builder_root/bin/leyline-codesign" "$builder_candidate" org.leyline.leylined
-codesign --verify --strict "$builder_candidate"
 mv -f "$builder_candidate" "$builder_output"
 printf 'Built %s profile: %s\n' "$builder_profile" "$builder_output"

@@ -45,41 +45,6 @@
       "ndid": 99
     },
     {
-      "name": "unknown-policy",
-      "newcomers": [
-        2
-      ],
-      "insertion_policy": "typo"
-    },
-    {
-      "name": "minimum-constrained",
-      "newcomers": [
-        2
-      ],
-      "binding_fields": {
-        "min_size": {
-          "w": 1800,
-          "h": 1000
-        }
-      }
-    },
-    {
-      "name": "stacked-store",
-      "newcomers": [
-        2
-      ],
-      "binding_fields": {
-        "contents": [
-          {
-            "window_id": 1
-          },
-          {
-            "window_id": 3
-          }
-        ]
-      }
-    },
-    {
       "name": "nested-store",
       "newcomers": [
         2
@@ -92,65 +57,12 @@
       }
     },
     {
-      "name": "promotion-store",
-      "newcomers": [
-        2
-      ],
-      "store_fields": {
-        "promotions": [
-          {
-            "window_id": 1
-          }
-        ]
-      }
-    },
-    {
       "name": "unbound-home-cell",
       "newcomers": [
         2
       ],
       "store_fields": {
         "bindings": {}
-      }
-    },
-    {
-      "name": "nested-null-presence",
-      "newcomers": [
-        2
-      ],
-      "binding_fields": {
-        "nested": null
-      }
-    },
-    {
-      "name": "binding-minimum",
-      "newcomers": [
-        2
-      ],
-      "binding_fields": {
-        "binding": {
-          "min_size": {
-            "w": 1800,
-            "h": 1000
-          }
-        }
-      }
-    },
-    {
-      "name": "contents-minimum",
-      "newcomers": [
-        2
-      ],
-      "binding_fields": {
-        "contents": [
-          {
-            "window_id": 1,
-            "min_size": {
-              "w": 1800,
-              "h": 1000
-            }
-          }
-        ]
       }
     },
     {
@@ -173,13 +85,6 @@
         2,
         "3"
       ]
-    },
-    {
-      "name": "numeric-policy",
-      "newcomers": [
-        2
-      ],
-      "insertion_policy": 42
     }
   ]
 }

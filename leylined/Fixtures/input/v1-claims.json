@@ -51,11 +51,6 @@
       "cmd + ctrl + alt + shift - a": "space.management.toggle"
     }
   },
-  "expected_claim_counts": {
-    "default": 8,
-    "move": 22,
-    "resize": 13
-  },
   "retained_action_ids": [
     "move.cancel",
     "move.cursor.east",
@@ -82,9 +77,5 @@
     "resize.start",
     "service.restart",
     "space.management.toggle"
-  ],
-  "unsupported_action_ids": [],
-  "reserved_chords": [
-    "cmd + ctrl + alt + shift - f"
   ]
 }

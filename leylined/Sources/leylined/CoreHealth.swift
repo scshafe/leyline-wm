@@ -119,12 +119,6 @@ struct CoreProjectionHealth: Equatable, Sendable {
         degradedReason: "projection_not_configured",
         lastRenderedRevision: nil)
 
-    static func unavailable(reason: String) -> Self {
-        Self(
-            required: nil, mounted: false, degraded: true,
-            degradedReason: reason, lastRenderedRevision: nil)
-    }
-
     var json: JSONValue {
         .object([
             "required": required.map(JSONValue.bool) ?? .null,

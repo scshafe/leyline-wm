@@ -2,10 +2,10 @@
 //
 // It RENDERS a BorderPlan and computes nothing: the plan arrives from
 // LeylineModel's pure `BorderProjection.plan(world:)`, and this file must
-// never read the world (no CGWindowList, no AX, no file polls) — asserted
-// structurally by `ley test leylined`. Everything here is main-thread AppKit.
+// never read the world (no CGWindowList, no AX, no file polls).
+// Everything here is main-thread AppKit.
 //
-// Three D10 properties, by mechanism rather than assertion:
+// Three presentation properties, by mechanism rather than assertion:
 //   * COMMIT BEFORE RENDER — `render` is only ever called with an
 //     already-committed revision; nothing here can mutate core state (there
 //     is no path back into the timeline from this file).
@@ -35,6 +35,55 @@ protocol BorderRenderSurface: AnyObject {
     func clear()
 }
 
+private enum BorderInsertionPreviewStyle {
+    static let tintAlpha: CGFloat = 0.16
+    static let badgeAlpha: CGFloat = 0.88
+    static let fontSize: CGFloat = 15
+    static let paddingX: CGFloat = 12
+    static let paddingY: CGFloat = 8
+    static let margin: CGFloat = 8
+    static let badgeRadius: CGFloat = 8
+}
+
+/// Click-through drawing within the exact source destination supplied by the
+/// immutable plan. Label fitting affects typography only, never tile geometry.
+@MainActor
+private final class BorderInsertionPreviewView: NSView {
+    var preview: BorderInsertionPreview?
+    var color: NSColor = .systemBlue
+    var cornerRadius: CGFloat = 12
+
+    override func draw(_ dirtyRect: NSRect) {
+        guard let preview else { return }
+        if preview.isAvailable {
+            color.withAlphaComponent(BorderInsertionPreviewStyle.tintAlpha).setFill()
+            NSBezierPath(roundedRect: bounds, xRadius: cornerRadius, yRadius: cornerRadius).fill()
+        }
+
+        let available = bounds.insetBy(dx: BorderInsertionPreviewStyle.margin, dy: BorderInsertionPreviewStyle.margin)
+        guard available.width > 0, available.height > 0 else { return }
+        let fontSize = min(BorderInsertionPreviewStyle.fontSize, max(6, available.height - BorderInsertionPreviewStyle.paddingY * 2))
+        let font = NSFont.systemFont(ofSize: fontSize, weight: .semibold)
+        let attributes: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor.white]
+        let choices = preview.isAvailable
+            ? [preview.label, "\(preview.arrow) \(preview.sideLabel)", preview.arrow]
+            : [preview.label, "\(preview.arrow) NO FIT", preview.arrow]
+        let label = choices.first { ($0 as NSString).size(withAttributes: attributes).width
+            + BorderInsertionPreviewStyle.paddingX * 2 <= available.width } ?? preview.arrow
+        let size = (label as NSString).size(withAttributes: attributes)
+        let badge = NSRect(x: bounds.midX - min(available.width, size.width + BorderInsertionPreviewStyle.paddingX * 2) / 2,
+            y: bounds.midY - min(available.height, size.height + BorderInsertionPreviewStyle.paddingY * 2) / 2,
+            width: min(available.width, size.width + BorderInsertionPreviewStyle.paddingX * 2),
+            height: min(available.height, size.height + BorderInsertionPreviewStyle.paddingY * 2))
+        let path = NSBezierPath(roundedRect: badge, xRadius: BorderInsertionPreviewStyle.badgeRadius,
+            yRadius: BorderInsertionPreviewStyle.badgeRadius)
+        NSColor.black.withAlphaComponent(BorderInsertionPreviewStyle.badgeAlpha).setFill(); path.fill()
+        color.setStroke(); path.lineWidth = 1; path.stroke()
+        (label as NSString).draw(at: NSPoint(x: bounds.midX - size.width / 2, y: bounds.midY - size.height / 2),
+            withAttributes: attributes)
+    }
+}
+
 @MainActor
 private final class AppKitBorderRenderSurface: BorderRenderSurface {
     private var panels: [NSPanel] = []
@@ -51,14 +100,13 @@ private final class AppKitBorderRenderSurface: BorderRenderSurface {
         guard let screenHeight = screenHeightProvider() else {
             return .failed(reason: "no_screen_available")
         }
-        let thickness = CGFloat(BorderPalette.thickness(store: store))
-        if thickness == 0 { clear(); return .rendered }
+        let thickness = CGFloat(BorderPalette.thickness)
         let radius = CGFloat(BorderPalette.radius(store: store))
 
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         defer { CATransaction.commit() }
-        let decorationCount = plan.rings.count + plan.selectionLines.count
+        let decorationCount = plan.rings.count + plan.selectionLines.count + (plan.insertionPreview == nil ? 0 : 1)
         while panels.count < decorationCount { panels.append(Self.makePanel()) }
 
         for (index, ring) in plan.rings.enumerated() {
@@ -74,15 +122,14 @@ private final class AppKitBorderRenderSurface: BorderRenderSurface {
                 width: outset.width,
                 height: outset.height)
             if panel.frame != appkit { panel.setFrame(appkit, display: true) }
-            if let layer = panel.contentView?.layer as? CAShapeLayer {
-                let stroke = panel.contentView!.bounds.insetBy(dx: thickness / 2, dy: thickness / 2)
-                layer.path = CGPath(roundedRect: stroke, cornerWidth: radius, cornerHeight: radius, transform: nil)
-                layer.strokeColor = Self.nsColor(hex: BorderPalette.color(ring.role, store: store)).cgColor
-                layer.fillColor = NSColor.clear.cgColor
-                layer.lineWidth = thickness
-                layer.lineDashPattern = ring.stroke == .dashed ? [6, 4] : nil
-                layer.lineCap = .butt
-            }
+            let layer = Self.shapeLayer(for: panel)
+            let stroke = panel.contentView!.bounds.insetBy(dx: thickness / 2, dy: thickness / 2)
+            layer.path = CGPath(roundedRect: stroke, cornerWidth: radius, cornerHeight: radius, transform: nil)
+            layer.strokeColor = Self.nsColor(hex: BorderPalette.color(ring.role, store: store)).cgColor
+            layer.fillColor = NSColor.clear.cgColor
+            layer.lineWidth = thickness
+            layer.lineDashPattern = ring.stroke == .dashed ? [6, 4] : nil
+            layer.lineCap = .butt
             if panel.alphaValue == 0 { panel.orderFrontRegardless() }
             panel.alphaValue = 1
         }
@@ -95,20 +142,39 @@ private final class AppKitBorderRenderSurface: BorderRenderSurface {
                 height: horizontal ? Double(thickness) * 2 : line.upper - line.lower + Double(thickness) * 2)
             let frame = NSRect(x: cg.minX, y: screenHeight - cg.minY - cg.height, width: cg.width, height: cg.height)
             if panel.frame != frame { panel.setFrame(frame, display: true) }
-            if let layer = panel.contentView?.layer as? CAShapeLayer {
-                let path = CGMutablePath()
-                path.move(to: CGPoint(x: thickness, y: thickness))
-                path.addLine(to: horizontal
-                    ? CGPoint(x: cg.width - thickness, y: thickness)
-                    : CGPoint(x: thickness, y: cg.height - thickness))
-                layer.path = path
-                layer.strokeColor = Self.nsColor(hex: BorderPalette.color(.dropEdge, store: store)).cgColor
-                layer.fillColor = NSColor.clear.cgColor
-                layer.lineWidth = thickness
-                layer.lineDashPattern = nil
-                layer.lineCap = .round
-            }
+            let layer = Self.shapeLayer(for: panel)
+            let path = CGMutablePath()
+            path.move(to: CGPoint(x: thickness, y: thickness))
+            path.addLine(to: horizontal
+                ? CGPoint(x: cg.width - thickness, y: thickness)
+                : CGPoint(x: thickness, y: cg.height - thickness))
+            layer.path = path
+            layer.strokeColor = Self.nsColor(hex: BorderPalette.color(.dropEdge, store: store)).cgColor
+            layer.fillColor = NSColor.clear.cgColor
+            layer.lineWidth = thickness
+            layer.lineDashPattern = nil
+            layer.lineCap = .round
             if panel.alphaValue == 0 { panel.orderFrontRegardless() }
+            panel.alphaValue = 1
+        }
+        if let preview = plan.insertionPreview {
+            let panel = panels[plan.rings.count + plan.selectionLines.count]
+            let frame = NSRect(x: preview.frame.x, y: screenHeight - preview.frame.y - preview.frame.h,
+                width: preview.frame.w, height: preview.frame.h)
+            if panel.frame != frame { panel.setFrame(frame, display: true) }
+            let view: BorderInsertionPreviewView
+            if let existing = panel.contentView as? BorderInsertionPreviewView { view = existing }
+            else {
+                view = BorderInsertionPreviewView(frame: NSRect(origin: .zero, size: frame.size))
+                view.autoresizingMask = [.width, .height]
+                view.setAccessibilityElement(false)
+                panel.contentView = view
+            }
+            view.preview = preview
+            view.color = preview.isAvailable ? Self.nsColor(hex: BorderPalette.color(.moved, store: store)) : .systemRed
+            view.cornerRadius = radius
+            view.needsDisplay = true
+            panel.orderFrontRegardless()
             panel.alphaValue = 1
         }
         for index in decorationCount..<panels.count
@@ -143,14 +209,27 @@ private final class AppKitBorderRenderSurface: BorderRenderSurface {
         panel.ignoresMouseEvents = true
         panel.setAccessibilityElement(false)
         panel.alphaValue = 0
-        let content = NSView(frame: panel.contentView?.bounds ?? .zero)
+        panel.contentView = makeShapeView(frame: panel.contentView?.bounds ?? .zero)
+        return panel
+    }
+
+    /// Panel indices change as a scope adds/removes affected windows. Replacing
+    /// the content kind prevents a previous badge surviving as a border panel.
+    private static func shapeLayer(for panel: NSPanel) -> CAShapeLayer {
+        if panel.contentView is BorderInsertionPreviewView || !(panel.contentView?.layer is CAShapeLayer) {
+            panel.contentView = makeShapeView(frame: NSRect(origin: .zero, size: panel.frame.size))
+        }
+        return panel.contentView!.layer as! CAShapeLayer
+    }
+
+    private static func makeShapeView(frame: NSRect) -> NSView {
+        let content = NSView(frame: frame)
         content.layer = CAShapeLayer()
         content.wantsLayer = true
         content.layer?.backgroundColor = NSColor.clear.cgColor
         content.autoresizingMask = [.width, .height]
         content.setAccessibilityElement(false)
-        panel.contentView = content
-        return panel
+        return content
     }
 
     private static func nsColor(hex: String) -> NSColor {
@@ -165,6 +244,35 @@ private final class AppKitBorderRenderSurface: BorderRenderSurface {
             alpha: CGFloat((value >> 24) & 0xff) / 255)
     }
 }
+
+#if LEYLINE_BUILD_TESTS
+/// Render the actual insertion view offscreen for visual QA, without opening
+/// panels or reading the desktop. The caller supplies fixture-owned geometry.
+@MainActor
+func renderInsertionPreviewSample(_ preview: BorderInsertionPreview, output: URL) throws {
+    guard let representation = NSBitmapImageRep(bitmapDataPlanes: nil,
+        pixelsWide: Int(preview.frame.w.rounded(.up)), pixelsHigh: Int(preview.frame.h.rounded(.up)),
+        bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+        colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0),
+        let context = NSGraphicsContext(bitmapImageRep: representation) else {
+        throw CocoaError(.fileWriteUnknown)
+    }
+    NSGraphicsContext.saveGraphicsState()
+    defer { NSGraphicsContext.restoreGraphicsState() }
+    NSGraphicsContext.current = context
+    let bounds = NSRect(x: 0, y: 0, width: preview.frame.w, height: preview.frame.h)
+    NSColor(calibratedWhite: 0.12, alpha: 1).setFill()
+    bounds.fill()
+    let view = BorderInsertionPreviewView(frame: bounds)
+    view.preview = preview
+    view.color = preview.isAvailable ? NSColor(srgbRed: 41 / 255, green: 98 / 255, blue: 1, alpha: 1) : .systemRed
+    view.draw(view.bounds)
+    guard let png = representation.representation(using: .png, properties: [:]) else {
+        throw CocoaError(.fileWriteUnknown)
+    }
+    try png.write(to: output)
+}
+#endif
 
 // @MainActor is load-bearing, not decoration: D10 says projections render on
 // the main thread from published revisions, and the isolation makes that a
@@ -201,8 +309,6 @@ final class BorderRenderer {
         lastPlan = .empty
     }
 
-    var isMounted: Bool { mounted }
-    var degradedReason: String? { degraded }
     var health: CoreProjectionHealth {
         CoreProjectionHealth(
             required: true,
@@ -249,6 +355,9 @@ final class BorderRenderer {
             ResidentPerformanceTrace.shared.record("render_submitted", fields: [
                 "revision": .int(Int64(clamping: revision)),
                 "candidate_id": plan.previewCandidateID.map(JSONValue.string) ?? .null,
+                "insertion_preview": plan.insertionPreview.map { .object(["window_id": .int($0.windowId),
+                    "frame": $0.frame.json, "side": .string($0.side.rawValue), "label": .string($0.label),
+                    "available": .bool($0.isAvailable)]) } ?? .null,
                 "window_ids": .array(Set(plan.rings.map(\.windowId)).sorted().map(JSONValue.int)),
                 "decorations": .array(plan.rings.map { .object(["window_id": .int($0.windowId),
                     "frame": $0.frame.json, "role": .string($0.role.rawValue), "stroke": .string($0.stroke.rawValue)]) }),

@@ -4,7 +4,7 @@ import LeylineModel
 /// Actual timeout callback/store and held lifecycle queues. No AppKit, AX,
 /// tap, journal, live timer or runtime mutation; capability ports are atomic.
 func runResidentControlTimeoutScenarios(home: String, test: inout SelfTest) {
-    let path = home + "/leylined/Fixtures/resident/control-timeout-ownership.json"
+    let path = SelfTestFixtures.path("resident/control-timeout-ownership.json", root: home)
     guard let data = FileManager.default.contents(atPath: path), let fixture = try? JSONValue.parse(data),
           let timed = fixture.at(path: "timed")?.objectValue, let next = fixture.at(path: "next")?.objectValue,
           let stop = fixture.at(path: "new_stop")?.objectValue,

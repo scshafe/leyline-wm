@@ -1,9 +1,0 @@
-{
-  "note": "op_stack_leaves guard: fewer than 2 leaf ids → reject.",
-  "tree": { "root_id": "r", "nodes": {
-    "r": {"id":"r","mode":"row","children":["a","b"]},
-    "a": {"id":"a","window_id":1}, "b": {"id":"b","window_id":2} } },
-  "op": "stack_leaves",
-  "args": {"leaves": ["a"]},
-  "expect": {"ok": false, "reason": "stack_leaves: need >= 2 leaf ids"}
-}

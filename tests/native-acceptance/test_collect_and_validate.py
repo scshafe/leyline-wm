@@ -13,8 +13,8 @@ import threading
 import unittest
 import zlib
 
-ROOT = Path(__file__).resolve().parent
-spec = importlib.util.spec_from_file_location("acceptance", ROOT / "collect-and-validate.py")
+HERE = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location("acceptance", HERE / "collect-and-validate.py")
 acceptance = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(acceptance)
 
@@ -31,11 +31,11 @@ class AcceptanceBoundaryTests(unittest.TestCase):
     def setUp(self) -> None:
         self.work = tempfile.TemporaryDirectory(prefix="leyline-native-validator-")
         self.root = Path(self.work.name)
-        self.sample = json.loads((ROOT / "fixtures/admission-and-sample.json").read_text())["sample"]
+        self.sample = json.loads((HERE / "fixtures/admission-and-sample.json").read_text())["sample"]
         self.admission = copy.deepcopy(self.sample)
         self.admission["captured_admission"] = self.admission.pop("admission")
         self.admission["stamps"].pop("physically_visible")
-        self.scenarios = json.loads((ROOT / "scenarios.json").read_text())
+        self.scenarios = json.loads((HERE / "scenarios.json").read_text())
         self.budget = next(b for b in self.scenarios["budgets"] if b["id"] == "move_resize")
         frames = []
         for frame_id, (stamp, channel) in enumerate(((999000000, 255), (1020000000, 0))):
@@ -219,7 +219,7 @@ class AcceptanceBoundaryTests(unittest.TestCase):
         self.assertIn("absolute_ceiling_missed", [e["code"] for e in report["errors"]])
 
     def production_events(self) -> list[dict]:
-        return json.loads((ROOT / "fixtures/production-trace-events.json").read_text())
+        return json.loads((HERE / "fixtures/production-trace-events.json").read_text())
 
     def write_collection(self, events: list[dict]) -> Path:
         run = self.root / "production-shaped-run"; run.mkdir()

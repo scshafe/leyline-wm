@@ -24,29 +24,6 @@ private final class StartupTestRecord: @unchecked Sendable {
 
 /// Holding the executor models a blocked AppKit presentation lane without
 /// creating panels or entering an application event loop.
-private final class StartupHeldExecutor: @unchecked Sendable {
-    private let lock = NSLock()
-    private var pending: [@Sendable () -> Void] = []
-    private var rendered: [CoreCommittedSnapshot] = []
-    func enqueue(_ operation: @escaping @Sendable () -> Void) {
-        lock.withLock { pending.append(operation) }
-    }
-    func present(_ snapshot: CoreCommittedSnapshot) {
-        lock.withLock { rendered.append(snapshot) }
-    }
-    var pendingCount: Int { lock.withLock { pending.count } }
-    var presented: [CoreCommittedSnapshot] { lock.withLock { rendered } }
-    func drain() {
-        while true {
-            let operation: (@Sendable () -> Void)? = lock.withLock {
-                pending.isEmpty ? nil : pending.removeFirst()
-            }
-            guard let operation else { return }
-            operation()
-        }
-    }
-}
-
 private func startupReadFrame(_ descriptor: Int32) -> JSONValue? {
     guard let data = FramedJSONSocket.readFrame(descriptor) else { return nil }
     return try? JSONValue.parse(data)
@@ -55,14 +32,10 @@ private func startupReadFrame(_ descriptor: Int32) -> JSONValue? {
 /// Injected workers drive the production startup coordinator and real socket.
 /// No live AX, event tap, renderer, control, or subprocess is constructed.
 func runStartupSelfTest() -> Int32 {
-    var failures: [String] = []
-    func check(_ name: String, _ passed: Bool) {
-        if !passed { failures.append(name) }
-    }
+    var test = SelfTest()
+    func check(_ name: String, _ passed: Bool) { test.check(passed, name) }
     runResidentStartupSeedGateScenarios(check: check)
-    let fixtureURL = URL(fileURLWithPath: #filePath)
-        .deletingLastPathComponent().deletingLastPathComponent()
-        .deletingLastPathComponent().appendingPathComponent("Fixtures/startup/bootstrap-worlds.json")
+    let fixtureURL = SelfTestFixtures.url("startup/bootstrap-worlds.json")
     do {
         let fixture = try JSONValue.parse(Data(contentsOf: fixtureURL))
         guard let blockedWorlds = fixture.at(path: "blocked_worlds")?.arrayValue, !blockedWorlds.isEmpty,
@@ -93,7 +66,7 @@ func runStartupSelfTest() -> Int32 {
             check(name + ": production session/audit token gate", (scope != nil) == admitted)
             if let scope, let expectedEpoch = row.at(path: "required_epoch")?.intValue {
                 check(name + ": audit retains required global epoch", scope.requiredEpoch == UInt64(expectedEpoch))
-                let publicationServer = CoreServer(socketPath: "/tmp/leyline-tests-\(getpid())/leylined-audit-publication-\(getpid()).sock")
+                let publicationServer = CoreServer(socketPath: selfTestSocketPath("leylined-audit-publication"))
                 let stopped = row.at(path: "stop_before_publish")?.boolValue == true
                 if stopped { _ = publicationServer.applyWorldDelta(stop) }
                 let before = publicationServer.committedSnapshot
@@ -112,14 +85,14 @@ func runStartupSelfTest() -> Int32 {
             let path = "/tmp/leyline-tests-\(getpid())/leylined-startup-\(getpid())-\(index).sock"
             let server = CoreServer(socketPath: path)
             let record = StartupTestRecord()
-            let presentation = StartupHeldExecutor()
+            let presentation = ManualPresenter()
             let mailbox = CorePresentationMailbox(execute: { presentation.enqueue($0) },
                 present: { presentation.present($0) })
             server.configureCommands(actionIDs: [actionID], handler: { record.command($0) })
             server.setCommittedSnapshotHandler { mailbox.submit($0) }
             _ = server.applyWorldDelta(CoreStartupBootstrap.pendingDelta)
             guard server.start(requireWorldSeed: false) else {
-                failures.append("\(name): pending socket binds"); continue
+                check("\(name): pending socket binds", false); continue
             }
             defer { server.stop() }
             let bootstrap = CoreStartupBootstrap(server: server)
@@ -192,19 +165,19 @@ func runStartupSelfTest() -> Int32 {
                 actual?.at(path: "ok") == .bool(true)
                     && actual?.at(path: "world.windows_onscreen") == world["windows_onscreen"]
                     && acted?.at(path: "ok") == .bool(true) && record.counts.commands == 1
-                    && presentation.presented.isEmpty && presentation.pendingCount == 1)
+                    && presentation.presented.isEmpty && presentation.pending == 1)
             let committed = server.committedSnapshot
             presentation.drain()
             check("\(name): presentation resumes with the latest immutable snapshot",
                 presentation.presented == [committed] && mailbox.health["visible_frame_evidence"] == .null)
         }
 
-        let emptyServer = CoreServer(socketPath: "/tmp/leyline-tests-\(getpid())/leylined-startup-empty-unused-\(getpid()).sock")
+        let emptyServer = CoreServer(socketPath: selfTestSocketPath("leylined-startup-empty-unused"))
         _ = emptyServer.applyWorldDelta(CoreStartupBootstrap.pendingDelta)
         let pending = emptyServer.committedSnapshot
         _ = emptyServer.applyWorldDelta(empty)
         let measuredEmpty = emptyServer.committedSnapshot
-        let incompleteServer = CoreServer(socketPath: "/tmp/leyline-tests-\(getpid())/leylined-startup-incomplete-unused-\(getpid()).sock")
+        let incompleteServer = CoreServer(socketPath: selfTestSocketPath("leylined-startup-incomplete-unused"))
         _ = incompleteServer.applyWorldDelta(incomplete)
         check("pending inventory and measured empty inventory have distinct completeness",
             pending.world.at(path: "windows") == .null && pending.world.at(path: "windows_onscreen") == .null
@@ -216,7 +189,7 @@ func runStartupSelfTest() -> Int32 {
             incompleteServer.worldSeedReady
                 && incompleteServer.worldState.at(path: "observation.world_complete") == .bool(false)
                 && incompleteServer.worldState.at(path: "observation.world_failure_code") == incomplete["observation"]?.at(path: "world_failure_code"))
-        let faultServer = CoreServer(socketPath: "/tmp/leyline-tests-\(getpid())/leylined-startup-journal-unused-\(getpid()).sock", initialState: journalFailure)
+        let faultServer = CoreServer(socketPath: selfTestSocketPath("leylined-startup-journal-unused"), initialState: journalFailure)
         _ = faultServer.applyWorldDelta(CoreStartupBootstrap.pendingDelta)
         check("pending startup preserves journal fault recovery facts",
             faultServer.worldState.at(path: "persistence_available") == .bool(false)
@@ -228,7 +201,7 @@ func runStartupSelfTest() -> Int32 {
             _ = server.applyWorldDelta(CoreStartupBootstrap.pendingDelta)
             let bootstrap = CoreStartupBootstrap(server: server)
             let record = StartupTestRecord()
-            let queued = StartupHeldExecutor()
+            let queued = ManualPresenter()
             bootstrap.schedule(execute: { queued.enqueue($0) }, capture: {
                 record.captured()
                 record.record(server.applyWorldDelta(empty, requiredObservationEpoch: bootstrap.requiredObservationEpoch))
@@ -259,8 +232,6 @@ func runStartupSelfTest() -> Int32 {
                     && record.lastResult?.reason == "observation_epoch_retired" && !server.worldSeedReady
                     && record.counts.discarded == 1 && blocked.requiredObservationEpoch == nil)
         }
-    } catch { failures.append("fixture: \(error)") }
-    for failure in failures { FileHandle.standardError.write(Data("self-test startup FAIL: \(failure)\n".utf8)) }
-    print("self-test startup: \(failures.isEmpty ? "ok" : "failed")")
-    return failures.isEmpty ? 0 : 1
+    } catch { check("fixture: \(error)", false) }
+    return test.finish("startup")
 }

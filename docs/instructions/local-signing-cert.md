@@ -1,8 +1,9 @@
 # Developer signing identity
 
 A stable local code-signing identity can preserve the resident's macOS permission
-identity across development builds. `LEYLINE_CODESIGN_IDENTITY` selects the intended
-certificate for build tooling. Signing failure is a build failure.
+identity across development builds. Builds sign ad hoc unless
+`LEYLINE_CODESIGN_IDENTITY` names the intended certificate; creating the certificate
+alone does not change how builds are signed. Signing failure is a build failure.
 
 Use Keychain Access → Certificate Assistant → Create a Certificate to create a
 local Code Signing identity, or inspect `bin/leyline-setup-signing-cert --help`

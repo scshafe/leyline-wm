@@ -1,6 +1,0 @@
-{
-  "note": "WS-A edge: no bound cells (empty store, e.g. nothing tiled yet) → null → caller falls back to sync-adopt.",
-  "arr": {"bindings": {}},
-  "float_frame": {"x": 100, "y": 100, "w": 400, "h": 400},
-  "expect": null
-}

@@ -31,13 +31,7 @@ public struct Frame: Equatable, Sendable {
     }
 
     public var json: JSONValue {
-        func num(_ d: Double) -> JSONValue {
-            if d == d.rounded(), abs(d) < 9_007_199_254_740_992 {
-                return .int(Int64(d))
-            }
-            return .double(d)
-        }
-        return .object(["x": num(x), "y": num(y), "w": num(w), "h": num(h)])
+        .object(["x": .number(x), "y": .number(y), "w": .number(w), "h": .number(h)])
     }
 
     /// F::as_frame — array or object form, {w,h} or {width,height}; null → nil.
@@ -71,8 +65,13 @@ public enum Geometry {
         max(min(a.maxY, b.maxY) - max(a.y, b.y), 0)
     }
 
-    /// G::frame_eq at tolerance (default 4, the TOL fallback).
-    public static func frameEq(_ a: Frame, _ b: Frame, tol: Double = 4) -> Bool {
+    /// The area two frames share; 0 when they only touch or are apart.
+    public static func intersectionArea(_ a: Frame, _ b: Frame) -> Double {
+        overlapX(a, b) * overlapY(a, b)
+    }
+
+    /// G::frame_eq at tolerance (default: the model's coordinate tolerance).
+    public static func frameEq(_ a: Frame, _ b: Frame, tol: Double = Arrangement.coordinateTolerance) -> Bool {
         abs(a.x - b.x) <= tol && abs(a.y - b.y) <= tol
             && abs(a.w - b.w) <= tol && abs(a.h - b.h) <= tol
     }
@@ -101,26 +100,13 @@ public enum Geometry {
     /// to the LOWEST id. Nil only on an empty display list.
     public static func assignDisplay(_ win: Frame, _ displays: [NormDisplay]) -> Int64? {
         guard !displays.isEmpty else { return nil }
-        let byUsable = displays.map { (id: $0.id, ov: overlapX(win, $0.usable) * overlapY(win, $0.usable)) }
+        let byUsable = displays.map { (id: $0.id, ov: intersectionArea(win, $0.usable)) }
         let cands = byUsable.contains(where: { $0.ov > 0 })
             ? byUsable
-            : displays.map { (id: $0.id, ov: overlapX(win, $0.frame) * overlapY(win, $0.frame)) }
+            : displays.map { (id: $0.id, ov: intersectionArea(win, $0.frame)) }
         return cands
             .sortedStableBy { .array([.double(-$0.ov), $0.id.map { JSONValue.int($0) } ?? .null]) }
             .first?.id
     }
 
-    /// F::min_size — the 160×120 DIAGNOSTIC default (deliberately different
-    /// from leaf fit-min's 0-default; project's overflow flag uses this one).
-    public static func minSize(_ v: JSONValue?) -> (w: Double, h: Double) {
-        let o = v?.objectValue ?? [:]
-        func num(_ keys: [String], _ def: Double) -> Double {
-            for k in keys {
-                if let n = o[k]?.numberValue { return n }
-                if let s = o[k]?.stringValue, let n = Double(s) { return n }
-            }
-            return def
-        }
-        return (num(["w", "min_w", "min_width"], 160), num(["h", "min_h", "min_height"], 120))
-    }
 }

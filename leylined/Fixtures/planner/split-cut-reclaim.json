@@ -1,0 +1,41 @@
+{
+  "schema": "leyline/split-cut-reclaim/v1",
+  "note": "Sanitized live Space 2026-10-18: three top tiles over one full-width bottom tile whose top cut is stored as two abutting pieces meeting at x=1024 (left behind when a quadrant's bottom-right window was reclaimed leftward). Pruning the bottom tile was refused, so every reconcile of the Space refused and its newcomer stayed untiled. Expected frames are hand-derived: the top tiles extend to the canvas bottom (y 1325) and keep their columns, insetting interior cuts by half the 1-point gap.",
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": { "x": 0, "y": 0, "w": 2048, "h": 1326 },
+        "usable": { "x": 0, "y": 41, "w": 2048, "h": 1285 }
+      }
+    ],
+    "gap": 1,
+    "outer_gap": 1
+  },
+  "store": {
+    "segments": [
+      { "axis": "h", "coord": 683.5, "lo": 1, "hi": 1024, "display_id": 1 },
+      { "axis": "h", "coord": 683.5, "lo": 1024, "hi": 2047, "display_id": 1 },
+      { "axis": "v", "coord": 512.5, "lo": 42, "hi": 683.5, "display_id": 1 },
+      { "axis": "v", "coord": 1024, "lo": 42, "hi": 683.5, "display_id": 1 }
+    ],
+    "bindings": {
+      "1:0:0": { "window_id": 73 },
+      "1:1:0": { "window_id": 2294, "min_size": { "w": 480 } },
+      "1:2:0": { "window_id": 1666, "min_size": { "w": 641 } },
+      "1:0:1": { "window_id": 2190, "min_size": { "w": 336 } }
+    },
+    "off_top": []
+  },
+  "goner": 2190,
+  "expected_prune_frames": {
+    "73": { "x": 1, "y": 42, "w": 511, "h": 1283 },
+    "2294": { "x": 513, "y": 42, "w": 510.5, "h": 1283 },
+    "1666": { "x": 1024.5, "y": 42, "w": 1022.5, "h": 1283 }
+  },
+  "observed": [
+    { "window_id": 73, "frame": { "x": 1, "y": 42, "w": 511, "h": 641 } },
+    { "window_id": 2294, "frame": { "x": 513, "y": 42, "w": 511, "h": 641 }, "min_size": { "w": 480 } },
+    { "window_id": 2545, "frame": { "x": 624, "y": 213, "w": 800, "h": 600 } }
+  ]
+}

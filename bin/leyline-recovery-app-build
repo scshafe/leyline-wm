@@ -19,6 +19,10 @@ case "$recovery_arch" in arm64|x86_64) ;; *) exit 64 ;; esac
 "$recovery_root/bin/leyline-grant-free-check" "$recovery_root/bin/leyline-recovery.swift"
 mkdir -p "$recovery_app/Contents/MacOS"
 cp "$recovery_root/bin/leyline-recovery.Info.plist" "$recovery_app/Contents/Info.plist"
+recovery_version="$(tr -d '[:space:]' < "$recovery_root/VERSION")"
+for recovery_key in CFBundleShortVersionString CFBundleVersion; do
+  /usr/bin/plutil -replace "$recovery_key" -string "$recovery_version" "$recovery_app/Contents/Info.plist"
+done
 swiftc ${recovery_flags[@]+"${recovery_flags[@]}"} -target "$recovery_arch-apple-macos14.0" -O -framework AppKit \
   -file-prefix-map "$recovery_root=/leyline" -debug-prefix-map "$recovery_root=/leyline" \
   -o "$recovery_app/Contents/MacOS/leyline-recovery" "$recovery_root/bin/leyline-recovery.swift"

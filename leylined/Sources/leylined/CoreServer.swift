@@ -197,25 +197,9 @@ final class CoreServer: @unchecked Sendable {
         let fd = socket(AF_UNIX, SOCK_STREAM, 0)
         guard fd >= 0 else { return false }
         guard fcntl(fd, F_SETFD, FD_CLOEXEC) == 0 else { close(fd); return false }
-        var addr = sockaddr_un()
-        addr.sun_family = sa_family_t(AF_UNIX)
-        let maxPath = MemoryLayout.size(ofValue: addr.sun_path)
-        let fit = withUnsafeMutablePointer(to: &addr.sun_path) { pathPtr in
-            pathPtr.withMemoryRebound(to: CChar.self, capacity: maxPath) { dest in
-                socketPath.withCString { src in
-                    if strlen(src) >= maxPath { return false }
-                    strcpy(dest, src)
-                    return true
-                }
-            }
+        guard let bound = FramedJSONSocket.withSocketAddress(path: socketPath, { bind(fd, $0, $1) }), bound == 0 else {
+            close(fd); return false
         }
-        guard fit else { close(fd); return false }
-        let bound = withUnsafePointer(to: &addr) {
-            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
-                bind(fd, $0, socklen_t(MemoryLayout<sockaddr_un>.size))
-            }
-        }
-        guard bound == 0 else { close(fd); return false }
         guard fchmodat(parent, name, mode_t(0o600), 0) == 0, listen(fd, 16) == 0 else {
             close(fd); _ = unlinkat(parent, name, 0); return false
         }
@@ -248,9 +232,17 @@ final class CoreServer: @unchecked Sendable {
 
     // ── the world feed (process-internal; never a wire op) ───────────────
 
+    /// End the interaction: default mode, no held context, no model interaction record.
+    private static func exitInteraction(_ s: inout JSONObject) {
+        s["mode"] = .string("default"); s["interaction_invalidated"] = .bool(true)
+        s["mode_context_window_id"] = .null
+        s["mode_context_space_key"] = .null
+        if var model = s["model_state"]?.objectValue { model.removeValue(forKey: "interaction"); s["model_state"] = .object(model) }
+    }
+
     /// The one entry world events funnel through: a synchronous transition on
-    /// the single-actor timeline. The CLI's observers call this from the main
-    /// run loop; the self-test calls it directly.
+    /// the single-actor timeline. The observation lane delivers here in
+    /// production; the self-tests call it directly.
     @discardableResult
     func applyWorldDelta(_ delta: JSONObject, expectedRevision: UInt64? = nil, requiredObservationEpoch: UInt64? = nil,
                          commitGuard: (@Sendable () -> String?)? = nil) -> WmResult {
@@ -277,7 +269,7 @@ final class CoreServer: @unchecked Sendable {
             let result = WmResult(status: .refused, revision: timeline.revision, reason: reason)
             lock.unlock(); return result
         }
-        if ["global_stop", "global_restart", "global_reset", "maintenance_started"].contains(delta["event"]?.stringValue ?? "") {
+        if WorldEvent.epochRetiring.contains(delta["event"]?.stringValue ?? "") {
             observationEpochValue &+= 1
         }
         if delta["event"]?.stringValue == "space_activation_changed",
@@ -301,7 +293,7 @@ final class CoreServer: @unchecked Sendable {
                 s["topology_revision"] = .int(Int64(clamping: nextRevision))
             }
             let event = delta["event"]?.stringValue ?? ""
-            let isWindowLifecycle = ["ax_window_created", "ax_window_destroyed", "ax_window_minimized", "ax_window_restored"].contains(event)
+            let isWindowLifecycle = AccessibilityFocusEventKind.isWindowLifecycle(event)
             if isWindowLifecycle {
                 // A lifecycle receipt owns its target. Missing new source fields
                 // cannot inherit a prior ignored window's identity or receipt.
@@ -323,16 +315,9 @@ final class CoreServer: @unchecked Sendable {
             let activationTouchesInteraction = !originSpaces.isDisjoint(with: affectedSpaces)
             let windowLifecycleInvalidates = isWindowLifecycle
                 && residentLifecycleInvalidatesInteraction(event: event, before: state, after: .object(s))
-            if windowLifecycleInvalidates || ["app_terminated", "space_changed", "topology_changed",
-                "geometry_configuration_changed"].contains(event)
+            if windowLifecycleInvalidates || WorldEvent.spaceOrLifetimeFence.contains(event)
                 || ((event == "space_activation_changed" || event == "settings_changed") && activationTouchesInteraction) {
-                s["mode"] = .string("default"); s["interaction_invalidated"] = .bool(true)
-                s["mode_context_window_id"] = .null
-                s["mode_context_space_key"] = .null
-                if var model = s["model_state"]?.objectValue {
-                    model.removeValue(forKey: "interaction")
-                    s["model_state"] = .object(model)
-                }
+                CoreServer.exitInteraction(&s)
             }
             if delta["event"]?.stringValue == "space_activation_changed",
                let key = delta["target_space_key"]?.stringValue,
@@ -393,10 +378,7 @@ final class CoreServer: @unchecked Sendable {
                let origin = s["mode_context_window_id"]?.intValue,
                (s["focus"]?.at(path: "window_id")?.intValue != origin
                 || s["focus"]?.at(path: "space_key")?.stringValue != s["mode_context_space_key"]?.stringValue) {
-                s["mode"] = .string("default"); s["interaction_invalidated"] = .bool(true)
-                s["mode_context_window_id"] = .null
-                s["mode_context_space_key"] = .null
-                if var model = s["model_state"]?.objectValue { model.removeValue(forKey: "interaction"); s["model_state"] = .object(model) }
+                CoreServer.exitInteraction(&s)
             }
             if s["model_state"] != state.at(path: "model_state") {
                 s["model_state_revision"] = .int(Int64(nextRevision))
@@ -490,7 +472,7 @@ final class CoreServer: @unchecked Sendable {
         frameObj["type"] = .string("revision")
         frameObj["revision"] = .int(Int64(result.revision.value))
         frameObj["delta"] = .object(delta)
-        let frame = Self.encodeFrame(.object(frameObj))
+        let frame = FramedJSONSocket.encode(.object(frameObj))
         ring.append((result.revision.value, frame))
         if ring.count > ringCap { ring.removeFirst(ring.count - ringCap) }
         return (frame, Array(subscribers.values),
@@ -699,7 +681,7 @@ final class CoreServer: @unchecked Sendable {
             guard let req = FramedJSONSocket.readFrame(fd, maximumBytes: 65_536, timeoutMilliseconds: 2_000) else { return }
             guard let obj = (try? JSONValue.parse(req))?.objectValue,
                   let op = obj["op"]?.stringValue else {
-                _ = Self.writeAll(fd, Self.encodeFrame(.object(["ok": .bool(false), "error": .string("bad_frame")])))
+                _ = FramedJSONSocket.writeAll(fd, FramedJSONSocket.encode(.object(["ok": .bool(false), "error": .string("bad_frame")])))
                 return
             }
             switch op {
@@ -717,11 +699,11 @@ final class CoreServer: @unchecked Sendable {
                 lock.unlock()
                 r["surface"] = .string(actions.isEmpty ? "read-only" : "resident-actions")
                 r["capabilities"] = .array(actions.map(JSONValue.string))
-                r["resident_control_capabilities"] = .array(hasControls ? ["start", "stop", "restart", "reset"].map(JSONValue.string) : [])
-                guard Self.writeAll(fd, Self.encodeFrame(.object(r))) else { return }
+                r["resident_control_capabilities"] = .array(hasControls ? ResidentControlAction.allCases.map { JSONValue.string($0.rawValue) } : [])
+                guard FramedJSONSocket.writeAll(fd, FramedJSONSocket.encode(.object(r))) else { return }
             case "status", "snapshot", "health":
                 if op == "snapshot", !worldSeedReady {
-                    guard Self.writeAll(fd, Self.encodeFrame(.object(["ok": .bool(false), "error": .string("world_seed_pending"),
+                    guard FramedJSONSocket.writeAll(fd, FramedJSONSocket.encode(.object(["ok": .bool(false), "error": .string("world_seed_pending"),
                         "op": .string(op), "world": .null, "ready": .bool(false)]))) else { return }
                     continue
                 }
@@ -747,7 +729,7 @@ final class CoreServer: @unchecked Sendable {
                 var facts = healthSnapshot.json.objectValue ?? [:]
                 if !supplemental.isEmpty { facts["resident"] = .object(supplemental) }
                 r["health"] = .object(facts)
-                guard Self.writeAll(fd, Self.encodeFrame(.object(r))) else { return }
+                guard FramedJSONSocket.writeAll(fd, FramedJSONSocket.encode(.object(r))) else { return }
             case "trace":
                 let arguments = obj["args"] ?? .object([:])
                 let from = arguments.at(path: "from_sequence")?.intValue ?? 0
@@ -757,13 +739,13 @@ final class CoreServer: @unchecked Sendable {
                       fields["from_sequence"] == nil || fields["from_sequence"]?.intValue != nil,
                       fields["limit"] == nil || fields["limit"]?.intValue != nil,
                       from >= 0, limit > 0, limit <= 128 else {
-                    _ = Self.writeAll(fd, Self.encodeFrame(.object(["ok": .bool(false), "reason": .string("trace_arguments_invalid")]))); continue
+                    _ = FramedJSONSocket.writeAll(fd, FramedJSONSocket.encode(.object(["ok": .bool(false), "reason": .string("trace_arguments_invalid")]))); continue
                 }
                 var trace = ResidentPerformanceTrace.shared.snapshot(from: UInt64(from), limit: Int(limit)).objectValue!
                 trace["ok"] = .bool(true); trace["pid"] = .int(Int64(ProcessInfo.processInfo.processIdentifier))
                 trace["revision"] = .int(Int64(currentRevision))
                 trace["epoch_ms"] = .int(epochMs)
-                guard Self.writeAll(fd, Self.encodeFrame(.object(trace))) else { return }
+                guard FramedJSONSocket.writeAll(fd, FramedJSONSocket.encode(.object(trace))) else { return }
             case "control", "control-result":
                 lock.lock()
                 let control = residentControlHandler
@@ -771,10 +753,9 @@ final class CoreServer: @unchecked Sendable {
                 let response: JSONValue
                 if let control { response = control(obj) }
                 else {
-                    response = .object(["ok": .bool(false), "status": .string("refused"), "phase": .string("completed"),
-                        "request_id": obj["request_id"] ?? .null, "reason": .string("resident_control_unavailable")])
+                    response = ResidentReply.refused(requestID: obj["request_id"] ?? .null, reason: "resident_control_unavailable")
                 }
-                guard Self.writeAll(fd, Self.encodeFrame(response)) else { return }
+                guard FramedJSONSocket.writeAll(fd, FramedJSONSocket.encode(response)) else { return }
             case "act", "result":
                 lock.lock()
                 let handler = commandHandler
@@ -782,7 +763,7 @@ final class CoreServer: @unchecked Sendable {
                 lock.unlock()
                 let response: JSONValue
                 if !worldSeedReady {
-                    response = .object(["ok": .bool(false), "status": .string("refused"), "error": .string("world_seed_pending")])
+                    response = .object(["ok": .bool(false), "status": .string(WmStatus.refused.rawValue), "error": .string("world_seed_pending")])
                 } else if op == "result", let handler,
                           let requestID = obj["request_id"]?.stringValue, !requestID.isEmpty {
                     response = handler(obj)
@@ -791,9 +772,9 @@ final class CoreServer: @unchecked Sendable {
                           let requestID = obj["request_id"]?.stringValue, !requestID.isEmpty {
                     response = handler(obj)
                 } else {
-                    response = .object(["ok": .bool(false), "status": .string("refused"), "error": .string("unregistered_action_or_missing_request_id")])
+                    response = .object(["ok": .bool(false), "status": .string(WmStatus.refused.rawValue), "error": .string("unregistered_action_or_missing_request_id")])
                 }
-                guard Self.writeAll(fd, Self.encodeFrame(response)) else { return }
+                guard FramedJSONSocket.writeAll(fd, FramedJSONSocket.encode(response)) else { return }
             case "subscribe":
                 let rawFrom = obj["from_revision"]?.intValue ?? 0
                 let from = rawFrom > 0 ? UInt64(rawFrom) : 0
@@ -805,7 +786,7 @@ final class CoreServer: @unchecked Sendable {
                         "error": .string("subscriber_limit_reached"),
                         "surface": .string("read-only"),
                     ]
-                    guard Self.writeAll(fd, Self.encodeFrame(.object(refusal))) else {
+                    guard FramedJSONSocket.writeAll(fd, FramedJSONSocket.encode(.object(refusal))) else {
                         return
                     }
                     continue
@@ -835,7 +816,7 @@ final class CoreServer: @unchecked Sendable {
                 r["error"] = .string("unknown_op")
                 r["op"] = .string(op)
                 r["surface"] = .string("resident (hello|status|snapshot|health|subscribe|act|result|control|control-result|trace)")
-                guard Self.writeAll(fd, Self.encodeFrame(.object(r))) else { return }
+                guard FramedJSONSocket.writeAll(fd, FramedJSONSocket.encode(.object(r))) else { return }
             }
         }
     }
@@ -854,15 +835,4 @@ final class CoreServer: @unchecked Sendable {
 
     // ── frame IO ─────────────────────────────────────────────────────────
 
-    static func encodeFrame(_ v: JSONValue) -> Data {
-        FramedJSONSocket.encode(v)
-    }
-
-    static func readFrame(_ fd: Int32) -> Data? {
-        FramedJSONSocket.readFrame(fd)
-    }
-
-    static func writeAll(_ fd: Int32, _ data: Data) -> Bool {
-        FramedJSONSocket.writeAll(fd, data)
-    }
 }

@@ -1,0 +1,229 @@
+{
+  "expect": {
+    "absorber": null,
+    "arr": {
+      "bindings": {
+        "1:0:0": {
+          "contents": [
+            {
+              "frame": {
+                "h": 1064,
+                "w": 948,
+                "x": 8,
+                "y": 8
+              },
+              "presented": true,
+              "window_id": 4
+            }
+          ],
+          "frame": {
+            "h": 1064,
+            "w": 948,
+            "x": 8,
+            "y": 8
+          },
+          "presented": true,
+          "window_id": 4
+        },
+        "1:1:0": {
+          "contents": [
+            {
+              "frame": {
+                "h": 528,
+                "w": 948,
+                "x": 964,
+                "y": 8
+              },
+              "presented": true,
+              "window_id": 1
+            }
+          ],
+          "frame": {
+            "h": 528,
+            "w": 948,
+            "x": 964,
+            "y": 8
+          },
+          "presented": true,
+          "window_id": 1
+        },
+        "1:1:1": {
+          "contents": [
+            {
+              "frame": {
+                "h": 528,
+                "w": 948,
+                "x": 964,
+                "y": 544
+              },
+              "presented": true,
+              "window_id": 3
+            }
+          ],
+          "frame": {
+            "h": 528,
+            "w": 948,
+            "x": 964,
+            "y": 544
+          },
+          "presented": true,
+          "window_id": 3
+        }
+      },
+      "off_top": [],
+      "segments": [
+        {
+          "axis": "v",
+          "coord": 960,
+          "hi": 1072,
+          "lo": 8
+        },
+        {
+          "axis": "h",
+          "coord": 540,
+          "hi": 1912,
+          "lo": 960
+        }
+      ]
+    }
+  },
+  "fn": "prune",
+  "goners": [
+    2
+  ],
+  "note": "Production \"even\" reclaim prune. Input store and expectation frozen 2026-10-11 from the retired jq reference engine (jq 1.8.1, arrangement.jq bridge_arrangement / bridge_arrangement_native_prune) applied to the former tests/oracles/fixtures/arrangement/prune-roundtrip/store_goner_leaves_3stack_mid.json.",
+  "store": {
+    "bindings": {
+      "1:0:0": {
+        "contents": [
+          {
+            "frame": {
+              "h": 1064,
+              "w": 948,
+              "x": 8,
+              "y": 8
+            },
+            "presented": true,
+            "window_id": 4
+          }
+        ],
+        "frame": {
+          "h": 1064,
+          "w": 948,
+          "x": 8,
+          "y": 8
+        },
+        "presented": true,
+        "window_id": 4
+      },
+      "1:1:0": {
+        "contents": [
+          {
+            "frame": {
+              "h": 349,
+              "w": 948,
+              "x": 964,
+              "y": 8
+            },
+            "presented": true,
+            "window_id": 1
+          }
+        ],
+        "frame": {
+          "h": 349,
+          "w": 948,
+          "x": 964,
+          "y": 8
+        },
+        "presented": true,
+        "window_id": 1
+      },
+      "1:1:1": {
+        "contents": [
+          {
+            "frame": {
+              "h": 350,
+              "w": 948,
+              "x": 964,
+              "y": 365
+            },
+            "presented": true,
+            "window_id": 2
+          }
+        ],
+        "frame": {
+          "h": 350,
+          "w": 948,
+          "x": 964,
+          "y": 365
+        },
+        "presented": true,
+        "window_id": 2
+      },
+      "1:1:2": {
+        "contents": [
+          {
+            "frame": {
+              "h": 349,
+              "w": 948,
+              "x": 964,
+              "y": 723
+            },
+            "presented": true,
+            "window_id": 3
+          }
+        ],
+        "frame": {
+          "h": 349,
+          "w": 948,
+          "x": 964,
+          "y": 723
+        },
+        "presented": true,
+        "window_id": 3
+      }
+    },
+    "off_top": [],
+    "segments": [
+      {
+        "axis": "h",
+        "coord": 361,
+        "hi": 1912,
+        "lo": 960
+      },
+      {
+        "axis": "h",
+        "coord": 719,
+        "hi": 1912,
+        "lo": 960
+      },
+      {
+        "axis": "v",
+        "coord": 960,
+        "hi": 1072,
+        "lo": 8
+      }
+    ]
+  },
+  "topology": {
+    "dead_zones": [],
+    "displays": [
+      {
+        "frame": {
+          "h": 1080,
+          "w": 1920,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "usable": {
+          "h": 1080,
+          "w": 1920,
+          "x": 0,
+          "y": 0
+        }
+      }
+    ],
+    "gap": 8
+  }
+}

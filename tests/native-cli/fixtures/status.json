@@ -56,8 +56,7 @@
         ],
         "accepting_claims": true,
         "tap_create_failed": false,
-        "safety_released": false,
-        "normal_path_subprocesses": 0
+        "safety_released": false
       }
     },
     "owner": "resident"

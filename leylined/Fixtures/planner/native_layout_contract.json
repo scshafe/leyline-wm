@@ -41,8 +41,7 @@
       "segments": [{"axis": "v", "coord": 600, "lo": 0, "hi": 600}],
       "bindings": {"1:0:0": {"window_id": 1}, "1:1:0": {"window_id": 2}}, "off_top": [], "focus": 2,
       "expected_east_frame": [640, 0, 360, 600], "expected_west_frame": [560, 0, 440, 600],
-      "expected_growth_frame": [0, 0, 1000, 600],
-      "expected_restored_frames": {"1": [0, 0, 600, 600], "2": [600, 0, 400, 600]}
+      "expected_recut_frame": [500, 0, 500, 600], "expected_recut_sibling_frame": [0, 0, 500, 600]
     },
     "resize_constraint": {
       "segments": [{"axis": "v", "coord": 600, "lo": 0, "hi": 600}],

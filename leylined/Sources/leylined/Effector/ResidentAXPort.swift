@@ -17,11 +17,49 @@ private final class ResidentAXLease: @unchecked Sendable {
     func minimum(_ id: String) -> ResidentMinimumEvidence? { lock.lock(); defer { lock.unlock() }; return minimumEvidence[id] }
 }
 
+/// AppKit animates frame changes for an application whose AXEnhancedUserInterface is on
+/// (assistive apps turn it on), and a position write issued during that animation can be
+/// dropped. One window's frame writes run with it off; it is turned back on afterwards.
+struct ResidentEnhancedInterface: Sendable {
+    let read: @Sendable (pid_t) -> Bool?
+    let write: @Sendable (pid_t, Bool) -> Bool
+
+    static let live = ResidentEnhancedInterface(read: { pid in
+        let app = AXUIElementCreateApplication(pid)
+        _ = AXUIElementSetMessagingTimeout(app, TargetedProjectionSnapshot.axReadTimeoutSeconds)
+        var value: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(app, "AXEnhancedUserInterface" as CFString, &value) == .success else { return nil }
+        return value as? Bool
+    }, write: { pid, enabled in
+        let app = AXUIElementCreateApplication(pid)
+        _ = AXUIElementSetMessagingTimeout(app, TargetedProjectionSnapshot.axReadTimeoutSeconds)
+        return AXUIElementSetAttributeValue(app, "AXEnhancedUserInterface" as CFString,
+                                            enabled ? kCFBooleanTrue : kCFBooleanFalse) == .success
+    })
+
+    /// True only when the attribute was on and is now off; the caller must restore it.
+    func suspend(_ pid: pid_t) -> Bool { read(pid) == true && write(pid, false) }
+    func restore(_ pid: pid_t) { _ = write(pid, true) }
+}
+
+enum ResidentFrameRepair {
+    /// A frame that moved no more than this since the write has settled.
+    static let settledTolerance = 1.0
+    /// A settled frame further than this from its target is a repair candidate.
+    static let repairThreshold = 2.0
+}
+
 /// A settled frame mismatch is only a repair candidate. Progress or external
 /// geometry drift cannot authorize replay, and no candidate establishes a minimum.
 func residentFrameRepairCandidate(initial: Frame?, current: Frame, target: Frame) -> Bool {
-    guard let initial, Geometry.frameEq(initial, current, tol: 1) else { return false }
-    return !Geometry.frameEq(current, target, tol: 2)
+    guard let initial, Geometry.frameEq(initial, current, tol: ResidentFrameRepair.settledTolerance) else { return false }
+    return !Geometry.frameEq(current, target, tol: ResidentFrameRepair.repairThreshold)
+}
+
+/// A settled frame within the effector's landing tolerance has landed: app
+/// rounding is neither a repair candidate nor external drift.
+func residentFrameRepairLanded(current: Frame, target: Frame) -> Bool {
+    Geometry.frameEq(current, target, tol: ResidentEffector.landedTolerance)
 }
 
 /// The sole live setter adapter. One worker and one pending launch bound IO
@@ -62,6 +100,7 @@ final class ResidentAXPort: ResidentMinimumEvidencePort, @unchecked Sendable {
     var onFocus: (@Sendable (String, String, UInt64, UInt64) -> Void)?
     var onFocusIssue: (@Sendable (String, UInt64) -> Void)?
     var onDeadline: (@Sendable (UInt64) -> Void)?
+    private let enhancedInterface = ResidentEnhancedInterface.live
 
     init(snapshots: TargetedProjectionSnapshot, observationQueue: DispatchQueue) {
         self.snapshots = snapshots; self.observationQueue = observationQueue
@@ -232,6 +271,7 @@ final class ResidentAXPort: ResidentMinimumEvidencePort, @unchecked Sendable {
             }
         } else {
             var sizeWrites: [String: ResidentSizeWriteReceipt] = [:]
+            var refusedOnce: [String: ResidentMinimumEvidence] = [:]
             for id in targets.keys.sorted() {
                 guard let target = targets[id], let windowID = Int64(id), authorizedGeneration(launch) != nil else {
                     fail("effect_identity_invalidated"); return
@@ -241,9 +281,10 @@ final class ResidentAXPort: ResidentMinimumEvidencePort, @unchecked Sendable {
                 case .failure(let failure): fail(failure.code); return
                 case .success(let observed): current = observed
                 }
-                if Geometry.frameEq(current.observation.frame, target, tol: 0.5) { continue }
+                if Geometry.frameEq(current.observation.frame, target, tol: ResidentEffector.unchangedTolerance) { continue }
                 let handle: ProjectionWindowHandle
                 if launch.repairing {
+                    if residentFrameRepairLanded(current: current.observation.frame, target: target) { continue }
                     if let first = launch.lease.minimum(id) {
                         let confirmed = ResidentMinimumEvidence(write: first.write, observed: first.observed,
                             observedGeneration: first.observedGeneration, readCompletedNanos: first.readCompletedNanos,
@@ -253,6 +294,8 @@ final class ResidentAXPort: ResidentMinimumEvidencePort, @unchecked Sendable {
                             onMinimumEvidence?(confirmed)
                             continue
                         }
+                        // Unchanged since the first write: the rewrite below can confirm a floor.
+                        if Geometry.frameEq(first.observed, current.observation.frame, tol: ResidentEffector.unchangedTolerance) { refusedOnce[id] = first }
                     }
                     guard residentFrameRepairCandidate(initial: launch.lease.initialFrame(id),
                                                        current: current.observation.frame, target: target) else {
@@ -265,7 +308,7 @@ final class ResidentAXPort: ResidentMinimumEvidencePort, @unchecked Sendable {
                         case .failure(let failure): fail(failure.code); return
                         case .success(let freshRead): current = freshRead
                         }
-                        if Geometry.frameEq(current.observation.frame, target, tol: 0.5) { continue }
+                        if residentFrameRepairLanded(current: current.observation.frame, target: target) { continue }
                         guard residentFrameRepairCandidate(initial: launch.lease.initialFrame(id),
                                                            current: current.observation.frame, target: target) else {
                             fail("effect_repair_geometry_drift"); return
@@ -277,13 +320,24 @@ final class ResidentAXPort: ResidentMinimumEvidencePort, @unchecked Sendable {
                       identity.windowId == CGWindowID(handle.windowId), identity.pid == handle.pid else {
                     fail("effect_identity_invalidated"); return
                 }
-                let before = current.observation.frame
-                var move = abs(before.x - target.x) > 0.5 || abs(before.y - target.y) > 0.5
-                let resize = abs(before.w - target.w) > 0.5 || abs(before.h - target.h) > 0.5
-                var position = CGPoint(x: abs(before.x - target.x) <= 0.5 ? before.x : target.x,
-                                       y: abs(before.y - target.y) <= 0.5 ? before.y : target.y)
-                var size = CGSize(width: abs(before.w - target.w) <= 0.5 ? before.w : target.w,
-                                  height: abs(before.h - target.h) <= 0.5 ? before.h : target.h)
+                // Restored when this window's writes end, including every failure return.
+                let suspended = enhancedInterface.suspend(handle.pid)
+                if suspended {
+                    recordAXWrite(launch, windowID: id, operation: "suspend_enhanced_interface", timestamp: DispatchTime.now().uptimeNanoseconds)
+                }
+                defer {
+                    if suspended {
+                        enhancedInterface.restore(handle.pid)
+                        recordAXWrite(launch, windowID: id, operation: "restore_enhanced_interface", timestamp: DispatchTime.now().uptimeNanoseconds)
+                    }
+                }
+                let before = current.observation.frame, unchanged = ResidentEffector.unchangedTolerance
+                var move = abs(before.x - target.x) > unchanged || abs(before.y - target.y) > unchanged
+                let resize = abs(before.w - target.w) > unchanged || abs(before.h - target.h) > unchanged
+                var position = CGPoint(x: abs(before.x - target.x) <= unchanged ? before.x : target.x,
+                                       y: abs(before.y - target.y) <= unchanged ? before.y : target.y)
+                var size = CGSize(width: abs(before.w - target.w) <= unchanged ? before.w : target.w,
+                                  height: abs(before.h - target.h) <= unchanged ? before.h : target.h)
                 guard let sizeValue = AXValueCreate(.cgSize, &size), let positionValue = AXValueCreate(.cgPoint, &position) else {
                     fail("ax_frame_value_creation_failed"); return
                 }
@@ -324,8 +378,8 @@ final class ResidentAXPort: ResidentMinimumEvidencePort, @unchecked Sendable {
                        let epoch = request.observerEpoch, !epoch.isEmpty,
                        request.windowPids[id] == Int64(handle.pid) {
                         var axes: Set<ResidentMinimumAxis> = []
-                        if abs(before.w - target.w) > 0.5 { axes.insert(.width) }
-                        if abs(before.h - target.h) > 0.5 { axes.insert(.height) }
+                        if abs(before.w - target.w) > unchanged { axes.insert(.width) }
+                        if abs(before.h - target.h) > unchanged { axes.insert(.height) }
                         sizeWrites[id] = ResidentSizeWriteReceipt(requestID: request.requestID, windowID: id,
                             ownerPID: Int64(handle.pid), windowGeneration: lifetime, observerEpoch: epoch,
                             observerGeneration: generation, spaceKey: space, displayID: display,
@@ -346,8 +400,8 @@ final class ResidentAXPort: ResidentMinimumEvidencePort, @unchecked Sendable {
                     case .failure(let failure): fail(failure.code); return
                     case .success(let observed):
                         current = observed
-                        move = abs(observed.observation.frame.x - target.x) > 0.5
-                            || abs(observed.observation.frame.y - target.y) > 0.5
+                        move = abs(observed.observation.frame.x - target.x) > unchanged
+                            || abs(observed.observation.frame.y - target.y) > unchanged
                         ResidentPerformanceTrace.shared.record("size_readback", fields: [
                             "request_id": .string(request.requestID), "window_id": .string(id),
                             "before_frame": before.json, "observed_frame": observed.observation.frame.json,
@@ -395,7 +449,11 @@ final class ResidentAXPort: ResidentMinimumEvidencePort, @unchecked Sendable {
             if !launch.repairing { launch.lease.remember(Dictionary(uniqueKeysWithValues: observed.map { ($0.0, $0.1.observation.frame) })) }
             for (id, readback) in observed {
                 guard allowed(launch) else { return }
-                if let write = sizeWrites[id], Int64(readback.handle.pid) == write.ownerPID {
+                if let first = refusedOnce[id], sizeWrites[id] != nil, Int64(readback.handle.pid) == first.write.ownerPID,
+                   let confirmed = ResidentMinimumLearning.repeatedRefusal(first, rewriteRead: readback.observation.frame,
+                       generation: readback.generation, completedNanos: readback.completedNanos) {
+                    onMinimumEvidence?(confirmed)
+                } else if let write = sizeWrites[id], Int64(readback.handle.pid) == write.ownerPID {
                     let evidence = ResidentMinimumEvidence(write: write, observed: readback.observation.frame,
                         observedGeneration: readback.generation, readCompletedNanos: readback.completedNanos)
                     launch.lease.rememberMinimum(id, evidence)

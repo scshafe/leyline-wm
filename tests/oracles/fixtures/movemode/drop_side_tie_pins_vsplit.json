@@ -1,9 +1,0 @@
-{
-  "fn": "drop_side",
-  "note": "B3 TIE PINNED: a display-aspect cell (960x540 on 16:9) halves to EQUAL log-distance either way (|log 0.89 - log 1.78| == |log 3.56 - log 1.78|) - the tie goes to the v-split (columns are the wm's native grain); moved centre east of cell centre -> east.",
-  "target_cell": {"frame": {"x": 0, "y": 0, "w": 960, "h": 540}},
-  "moved_frame": {"x": 960, "y": 0, "w": 960, "h": 540},
-  "display": {"frame": {"x": 0, "y": 0, "w": 1920, "h": 1080}},
-  "policy": "aspect",
-  "expect": "east"
-}

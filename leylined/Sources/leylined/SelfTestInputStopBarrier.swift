@@ -29,7 +29,7 @@ private final class InputStopBarrierTestPort: @unchecked Sendable {
 /// ResidentInputStopBarrier itself through an injected port and serial queue.
 func runInputStopBarrierSelfTest() -> Int32 {
     var test = SelfTest()
-    let path = responsivenessRepositoryRoot() + "/leylined/Fixtures/lifecycle/input-stop-barrier.json"
+    let path = SelfTestFixtures.path("lifecycle/input-stop-barrier.json")
     guard let data = FileManager.default.contents(atPath: path),
           let fixture = try? JSONValue.parse(data),
           let stopEvent = fixture.at(path: "stop_event")?.stringValue,

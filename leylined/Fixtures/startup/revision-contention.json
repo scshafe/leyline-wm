@@ -1,0 +1,27 @@
+{
+  "schema": "leyline/startup-revision-contention/v1",
+  "neutral_event": "fixture_startup_telemetry",
+  "seed_event": "fixture_startup_cache_retired",
+  "telemetry_key": "fixture_startup_marker",
+  "marker": "current",
+  "generation": 3,
+  "retired_generation": 4,
+  "first_request": "startup-contention-first",
+  "second_request": "startup-contention-fresh",
+  "admission_event": "fixture_startup_app_activated",
+  "admission_blocker_request": "startup-admission-blocker",
+  "admission_first_request": "startup-admission-first",
+  "admission_second_request": "startup-admission-fresh",
+  "negative_cases": [
+    "repeat",
+    "untrusted",
+    "stopped",
+    "partial",
+    "lifetime",
+    "Space",
+    "persistence",
+    "geometry",
+    "lifecycle",
+    "intent-OFF"
+  ]
+}

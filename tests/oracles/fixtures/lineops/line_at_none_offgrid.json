@@ -1,7 +1,0 @@
-{ "fn": "line_at",
-  "note": "mouse-line-drag M0: a point inside a cell (far from every divider) hits nothing — kind none is a valid, refusing answer.",
-  "arr": { "segments": [ { "axis": "h", "coord": 540, "lo": 0, "hi": 1920 },
-                         { "axis": "v", "coord": 960, "lo": 0, "hi": 1080 } ],
-           "bindings": {} },
-  "x": 400, "y": 200, "tol": 12,
-  "expect": { "kind": "none", "hits": [] } }

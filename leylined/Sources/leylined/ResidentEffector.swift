@@ -1,136 +1,17 @@
 import Foundation
 import LeylineModel
 
-struct ResidentEffectContext: Sendable, Equatable {
-    var revision: UInt64
-    var observerGeneration: UInt64
-    var activeSpaceKey: String?
-    var topologyRevision: UInt64
-    var trusted: Bool
-    var complete: Bool
-    var spaceEnabled: Bool
-}
-
-enum ResidentEffectKind: String, Sendable { case frame, focus }
-
-struct ResidentEffectRequest: Sendable {
-    let requestID: String
-    let actionID: String
-    let windowID: String
-    let expectedRevision: UInt64
-    let observerGeneration: UInt64
-    let activeSpaceKey: String
-    let topologyRevision: UInt64
-    let receiptNanos: UInt64
-    let frame: Frame
-    var relativeWidthDelta: Double? = nil
-    var relativeHeightDelta: Double? = nil
-    var ordered: Bool = false
-    var effectKind: ResidentEffectKind = .frame
-    /// A member selection may reframe the newly presented top and focus it in
-    /// one journaled goal. Both independent observations must land.
-    var requiresFocus = false
-    var stackTopWindowIDs: [String] = []
-    var priorInteraction: JSONValue? = nil
-    var priorModelState: JSONValue? = nil
-    var proposedState: JSONValue? = nil
-    var frameTargets: [String: Frame] = [:]
-    var schedulingLane: String? = nil
-    var windowGenerations: [String: UInt64] = [:]
-    var windowSpaceKeys: [String: String] = [:]
-    var windowPids: [String: Int64] = [:]
-    var windowDisplayIDs: [String: String] = [:]
-    var windowApplicationKeys: [String: String] = [:]
-    var observerEpoch: String? = nil
-    var sessionGeneration: UInt64? = nil
-    var sourceInputGeneration: UInt64? = nil
-
-    var fingerprint: String {
-        JSONValue.object([
-            "action_id": .string(actionID), "window_id": .string(windowID),
-            "expected_revision": .int(Int64(expectedRevision)),
-            "observer_generation": .int(Int64(observerGeneration)),
-            "active_space_key": .string(activeSpaceKey),
-            "topology_revision": .int(Int64(topologyRevision)), "frame": frame.json,
-            "relative_width_delta": relativeWidthDelta.map(JSONValue.double) ?? .null,
-            "relative_height_delta": relativeHeightDelta.map(JSONValue.double) ?? .null,
-            "ordered": .bool(ordered),
-            "effect_kind": .string(effectKind.rawValue),
-            "requires_focus": .bool(requiresFocus), "prior_interaction": priorInteraction ?? .null,
-            "stack_top_window_ids": .array(stackTopWindowIDs.map(JSONValue.string)),
-            "prior_model_state": priorModelState ?? .null,
-            "proposed_state": proposedState ?? .null,
-            "frame_targets": .object(JSONObject(unordered: frameTargets.mapValues(\.json))),
-            "scheduling_lane": schedulingLane.map(JSONValue.string) ?? .null,
-            "source_input_generation": sourceInputGeneration.map { .int(Int64(clamping: $0)) } ?? .null,
-            "window_space_keys": .object(JSONObject(unordered: windowSpaceKeys.mapValues(JSONValue.string))),
-            "window_pids": .object(JSONObject(unordered: windowPids.mapValues(JSONValue.int))),
-            "window_display_ids": .object(JSONObject(unordered: windowDisplayIDs.mapValues(JSONValue.string))),
-            "window_application_keys": .object(JSONObject(unordered: windowApplicationKeys.mapValues(JSONValue.string))),
-            "observer_epoch": observerEpoch.map(JSONValue.string) ?? .null,
-            "session_generation": sessionGeneration.map { .int(Int64(clamping: $0)) } ?? .null,
-            "window_generations": .object(JSONObject(unordered: windowGenerations.mapValues { .int(Int64(clamping: $0)) })),
-        ]).canonical()
-    }
-}
-
-struct ResidentEffectOutcome: Sendable {
-    let requestID: String
-    let status: WmStatus
-    let reason: String?
-    let revision: UInt64
-    let generation: UInt64
-    let phase: String
-    let requestedFrame: Frame?
-    let landedFrame: Frame?
-    let receiptNanos: UInt64
-    let effectIssuedNanos: UInt64?
-    let firstMatchingObservationNanos: UInt64?
-    let verifiedNanos: UInt64?
-    let effectKind: ResidentEffectKind
-    let focusConfirmed: Bool
-    let requestedFrames: [String: Frame]
-    let landedFrames: [String: Frame]
-    let requestedGeneration: UInt64
-    let observedGeneration: UInt64?
-    let desiredStateCommittedRevision: UInt64?
-
-    var json: JSONValue {
-        func nanos(_ value: UInt64?) -> JSONValue { value.map { .int(Int64($0)) } ?? .null }
-        return .object([
-            "request_id": .string(requestID), "status": .string(status.rawValue),
-            "reason": reason.map(JSONValue.string) ?? .null, "revision": .int(Int64(revision)),
-            "observer_generation": .int(Int64(generation)), "phase": .string(phase),
-            "requested_frame": requestedFrame?.json ?? .null, "landed_frame": landedFrame?.json ?? .null,
-            "receipt_nanos": nanos(receiptNanos), "effect_issued_nanos": nanos(effectIssuedNanos),
-            "first_matching_observation_nanos": nanos(firstMatchingObservationNanos),
-            "verified_nanos": nanos(verifiedNanos), "visible_evidence": .bool(false),
-            "effect_kind": .string(effectKind.rawValue), "focus_confirmed": .bool(focusConfirmed),
-            "requested_frames": .object(JSONObject(unordered: requestedFrames.mapValues(\.json))),
-            "landed_frames": .object(JSONObject(unordered: landedFrames.mapValues(\.json))),
-            "requested_observer_generation": .int(Int64(clamping: requestedGeneration)),
-            "observed_observer_generation": observedGeneration.map { .int(Int64(clamping: $0)) } ?? .null,
-            "desired_state_committed_revision": desiredStateCommittedRevision.map { .int(Int64(clamping: $0)) } ?? .null,
-        ])
-    }
-}
-
-/// Canonical observer supplies window identity; this port performs ONLY the targeted operation.
-/// A setter acknowledgment is not landed evidence. Notifications/readback call observe separately.
-protocol ResidentEffectorPort: AnyObject, Sendable {
-    func issue(request: ResidentEffectRequest, frame: Frame,
-               completion: @escaping @Sendable (String?) -> Void)
-    func cancel(requestID: String)
-}
-
-protocol ResidentEffectorJournal: AnyObject, Sendable {
-    func append(_ record: JSONValue) throws
-}
-
 /// @canonical resident_effector -- owner/precondition gates, journal before effect, targeted landing.
 /// A serial worker handles IO; the state lock never encompasses journal IO or an AX read/write.
 /// Queueing and immutable outcome publication remain responsive to slow external ports.
 final class ResidentEffector: @unchecked Sendable {
+    /// A frame component this close to its target has landed; an app rounding
+    /// a point is neither a mismatch nor external drift.
+    static let landedTolerance = 1.0
+    /// Two frames within half a point are the same physical frame: nothing to
+    /// write, and a readback that has not changed.
+    static let unchangedTolerance = 0.5
+
     private let lock = NSLock()
     private let worker = DispatchQueue(label: "leylined.resident.effector.io")
     private let journal: any ResidentEffectorJournal
@@ -217,18 +98,9 @@ final class ResidentEffector: @unchecked Sendable {
             gateRefusalCount += 1; fingerprints[request.requestID] = request.fingerprint; rememberCompletion(value)
             lock.unlock(); return value
         }
-        let admission: CommandScheduling.Admission
-        if request.relativeWidthDelta != nil || request.relativeHeightDelta != nil {
-            admission = scheduler.admitRelativeResize(
-                requestID: request.requestID, lane: request.schedulingLane ?? request.windowID,
-                generation: request.observerGeneration, receiptNanos: request.receiptNanos,
-                baseline: request.frame, widthDelta: request.relativeWidthDelta ?? 0,
-                heightDelta: request.relativeHeightDelta ?? 0)
-        } else {
-            admission = scheduler.admit(.init(requestID: request.requestID, lane: request.schedulingLane ?? request.windowID,
-                generation: request.observerGeneration, receiptNanos: request.receiptNanos,
-                desiredFrame: request.frame, ordered: request.ordered))
-        }
+        let admission = scheduler.admit(.init(requestID: request.requestID, lane: request.schedulingLane ?? request.windowID,
+            generation: request.observerGeneration, receiptNanos: request.receiptNanos,
+            desiredFrame: request.frame, ordered: request.ordered))
         guard admission.accepted else {
             let value = outcome(request, status: .refused, reason: admission.reason, phase: "admission")
             fingerprints[request.requestID] = request.fingerprint; rememberCompletion(value)
@@ -263,7 +135,7 @@ final class ResidentEffector: @unchecked Sendable {
             || replacement.activeSpaceKey != context.activeSpaceKey
             || replacement.topologyRevision != context.topologyRevision
             || !replacement.trusted || !replacement.complete || !replacement.spaceEnabled
-            || cause == "escape" || cause == "cancel" || cause == "space-off"
+            || cause == "cancel"
         context = replacement
         lastContextCause = cause
         var cancelled: [ResidentEffectOutcome] = []
@@ -283,7 +155,7 @@ final class ResidentEffector: @unchecked Sendable {
                     && !invalidatingRequestIDs.contains(id)
                     && request.topologyRevision == replacement.topologyRevision
                     && replacement.trusted && replacement.complete && replacement.spaceEnabled
-                    && !["escape", "cancel", "space-off"].contains(cause)
+                    && cause != "cancel"
             })
             for id in scheduler.invalidate(generation: replacement.observerGeneration,
                     cause: cause, eventID: eventID, receiptNanos: receiptNanos) {
@@ -349,7 +221,7 @@ final class ResidentEffector: @unchecked Sendable {
             return false
         }
         minimumEvidence[id, default: [:]][evidence.write.windowID] = evidence
-        if ResidentMinimumLearning.settledClampAxes(evidence) != nil {
+        if ResidentMinimumLearning.settledConstraint(evidence) {
             let observed = evidence.confirmationFrame ?? evidence.observed
             observedTargets[id, default: [:]][evidence.write.windowID] = observed
             observedGenerations[id] = context.observerGeneration
@@ -357,7 +229,7 @@ final class ResidentEffector: @unchecked Sendable {
         }
         let constrained = setterAcknowledged.contains(id) && minimumConstrained(request, primaryFrame: flight.desiredFrame)
         lock.unlock()
-        if constrained { complete(requestID: id, status: .failed, reason: "minimum_constraint", verifiedNanos: nil) }
+        if constrained { complete(requestID: id, status: .failed, reason: "minimum_constraint", verified: false) }
         return true
     }
 
@@ -366,7 +238,7 @@ final class ResidentEffector: @unchecked Sendable {
     @discardableResult
     func observe(requestID: String, windowID: String, frame: Frame,
                  generation: UInt64, windowGeneration: UInt64? = nil,
-                 timestampNanos: UInt64, tolerance: Double = 1) -> Bool {
+                 timestampNanos: UInt64) -> Bool {
         lock.lock()
         let receivedAt = now()
         guard let flight = scheduler.inFlight, flight.requestID == requestID,
@@ -381,11 +253,11 @@ final class ResidentEffector: @unchecked Sendable {
         observedGenerations[requestID] = generation
         observedTargets[requestID, default: [:]][windowID] = frame
         if windowID == request.windowID { observedFrames[requestID] = frame }
-        guard Geometry.frameEq(desired, frame, tol: tolerance) else {
+        guard Geometry.frameEq(desired, frame, tol: Self.landedTolerance) else {
             matchingTargets[requestID]?.remove(windowID)
             let constrained = setterAcknowledged.contains(requestID) && minimumConstrained(request, primaryFrame: flight.desiredFrame)
             lock.unlock()
-            if constrained { complete(requestID: requestID, status: .failed, reason: "minimum_constraint", verifiedNanos: nil) }
+            if constrained { complete(requestID: requestID, status: .failed, reason: "minimum_constraint", verified: false) }
             return false
         }
         firstMatched[requestID] = firstMatched[requestID] ?? timestampNanos
@@ -393,12 +265,11 @@ final class ResidentEffector: @unchecked Sendable {
         matchingTargets[requestID, default: []].insert(windowID)
         let progressed = request.windowGenerations[windowID] != nil && timestampNanos <= now()
             && progressTargets[requestID, default: []].insert(windowID).inserted
-        let acknowledged = setterAcknowledged.contains(requestID) && goalObserved(request, primaryFrame: flight.desiredFrame)
-        let constrained = setterAcknowledged.contains(requestID) && minimumConstrained(request, primaryFrame: flight.desiredFrame)
+        let resolution = Resolution(progress: progressed ? timestampNanos : nil,
+            acknowledged: setterAcknowledged.contains(requestID) && goalObserved(request, primaryFrame: flight.desiredFrame),
+            constrained: setterAcknowledged.contains(requestID) && minimumConstrained(request, primaryFrame: flight.desiredFrame))
         lock.unlock()
-        if progressed { onProgress(requestID, timestampNanos) }
-        if acknowledged { complete(requestID: requestID, status: .accepted, reason: nil, verifiedNanos: receivedAt) }
-        else if constrained { complete(requestID: requestID, status: .failed, reason: "minimum_constraint", verifiedNanos: nil) }
+        deliver(resolution, requestID: requestID)
         return true
     }
 
@@ -431,10 +302,10 @@ final class ResidentEffector: @unchecked Sendable {
         recordMatchedSourceStamp(requestID: requestID, windowID: windowID, timestampNanos: timestampNanos)
         let progressed = requests[requestID]?.windowGenerations[windowID] != nil && timestampNanos <= now()
             && progressTargets[requestID, default: []].insert(windowID).inserted
-        let acknowledged = setterAcknowledged.contains(requestID) && goalObserved(request, primaryFrame: flight.desiredFrame)
+        let resolution = Resolution(progress: progressed ? timestampNanos : nil,
+            acknowledged: setterAcknowledged.contains(requestID) && goalObserved(request, primaryFrame: flight.desiredFrame))
         lock.unlock()
-        if progressed { onProgress(requestID, timestampNanos) }
-        if acknowledged { complete(requestID: requestID, status: .accepted, reason: nil, verifiedNanos: now()) }
+        deliver(resolution, requestID: requestID)
         return true
     }
 
@@ -499,9 +370,9 @@ final class ResidentEffector: @unchecked Sendable {
                   timestampNanos - stamp >= evidenceDeadlineNanos else { return nil }
             return flight.requestID
         }
-        let clamped = expired.map { id in (minimumEvidence[id] ?? [:]).values.contains { ResidentMinimumLearning.settledClampAxes($0) != nil } } == true
+        let clamped = expired.map { id in (minimumEvidence[id] ?? [:]).values.contains(where: ResidentMinimumLearning.settledConstraint) } == true
         lock.unlock()
-        if let expired { complete(requestID: expired, status: .failed, reason: clamped ? "minimum_constraint" : "targeted_evidence_timeout", verifiedNanos: nil) }
+        if let expired { complete(requestID: expired, status: .failed, reason: clamped ? "minimum_constraint" : "targeted_evidence_timeout", verified: false) }
     }
 
     func snapshot() -> JSONValue {
@@ -516,10 +387,9 @@ final class ResidentEffector: @unchecked Sendable {
             "committed_request_revisions": .object(JSONObject(unordered: committedRevisions.mapValues { .int(Int64(clamping: $0)) })),
             "coalesced_intents": .int(Int64(scheduler.coalescedCount)),
             "refusals": .int(Int64(scheduler.refusedCount + gateRefusalCount)),
-            "evidence_reads": .int(Int64(evidenceReadCount)), "enumeration_count": .int(0),
+            "evidence_reads": .int(Int64(evidenceReadCount)),
             "journal_worker_running": .bool(workerRunning), "journal_worker_pending": .int(workerPending == nil ? 0 : 1),
             "replans": .int(Int64(replanCount)),
-            "shell_spawn_count": .int(0), "jq_spawn_count": .int(0),
             "generation_causes": .array(scheduler.causes.map { .object([
                 "generation": .int(Int64($0.generation)), "cause": .string($0.cause),
                 "event_id": .string($0.eventID), "receipt_nanos": .int(Int64($0.receiptNanos))]) }),
@@ -544,9 +414,6 @@ final class ResidentEffector: @unchecked Sendable {
               request.frame.x.isFinite, request.frame.y.isFinite,
               request.frame.w.isFinite, request.frame.h.isFinite,
               request.frame.w > 0, request.frame.h > 0 else { return "invalid_effect_request" }
-        if !request.frameTargets.isEmpty && (request.relativeWidthDelta != nil || request.relativeHeightDelta != nil) {
-            return "relative_batch_requires_accumulated_plan"
-        }
         if request.frameTargets.contains(where: { id, frame in
             id.isEmpty || !frame.x.isFinite || !frame.y.isFinite || !frame.w.isFinite || !frame.h.isFinite
                 || frame.w <= 0 || frame.h <= 0 }) { return "invalid_effect_batch" }
@@ -598,7 +465,7 @@ final class ResidentEffector: @unchecked Sendable {
             let invalid = refusal(request, requireRevision: false)
             let plannedRevision = context.revision + 1
             lock.unlock()
-            if let invalid { complete(requestID: request.requestID, status: .refused, reason: invalid, verifiedNanos: nil); return }
+            if let invalid { complete(requestID: request.requestID, status: .refused, reason: invalid, verified: false); return }
             do {
                 try journal.append(.object([
                     "type": .string("effect_intent"), "request_id": .string(request.requestID),
@@ -607,10 +474,9 @@ final class ResidentEffector: @unchecked Sendable {
                     "revision": .int(Int64(plannedRevision)),
                     "observer_generation": .int(Int64(request.observerGeneration)),
                     "active_space_key": .string(request.activeSpaceKey), "frame": frame.json,
-                    "proposed_state": request.proposedState ?? .null,
                     "state": request.proposedState ?? .null,
-                    "requested_frames": .object(JSONObject(unordered: targetFrames(request, primaryFrame: frame).mapValues(\.json))),
-                    "window_generations": .object(JSONObject(unordered: request.windowGenerations.mapValues { .int(Int64(clamping: $0)) })),
+                    "requested_frames": targetFrames(request, primaryFrame: frame).json(\.json),
+                    "window_generations": request.windowGenerationsJSON,
                     "receipt_nanos": .int(Int64(request.receiptNanos)),
                 ]))
             } catch {
@@ -622,7 +488,7 @@ final class ResidentEffector: @unchecked Sendable {
             if let invalid = refusal(request, requireRevision: false) {
                 let status: WmStatus = committedRevisions[request.requestID] == nil ? .refused : .failed
                 lock.unlock()
-                complete(requestID: request.requestID, status: status, reason: invalid, verifiedNanos: nil)
+                complete(requestID: request.requestID, status: status, reason: invalid, verified: false)
                 return
             }
             guard context.revision + 1 == plannedRevision else {
@@ -654,7 +520,7 @@ final class ResidentEffector: @unchecked Sendable {
             }
             guard committedRevision == plannedRevision else {
                 complete(requestID: request.requestID, status: .failed,
-                    reason: "authoritative_commit_revision_mismatch", verifiedNanos: nil)
+                    reason: "authoritative_commit_revision_mismatch", verified: false)
                 return
             }
             do {
@@ -674,7 +540,7 @@ final class ResidentEffector: @unchecked Sendable {
             guard scheduler.inFlight?.requestID == intent.requestID else { lock.unlock(); return }
             if let invalid = refusal(request, requireRevision: false) {
                 lock.unlock()
-                complete(requestID: request.requestID, status: .failed, reason: invalid, verifiedNanos: nil)
+                complete(requestID: request.requestID, status: .failed, reason: invalid, verified: false)
                 return
             }
             context.revision = max(context.revision, committedRevision)
@@ -690,46 +556,63 @@ final class ResidentEffector: @unchecked Sendable {
                 "observer_epoch": request.observerEpoch.map(JSONValue.string) ?? .null,
                 "window_id": .string(request.windowID), "space_key": .string(request.activeSpaceKey),
                 "topology_revision": .int(Int64(clamping: request.topologyRevision)),
-                "window_pids": .object(JSONObject(unordered: request.windowPids.mapValues(JSONValue.int))),
-                "window_generations": .object(JSONObject(unordered: request.windowGenerations.mapValues { .int(Int64(clamping: $0)) })),
-                "target_frames": .object(JSONObject(unordered: targetFrames(request, primaryFrame: frame).mapValues(\.json))),
+                "window_pids": request.windowPidsJSON,
+                "window_generations": request.windowGenerationsJSON,
+                "target_frames": targetFrames(request, primaryFrame: frame).json(\.json),
                 "source_input_generation": request.sourceInputGeneration.map { .int(Int64(clamping: $0)) } ?? .null,
                 "receipt_uptime_ns": .int(Int64(clamping: request.receiptNanos))], timestamp: issueStamp)
             port.issue(request: request, frame: frame) { [weak self] error in
                 guard let self else { return }
-                if let error { self.complete(requestID: request.requestID, status: .failed, reason: error, verifiedNanos: nil); return }
+                if let error { self.complete(requestID: request.requestID, status: .failed, reason: error, verified: false); return }
                 self.lock.lock()
                 guard self.scheduler.inFlight?.requestID == request.requestID else { self.lock.unlock(); return }
                 let firstAcknowledgment = self.setterAcknowledged.insert(request.requestID).inserted
                 let progressStamp = self.now()
                 let progressed = firstAcknowledgment && !request.windowGenerations.isEmpty
                     && self.issued[request.requestID].map { progressStamp >= $0 } == true
-                let matched = self.goalObserved(request, primaryFrame: intent.desiredFrame)
-                    ? self.firstMatched[request.requestID] : nil
-                let constrained = self.minimumConstrained(request, primaryFrame: intent.desiredFrame)
+                let resolution = Resolution(progress: progressed ? progressStamp : nil,
+                    acknowledged: self.goalObserved(request, primaryFrame: intent.desiredFrame) && self.firstMatched[request.requestID] != nil,
+                    constrained: self.minimumConstrained(request, primaryFrame: intent.desiredFrame))
                 self.lock.unlock()
-                if progressed { self.onProgress(request.requestID, progressStamp) }
-                if matched != nil { self.complete(requestID: request.requestID, status: .accepted,
-                    reason: nil, verifiedNanos: max(self.now(), matched!)) }
-                else if constrained { self.complete(requestID: request.requestID, status: .failed,
-                    reason: "minimum_constraint", verifiedNanos: nil) }
+                self.deliver(resolution, requestID: request.requestID)
             }
     }
 
-    private func complete(requestID: String, status: WmStatus, reason: String?, verifiedNanos: UInt64?) {
+    /// Evidence decided under `lock` and delivered after it: at most one progress
+    /// stamp, then at most one terminal completion, in that order. Readback that
+    /// proves the goal accepts; a confirmed minimum clamp fails; anything else waits.
+    private struct Resolution {
+        var progress: UInt64?
+        var acknowledged: Bool
+        var constrained = false
+    }
+
+    private func deliver(_ resolution: Resolution, requestID: String) {
+        if let stamp = resolution.progress { onProgress(requestID, stamp) }
+        if resolution.acknowledged { complete(requestID: requestID, status: .accepted, reason: nil, verified: true) }
+        else if resolution.constrained { complete(requestID: requestID, status: .failed, reason: "minimum_constraint", verified: false) }
+    }
+
+    /// `verified` marks an accepted completion proven by readback; the stamp is
+    /// always the request's own verification timestamp, never caller-supplied.
+    private func complete(requestID: String, status: WmStatus, reason: String?, verified: Bool) {
         lock.lock()
         guard let flight = scheduler.inFlight, flight.requestID == requestID,
               let request = requests[requestID], scheduler.finish(requestID: requestID, generation: flight.generation) else {
             lock.unlock(); return
         }
+        // A refused shape is not a floor: name it so learning and startup can tell them apart.
+        let reason = reason == "minimum_constraint"
+            && (minimumEvidence[requestID] ?? [:]).values.contains(where: ResidentMinimumLearning.settledShapeRefusal)
+            ? "fixed_aspect_constraint" : reason
         let value = outcome(request, status: status, reason: reason, phase: "completed",
                             requestedFrame: flight.desiredFrame,
-                            verifiedNanos: verifiedNanos.map { _ in verificationTimestamp(request) })
+                            verifiedNanos: verified ? verificationTimestamp(request) : nil)
         let minima: [ResidentMinimumEvidence]
         if status == .accepted && value.verifiedNanos != nil {
             minima = Array((minimumEvidence[requestID] ?? [:]).values)
-        } else if status == .failed && reason == "minimum_constraint" {
-            minima = (minimumEvidence[requestID] ?? [:]).values.filter { ResidentMinimumLearning.settledClampAxes($0) != nil }
+        } else if status == .failed && (reason == "minimum_constraint" || reason == "fixed_aspect_constraint") {
+            minima = (minimumEvidence[requestID] ?? [:]).values.filter(ResidentMinimumLearning.settledConstraint)
         } else { minima = [] }
         rememberCompletion(value)
         if status == .refused { gateRefusalCount += 1 }
@@ -744,7 +627,7 @@ final class ResidentEffector: @unchecked Sendable {
         do {
             try journal.append(.object(["type": .string("effect_abort"), "request_id": .string(requestID),
                 "revision": .int(Int64(revision)), "reason": .string(reason)]))
-            complete(requestID: requestID, status: .refused, reason: reason, verifiedNanos: nil)
+            complete(requestID: requestID, status: .refused, reason: reason, verified: false)
         } catch {
             journalFailure(requestID: requestID, reason: "journal_abort_failed")
         }
@@ -757,8 +640,8 @@ final class ResidentEffector: @unchecked Sendable {
         lock.lock()
         let valid = scheduler.inFlight?.requestID == intent.requestID
             && context.revision != revision - 1
-            && (["action_result", "effect_completed", "desired_plan_committed", "interaction_committed", "own-apply"].contains(lastContextCause)
-                || (["app_activated", "ax_focus_changed"].contains(lastContextCause)
+            && (["action_result", "desired_plan_committed", "interaction_committed"].contains(lastContextCause)
+                || (WorldEvent.foregroundRebind.contains(lastContextCause)
                     && validatedFrameGenerations[intent.requestID] == context.observerGeneration))
             && requests[intent.requestID].map { refusal($0, requireRevision: false) == nil } == true
         let attempts = replanAttempts[intent.requestID] ?? 0
@@ -813,7 +696,7 @@ final class ResidentEffector: @unchecked Sendable {
     /// Storage faults outlive command cancellation. Publish the current command's precise
     /// terminal result first, then fence persistence through a separate callback outside locks.
     private func journalFailure(requestID: String, reason: String) {
-        complete(requestID: requestID, status: .failed, reason: reason, verifiedNanos: nil)
+        complete(requestID: requestID, status: .failed, reason: reason, verified: false)
         onPersistenceFault(reason)
     }
 
@@ -871,7 +754,7 @@ final class ResidentEffector: @unchecked Sendable {
     /// Other windows must independently reach their targets before early exit.
     private func minimumConstrained(_ request: ResidentEffectRequest, primaryFrame: Frame?) -> Bool {
         let proofs = minimumEvidence[request.requestID] ?? [:]
-        let clamps = Set(proofs.filter { ResidentMinimumLearning.settledClampAxes($0.value) != nil }.keys)
+        let clamps = Set(proofs.filter { ResidentMinimumLearning.settledConstraint($0.value) }.keys)
         guard !clamps.isEmpty else { return false }
         let matching = matchingTargets[request.requestID] ?? []
         return targetFrames(request, primaryFrame: primaryFrame).keys.allSatisfy { matching.contains($0) || clamps.contains($0) }

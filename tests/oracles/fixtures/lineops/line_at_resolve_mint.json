@@ -1,9 +1,0 @@
-{ "fn": "line_at_resolve",
-  "note": "mouse-line-drag M0/M5: the commit-time resolver mints transient ids onto the hits (v-first, monotone from the store max) — the same mint the keyboard face resolver performs.",
-  "arr": { "segments": [ { "axis": "h", "coord": 540, "lo": 0, "hi": 1920 },
-                         { "axis": "v", "coord": 960, "lo": 0, "hi": 1080 } ],
-           "bindings": {} },
-  "x": 955, "y": 545, "tol": 12,
-  "expect": { "kind": "junction",
-              "ids": [ { "id": 1, "axis": "v" }, { "id": 2, "axis": "h" } ],
-              "minted": [ { "id": 1, "axis": "v" }, { "id": 2, "axis": "h" } ] } }

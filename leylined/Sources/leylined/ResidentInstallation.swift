@@ -2,7 +2,10 @@ import Darwin
 import Foundation
 import LeylineModel
 
-private struct ResidentInstallationError: Error {
+/// The operations the native installer accepts; main.swift dispatches on the same set.
+let residentInstallationOperations = ["install", "uninstall", "service-status", "service-start", "service-stop", "service-restart"]
+
+struct ResidentInstallationError: Error {
     let code: String
     let message: String
     var context: JSONObject = [:]
@@ -14,12 +17,12 @@ private struct ResidentInstallationError: Error {
     }
 }
 
-private struct ResidentInstallationCommand {
+struct ResidentInstallationCommand {
     let status: Int32
     let output: String
 }
 
-private struct ResidentInstallationOptions {
+struct ResidentInstallationOptions {
     var operation: String
     var root: String
     var launchAgents: String
@@ -32,22 +35,22 @@ private struct ResidentInstallationOptions {
     var plistPath: String { launchAgents + "/" + ResidentInstallation.label + ".plist" }
     var service: String { "gui/\(geteuid())/" + ResidentInstallation.label }
     var directories: [String] {
-        [root, root + "/config", root + "/runtime", root + "/runtime/sockets",
-         root + "/state", root + "/state/leylined", launchAgents]
+        [root, ResidentLayout.config(root: root), ResidentLayout.runtime(root: root), ResidentLayout.sockets(root: root),
+         root + "/state", ResidentLayout.state(root: root), launchAgents]
     }
     var plist: [String: Any] {
         ["Label": ResidentInstallation.label, "ProgramArguments": [executable, "core"],
          "RunAtLoad": true, "KeepAlive": true, "ThrottleInterval": 1, "Umask": 0o077,
          "ProcessType": "Interactive", "EnvironmentVariables": [
-            "LEYLINE_HOME": resourceHome, "LEYLINE_ROOT": root, "LEYLINE_RUNTIME_DIR": root + "/runtime"],
-         "StandardOutPath": root + "/runtime/leylined.stdout.log",
-         "StandardErrorPath": root + "/runtime/leylined.stderr.log"]
+            "LEYLINE_HOME": resourceHome, "LEYLINE_ROOT": root, "LEYLINE_RUNTIME_DIR": ResidentLayout.runtime(root: root)],
+         "StandardOutPath": ResidentLayout.stdoutLog(root: root),
+         "StandardErrorPath": ResidentLayout.stderrLog(root: root)]
     }
 }
 
 /// @canonical resident_installation -- the bundled application and CLI share
 /// one per-user install/update/uninstall and launchd administration path.
-private enum ResidentInstallation {
+enum ResidentInstallation {
     static let label = "org.leyline.leylined"
     static let launchctlTimeoutSeconds: Double = 10
     static let launchctlMaximumOutputBytes = 1_048_576
@@ -57,7 +60,7 @@ private enum ResidentInstallation {
     typealias Executor = ([String]) throws -> ResidentInstallationCommand
 
     static func parse(_ arguments: [String]) throws -> ResidentInstallationOptions {
-        let operations = ["install", "uninstall", "service-status", "service-start", "service-stop", "service-restart"]
+        let operations = residentInstallationOperations
         guard let operation = arguments.first, operations.contains(operation) else {
             throw failure("ARGUMENT_INVALID", "Expected install, uninstall or a service operation")
         }
@@ -66,7 +69,7 @@ private enum ResidentInstallation {
             throw failure("EXECUTABLE_UNAVAILABLE", "Cannot locate the current executable")
         }
         var options = ResidentInstallationOptions(operation: operation,
-            root: environment["LEYLINE_ROOT"] ?? NSHomeDirectory() + "/.config/leyline",
+            root: ResidentPaths.root(environment),
             launchAgents: NSHomeDirectory() + "/Library/LaunchAgents",
             executable: ownExecutable.resolvingSymlinksInPath().path, resourceHome: ResidentResources.home())
         var seen = Set<String>()
@@ -92,7 +95,6 @@ private enum ResidentInstallation {
                     throw failure("ARGUMENT_INVALID", "Choose either --start or --no-start")
                 }
                 options.start = flag == "--start"; index += 1
-            case "--json": index += 1
             default: throw failure("ARGUMENT_INVALID", "Unknown option \(flag)")
             }
         }
@@ -421,7 +423,7 @@ private enum ResidentInstallation {
             }
     }
 
-    private static func ownedPlist(_ plist: [String: Any], root: String?) -> Bool {
+    static func ownedPlist(_ plist: [String: Any], root: String?) -> Bool {
         // Program/BundleProgram and unrecognized launchd capabilities can
         // override argv or create additional services. Refuse them before boot.
         guard Set(plist.keys) == plistKeys, plist["Label"] as? String == label,
@@ -431,10 +433,10 @@ private enum ResidentInstallation {
               Set(environment.keys) == environmentKeys,
               let installedRoot = environment["LEYLINE_ROOT"], installedRoot.hasPrefix("/"),
               root == nil || installedRoot == root,
-              environment["LEYLINE_RUNTIME_DIR"] == installedRoot + "/runtime",
+              environment["LEYLINE_RUNTIME_DIR"] == ResidentLayout.runtime(root: installedRoot),
               environment["LEYLINE_HOME"]?.hasPrefix("/") == true,
-              plist["StandardOutPath"] as? String == installedRoot + "/runtime/leylined.stdout.log",
-              plist["StandardErrorPath"] as? String == installedRoot + "/runtime/leylined.stderr.log",
+              plist["StandardOutPath"] as? String == ResidentLayout.stdoutLog(root: installedRoot),
+              plist["StandardErrorPath"] as? String == ResidentLayout.stderrLog(root: installedRoot),
               plist["ProcessType"] as? String == "Interactive", plist["Umask"] as? Int == 0o077,
               plist["KeepAlive"] as? Bool == true, plist["RunAtLoad"] as? Bool == true,
               plist["ThrottleInterval"] as? Int == 1 else { return false }
@@ -443,21 +445,15 @@ private enum ResidentInstallation {
 
     private static func resourceDefaults(_ options: ResidentInstallationOptions) throws -> JSONObject {
         try validateImmutableFile(options.executable, executable: true)
-        for name in ["decode-us", "global", "modes"] {
-            let path = options.resourceHome + "/keymap/" + name + ".json"
+        for name in ResidentLayout.keymapFiles {
+            let path = ResidentLayout.keymap(name, home: options.resourceHome)
             let bytes = try readImmutableFile(path)
             guard (try? JSONValue.parse(bytes))?.objectValue != nil else { throw failure("RESOURCES_INVALID", "Packaged keymap is invalid", ["path": .string(path)]) }
         }
         let version = String(decoding: try readImmutableFile(options.resourceHome + "/VERSION"), as: UTF8.self)
             .trimmingCharacters(in: .whitespacesAndNewlines)
         guard version == ResidentVersion.current else { throw failure("VERSION_MISMATCH", "Packaged resources and executable have different versions") }
-        let path = options.resourceHome + "/config/registry/borders.json"
-        let registryBytes = try readImmutableFile(path)
-        guard let registry = (try? JSONValue.parse(registryBytes))?.objectValue,
-              !registry.isEmpty, registry.values.allSatisfy({ $0.at(path: "default") != nil }) else {
-            throw failure("RESOURCES_INVALID", "Packaged border defaults are invalid", ["path": .string(path)])
-        }
-        return registry.mapValues { $0.at(path: "default")! }
+        return BorderPalette.configurationDefaults
     }
 
     private static func validateJobFiles(_ plist: [String: Any]) throws {
@@ -466,32 +462,32 @@ private enum ResidentInstallation {
             throw failure("PLIST_INVALID", "Installed Leyline job has no executable or resource home")
         }
         try validateImmutableFile(executable, executable: true)
-        for path in [home + "/VERSION", home + "/keymap/decode-us.json", home + "/keymap/global.json", home + "/keymap/modes.json"] {
+        for path in [home + "/VERSION"] + ResidentLayout.keymapFiles.map({ ResidentLayout.keymap($0, home: home) }) {
             try validateImmutableFile(path)
         }
     }
 
     private static func inspectConfiguration(_ options: ResidentInstallationOptions) throws {
-        for suffix in ["/config/borders.json", "/config/leylined-settings.json"] {
-            if let bytes = try readPrivateFile(options.root + suffix), (try? JSONValue.parse(bytes))?.objectValue == nil {
-                throw failure("CONFIGURATION_INVALID", "Existing configuration is invalid and was preserved", ["path": .string(options.root + suffix)])
+        let config = ResidentLayout.config(root: options.root)
+        for path in [ResidentLayout.borders(config: config), ResidentLayout.settings(config: config)] {
+            if let bytes = try readPrivateFile(path), (try? JSONValue.parse(bytes))?.objectValue == nil {
+                throw failure("CONFIGURATION_INVALID", "Existing configuration is invalid and was preserved", ["path": .string(path)])
             }
         }
-        for suffix in ["/runtime/leylined.stdout.log", "/runtime/leylined.stderr.log", "/state/leylined/journal.jsonl"] {
-            try inspectPrivateFile(options.root + suffix)
+        for path in [ResidentLayout.stdoutLog(root: options.root), ResidentLayout.stderrLog(root: options.root),
+                     ResidentLayout.journal(root: options.root)] {
+            try inspectPrivateFile(path)
         }
     }
 
     private static func createConfiguration(_ options: ResidentInstallationOptions) throws -> Bool {
-        let defaults = try resourceDefaults(options)
-        let settings: JSONObject = ["schema": .string("leyline/resident-settings/v1"),
-            "spaces_enabled": .object([:]), "desired_running": .bool(true)]
+        let defaults = try resourceDefaults(options), config = ResidentLayout.config(root: options.root)
         var created = false
-        for (suffix, bytes) in [("/config/borders.json", Data((JSONValue.object(defaults).canonical() + "\n").utf8)),
-                                ("/config/leylined-settings.json", Data((JSONValue.object(settings).canonical() + "\n").utf8)),
-                                ("/runtime/leylined.stdout.log", Data()), ("/runtime/leylined.stderr.log", Data())] {
-            if try privateFileDescriptor(options.root + suffix).map({ descriptor in close(descriptor); return true }) != true {
-                try writePrivateFile(options.root + suffix, bytes: bytes)
+        for (path, bytes) in [(ResidentLayout.borders(config: config), Data((JSONValue.object(defaults).canonical() + "\n").utf8)),
+                              (ResidentLayout.settings(config: config), ResidentSettingsStore.document(spacesEnabled: [:], desiredRunning: true)),
+                              (ResidentLayout.stdoutLog(root: options.root), Data()), (ResidentLayout.stderrLog(root: options.root), Data())] {
+            if try privateFileDescriptor(path).map({ descriptor in close(descriptor); return true }) != true {
+                try writePrivateFile(path, bytes: bytes)
                 created = true
             }
         }
@@ -513,7 +509,7 @@ private enum ResidentInstallation {
         }
     }
 
-    private static func createPrivateDirectory(_ path: String) throws {
+    static func createPrivateDirectory(_ path: String) throws {
         let descriptor = try ResidentPrivateFiles.openDirectory(at: path, create: true, repairPermissions: true)
         close(descriptor)
     }
@@ -536,7 +532,7 @@ private enum ResidentInstallation {
         if let descriptor = try privateFileDescriptor(path) { close(descriptor) }
     }
 
-    private static func readPrivateFile(_ path: String) throws -> Data? {
+    static func readPrivateFile(_ path: String) throws -> Data? {
         guard let descriptor = try privateFileDescriptor(path) else { return nil }
         defer { close(descriptor) }
         return try readBytes(descriptor, path: path)
@@ -582,7 +578,7 @@ private enum ResidentInstallation {
         }
     }
 
-    private static func writePrivateFile(_ path: String, bytes: Data) throws {
+    static func writePrivateFile(_ path: String, bytes: Data) throws {
         let parent = (path as NSString).deletingLastPathComponent
         let directory = try ResidentPrivateFiles.openDirectory(at: parent, create: false)
         defer { close(directory) }
@@ -665,216 +661,6 @@ private enum ResidentInstallation {
     private static func json(_ value: [String: Any]) throws -> JSONValue {
         try JSONValue.parse(JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]))
     }
-
-    #if LEYLINE_BUILD_TESTS
-    static func selfTest() -> Int32 {
-        var tests = SelfTest()
-        let base = NSTemporaryDirectory() + "/leyline-installation-" + UUID().uuidString
-        do {
-            try createPrivateDirectory(base)
-            defer {
-                do { try FileManager.default.removeItem(atPath: base) }
-                catch { tests.check(false, "installation/temporary-fixture-cleanup") }
-            }
-            func options(_ name: String, start: Bool = false) throws -> ResidentInstallationOptions {
-                var result = try parse(["install", "--root", base + "/" + name + "/state",
-                    "--launch-agents", base + "/" + name + "/agents", "--resource-home", ResidentResources.home()])
-                result.start = start
-                return result
-            }
-            func report(_ options: ResidentInstallationOptions, plist: [String: Any]? = nil, running: Bool = true) -> String {
-                let value = plist ?? options.plist
-                let arguments = value["ProgramArguments"] as! [String]
-                let environment = value["EnvironmentVariables"] as! [String: String]
-                return options.service + " = {\n\tpath = " + options.plistPath
-                    + "\n\tprogram = " + arguments[0] + "\n\targuments = {\n"
-                    + arguments.map { "\t\t" + $0 }.joined(separator: "\n")
-                    + "\n\t}\n\tenvironment = {\n"
-                    + environment.sorted(by: { $0.key < $1.key }).map { "\t\t" + $0.key + " => " + $0.value }.joined(separator: "\n")
-                    + "\n\t}\n\tminimum runtime = 1\n\tproperties = keepalive | runatload | inferred program\n"
-                    + (running ? "\tstate = running\n\tpid = 123\n" : "\tstate = waiting\n") + "}\n"
-            }
-            func absent(_ arguments: [String]) throws -> ResidentInstallationCommand {
-                guard arguments.first == "print" else { throw failure("TEST_MUTATION", "No-start fixture attempted a live operation") }
-                return ResidentInstallationCommand(status: 113, output: "not registered")
-            }
-            func refused(_ name: String, code: String, operation: () throws -> Void) {
-                do { try operation(); tests.check(false, "installation/" + name) }
-                catch { tests.check(errorJSON(error).at(path: "code")?.stringValue == "INSTALL." + code, "installation/" + name) }
-            }
-
-            var dry = try options("plan")
-            dry.plan = true
-            var calls: [[String]] = []
-            let dryResult = try perform(dry, execute: { arguments in calls.append(arguments); return try absent(arguments) })
-            tests.check(calls.isEmpty && dryResult["registration_checked"] == .bool(false)
-                && !FileManager.default.fileExists(atPath: dry.root), "installation/plan-has-zero-writes-and-zero-launchctl-calls")
-
-            let staged = try options("staged")
-            calls = []
-            let first = try perform(staged, execute: { arguments in calls.append(arguments); return try absent(arguments) })
-            tests.check(calls == [["print", staged.service]] && first["registered"] == .bool(false), "installation/no-start-only-inspects-registration")
-            tests.check(staged.directories.allSatisfy { path in
-                var facts = stat(); return lstat(path, &facts) == 0 && (facts.st_mode & 0o777) == 0o700
-            }, "installation/all-install-owned-directories-are-private")
-            let original = try readPrivateFile(staged.plistPath)!
-            let second = try perform(staged, execute: absent)
-            let repeatedPlist = try readPrivateFile(staged.plistPath)
-            tests.check(second["applied"] == .bool(false) && repeatedPlist == original,
-                "installation/repeated-no-start-install-is-idempotent")
-            tests.check(ownedPlist(staged.plist, root: staged.root) && staged.plist["Umask"] as? Int == 0o077,
-                "installation/exactly-one-direct-job-with-private-umask-and-one-second-throttle")
-            for name in ["Program", "BundleProgram", "MachServices"] {
-                var overridden = staged.plist
-                overridden[name] = "/bin/false"
-                tests.check(!ownedPlist(overridden, root: staged.root), "installation/forbids-launchd-capability-override-" + name)
-            }
-            var injected = staged.plist
-            var injectedEnvironment = injected["EnvironmentVariables"] as! [String: String]
-            injectedEnvironment["DYLD_INSERT_LIBRARIES"] = "/private/untrusted.dylib"
-            injected["EnvironmentVariables"] = injectedEnvironment
-            tests.check(!ownedPlist(injected, root: staged.root), "installation/forbids-unrecognized-job-environment")
-            let malformed = try PropertyListSerialization.data(fromPropertyList: injected, format: .xml, options: 0)
-            try writePrivateFile(staged.plistPath, bytes: malformed)
-            var unsafeStart = staged; unsafeStart.operation = "service-start"
-            refused("start-refuses-noncanonical-job-before-bootstrap", code: "NOT_INSTALLED") {
-                _ = try perform(unsafeStart, execute: absent)
-            }
-            try writePrivateFile(staged.plistPath, bytes: original)
-
-            let settingsPath = staged.root + "/config/leylined-settings.json"
-            let settings = Data("{\"schema\":\"leyline/resident-settings/v1\",\"spaces_enabled\":{\"desktop\":false},\"desired_running\":false,\"global_gutter_width\":17}\n".utf8)
-            let borderPath = staged.root + "/config/borders.json"
-            let border = Data("{\"width\":17,\"colors.focus\":\"0xff00ff00\"}\n".utf8)
-            let journalPath = staged.root + "/state/leylined/journal.jsonl"
-            let journal = Data("existing journal evidence\n".utf8)
-            try writePrivateFile(settingsPath, bytes: settings)
-            try writePrivateFile(borderPath, bytes: border)
-            try writePrivateFile(journalPath, bytes: journal)
-            _ = try perform(staged, execute: absent)
-            let preservedSettings = try readPrivateFile(settingsPath)
-            let preservedBorder = try readPrivateFile(borderPath)
-            let preservedJournal = try readPrivateFile(journalPath)
-            tests.check(preservedSettings == settings && preservedBorder == border && preservedJournal == journal,
-                "installation/settings-borders-and-journals-are-preserved")
-
-            var same = staged; same.start = true
-            calls = []
-            let sameResult = try perform(same, execute: { arguments in
-                calls.append(arguments)
-                return ResidentInstallationCommand(status: 0, output: report(same))
-            })
-            tests.check(sameResult["applied"] == .bool(false) && calls.allSatisfy { $0.first == "print" },
-                "installation/opening-an-already-running-identical-job-does-not-restart-it")
-
-            let conflict = try options("conflict", start: true)
-            refused("different-registration-is-refused-before-writing", code: "UPDATE_REQUIRED") {
-                _ = try perform(conflict, execute: { _ in ResidentInstallationCommand(status: 0, output: "unrecognized registered job") })
-            }
-            tests.check(!FileManager.default.fileExists(atPath: conflict.root), "installation/refused-registration-does-not-create-root")
-            refused("inspection-error-is-not-absence", code: "LAUNCHCTL_FAILED") {
-                _ = try perform(conflict, execute: { _ in ResidentInstallationCommand(status: 5, output: "domain unavailable") })
-            }
-
-            var replacement = staged.plist
-            var replacementEnvironment = replacement["EnvironmentVariables"] as! [String: String]
-            replacementEnvironment["LEYLINE_HOME"] = staged.resourceHome + "/previous"
-            replacement["EnvironmentVariables"] = replacementEnvironment
-            let prior = try PropertyListSerialization.data(fromPropertyList: replacement, format: .xml, options: 0)
-            try writePrivateFile(staged.plistPath, bytes: prior)
-            refused("different-disk-plist-needs-explicit-update", code: "UPDATE_REQUIRED") { _ = try perform(staged, execute: absent) }
-            let refusedPlist = try readPrivateFile(staged.plistPath)
-            tests.check(refusedPlist == prior, "installation/refused-update-preserves-existing-plist")
-
-            var update = same; update.update = true
-            var fakeRegistration: [String: Any]? = replacement
-            var bootstrapCount = 0
-            calls = []
-            let updateExecutor: Executor = { arguments in
-                calls.append(arguments)
-                if arguments.first == "print" {
-                    return fakeRegistration.map { ResidentInstallationCommand(status: 0, output: report(update, plist: $0)) }
-                        ?? ResidentInstallationCommand(status: 113, output: "not registered")
-                }
-                if arguments.first == "bootout" { fakeRegistration = nil; return ResidentInstallationCommand(status: 0, output: "") }
-                if arguments.first == "bootstrap" {
-                    bootstrapCount += 1
-                    if bootstrapCount == 1 { return ResidentInstallationCommand(status: 5, output: "injected bootstrap failure") }
-                    fakeRegistration = replacement
-                    return ResidentInstallationCommand(status: 0, output: "")
-                }
-                throw failure("TEST_COMMAND_INVALID", "Unexpected fake launchctl operation")
-            }
-            do { _ = try perform(update, execute: updateExecutor); tests.check(false, "installation/bootstrap-failure-restores-prior-registration") }
-            catch {
-                let restored = try readPrivateFile(staged.plistPath)
-                tests.check(errorJSON(error).at(path: "code") == .string("INSTALL.BOOTSTRAP_FAILED")
-                    && errorJSON(error).at(path: "context.rollback_succeeded") == .bool(true)
-                    && bootstrapCount == 2 && fakeRegistration != nil && restored == prior,
-                    "installation/bootstrap-failure-restores-prior-registration")
-            }
-            tests.check(calls.first == ["print", update.service] && calls.filter { $0.first == "bootout" }.count == 1,
-                "installation/update-inspects-before-stopping-and-writes-no-second-job")
-
-            fakeRegistration = replacement
-            do {
-                _ = try perform(update, execute: { arguments in
-                    if arguments.first == "print" {
-                        return fakeRegistration.map { ResidentInstallationCommand(status: 0, output: report(update, plist: $0)) }
-                            ?? ResidentInstallationCommand(status: 113, output: "")
-                    }
-                    if arguments.first == "bootout" { fakeRegistration = nil; return ResidentInstallationCommand(status: 0, output: "") }
-                    return ResidentInstallationCommand(status: 5, output: "injected startup and rollback failure")
-                })
-                tests.check(false, "installation/rollback-failure-is-explicit-and-preserves-prior-plist")
-            } catch {
-                let restored = try readPrivateFile(staged.plistPath)
-                tests.check(errorJSON(error).at(path: "context.rollback_succeeded") == .bool(false)
-                    && errorJSON(error).at(path: "context.rollback_error.code") == .string("INSTALL.LAUNCHCTL_FAILED")
-                    && restored == prior, "installation/rollback-failure-is-explicit-and-preserves-prior-plist")
-            }
-
-            let fresh = try options("fresh-failure", start: true)
-            do {
-                _ = try perform(fresh, execute: { arguments in
-                    arguments.first == "print" ? ResidentInstallationCommand(status: 113, output: "")
-                        : ResidentInstallationCommand(status: 5, output: "injected bootstrap failure")
-                })
-                tests.check(false, "installation/failed-first-bootstrap-removes-only-new-plist")
-            } catch {
-                tests.check(errorJSON(error).at(path: "context.rollback_succeeded") == .bool(true)
-                    && !FileManager.default.fileExists(atPath: fresh.plistPath)
-                    && FileManager.default.fileExists(atPath: fresh.root + "/config/leylined-settings.json"),
-                    "installation/failed-first-bootstrap-removes-only-new-plist")
-            }
-
-            var remove = staged; remove.operation = "uninstall"; remove.plan = true
-            calls = []
-            _ = try perform(remove, execute: { arguments in calls.append(arguments); return try absent(arguments) })
-            let dryRemovedPlist = try readPrivateFile(staged.plistPath)
-            tests.check(calls.isEmpty && dryRemovedPlist == prior, "installation/uninstall-plan-preserves-plist-and-calls-nothing")
-            remove.plan = false
-            _ = try perform(remove, execute: absent)
-            let removedSettings = try readPrivateFile(settingsPath)
-            let removedJournal = try readPrivateFile(journalPath)
-            tests.check(!FileManager.default.fileExists(atPath: staged.plistPath)
-                && removedSettings == settings && removedJournal == journal,
-                "installation/uninstall-preserves-user-data-and-removes-only-owned-plist")
-
-            var startMissing = fresh; startMissing.operation = "service-start"
-            refused("start-requires-canonical-installed-plist", code: "NOT_INSTALLED") { _ = try perform(startMissing, execute: absent) }
-            refused("symlink-root-is-refused", code: "PATH_UNSAFE") {
-                let linked = try options("linked")
-                try createPrivateDirectory((linked.root as NSString).deletingLastPathComponent)
-                guard symlink(staged.root, linked.root) == 0 else { throw failure("TEST_SYMLINK_FAILED", "Cannot create fixture symlink") }
-                _ = try perform(linked, execute: absent)
-            }
-        } catch {
-            tests.check(false, "installation/fixture-failed:" + errorJSON(error).canonical())
-        }
-        return tests.finish("installation")
-    }
-    #endif
 }
 
 /// Run the native per-user installer/service CLI. Arguments begin with one of
@@ -892,17 +678,11 @@ func runResidentInstallation(_ arguments: [String]) -> Int32 {
         data = .object(try ResidentInstallation.perform(options))
     } catch {
         errorValue = ResidentInstallation.errorJSON(error)
-        exitCode = errorValue.at(path: "code")?.stringValue == "INSTALL.ARGUMENT_INVALID" ? 64 : 65
+        exitCode = errorValue.at(path: "code")?.stringValue == "INSTALL.ARGUMENT_INVALID" ? ResidentExitCode.usage : ResidentExitCode.refused
     }
-    print(JSONValue.object(["data": data, "error": errorValue,
-        "meta": .object(["owner": .string("leylined"), "transport": .string("native_installation"),
-            "version": .string(ResidentVersion.current), "request_id": .string(requestID),
-            "completed": .bool(exitCode == 0)])]).canonical())
+    print(ResidentReply.cliEnvelope(data: data, error: errorValue, meta: [
+        "owner": .string("leylined"), "transport": .string("native_installation"),
+        "version": .string(ResidentVersion.current), "request_id": .string(requestID),
+        "completed": .bool(exitCode == 0)]).canonical())
     return exitCode
 }
-
-#if LEYLINE_BUILD_TESTS
-/// Test fake launchctl registration, rollback and filesystem safety; no real
-/// launchctl command, resident socket, event tap or Accessibility call is used.
-func runResidentInstallationSelfTest() -> Int32 { ResidentInstallation.selfTest() }
-#endif

@@ -1,9 +1,0 @@
-{
-  "fn": "drop_side",
-  "note": "B3 aspect policy: a WIDE target cell (1920x540, aspect 3.56) on a 16:9 display - the v-split's halves (960x540, aspect 1.78 == display) beat the h-split's (1920x270, aspect 7.1), so the side is east/west; the moved window's centre (x=240) is west of the cell centre -> west.",
-  "target_cell": {"frame": {"x": 0, "y": 540, "w": 1920, "h": 540}},
-  "moved_frame": {"x": 0, "y": 0, "w": 480, "h": 540},
-  "display": {"frame": {"x": 0, "y": 0, "w": 1920, "h": 1080}},
-  "policy": "aspect",
-  "expect": "west"
-}

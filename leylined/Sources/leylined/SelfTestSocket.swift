@@ -1,8 +1,7 @@
-// self-test socket — the D9 read-only surface, hermetic (cutover plan step 3):
-// a CoreServer on a temp socket, world deltas injected directly (no AppKit,
-// no live world). Rows cover the frame protocol, the peer gate decision
-// matrix, 0600 perms, hello epoch/revision echo, subscribe replay-from-R and
-// live push, the typed unknown-op refusal, and the oversized-prefix close.
+// self-test socket — the read-only surface, hermetic: a CoreServer on a temp
+// socket with world deltas injected directly (no AppKit, no live world). Each
+// scenario below names what it pins, from the frame protocol and peer gate to
+// health schema, replay ordering, slow subscribers and the subscriber cap.
 import Foundation
 import LeylineModel
 
@@ -36,8 +35,8 @@ private func sockConnect(_ path: String) -> Int32? {
 }
 
 private func sockRequest(_ fd: Int32, _ body: JSONObject) -> JSONObject? {
-    guard CoreServer.writeAll(fd, CoreServer.encodeFrame(.object(body))),
-          let reply = CoreServer.readFrame(fd),
+    guard FramedJSONSocket.writeAll(fd, FramedJSONSocket.encode(.object(body))),
+          let reply = FramedJSONSocket.readFrame(fd),
           let obj = (try? JSONValue.parse(reply))?.objectValue else { return nil }
     return obj
 }
@@ -119,14 +118,8 @@ private final class SocketHealthOverlapFixture: @unchecked Sendable {
 }
 
 func runSocketSelfTest() -> Int32 {
-    var pass = 0
-    var fail = 0
-    func check(_ name: String, _ ok: Bool) {
-        if ok { pass += 1 } else {
-            fail += 1
-            FileHandle.standardError.write(Data("self-test socket FAIL: \(name)\n".utf8))
-        }
-    }
+    var test = SelfTest()
+    func check(_ name: String, _ ok: Bool) { test.check(ok, name) }
     runResidentLifecycleScopeScenarios(check: check)
     runSocketBoundaryScenarios(check: check)
 
@@ -143,7 +136,7 @@ func runSocketSelfTest() -> Int32 {
 
     // Socket visibility is mechanically gated on the synchronous seed, not
     // just ordered that way by CoreMain call sites.
-    let seedGatePath = "/tmp/leyline-tests-\(getpid())/leylined-seed-gate-\(getpid()).sock"
+    let seedGatePath = selfTestSocketPath("leylined-seed-gate")
     defer { unlink(seedGatePath) }
     let seedGateServer = CoreServer(socketPath: seedGatePath)
     let refusedBeforeSeed = !seedGateServer.start(requireWorldSeed: true)
@@ -163,13 +156,12 @@ func runSocketSelfTest() -> Int32 {
           peerGateDecision(peerUid: nil, ourUid: me) == .deny)
 
     // A short socket path: sockaddr_un caps at ~104 bytes.
-    let path = "/tmp/leyline-tests-\(getpid())/leylined-st-\(getpid()).sock"
+    let path = selfTestSocketPath("leylined-st")
     defer { unlink(path) }
     let server = CoreServer(socketPath: path)
     guard server.start() else {
-        FileHandle.standardError.write(Data("self-test socket FAIL: server did not bind \(path)\n".utf8))
-        print("self-test socket: \(pass)/\(pass + fail + 1) ok")
-        return 1
+        check("socket/server-bind \(path)", false)
+        return test.finish("socket")
     }
     defer { server.stop() }
 
@@ -213,31 +205,27 @@ func runSocketSelfTest() -> Int32 {
     // Health has one stable, complete schema even before daemon adapters have
     // configured their facts. Every unavailable value is explicit/null or a
     // typed degradation; no key disappears from the real socket response.
+    // The shape is the CLI fixture `ley doctor` is tested against, so that
+    // fixture is proven here rather than authored: every key, nested schemas
+    // exact. `resident` is the one conditional key — CoreServer adds it only
+    // when supplemental facts exist, and this hermetic server has none.
+    let cliFixture = (try? Data(contentsOf: URL(fileURLWithPath:
+        SelfTestFixtures.repositoryRoot() + "/tests/native-cli/fixtures/status.json")))
+        .flatMap { try? JSONValue.parse($0) }?.at(path: "health")?.objectValue ?? [:]
+    let cliKeys = Set(cliFixture.keys).subtracting(["resident"])
+    check("cli status fixture names the health keys", cliKeys.count >= 6)
     if let fd = sockConnect(path) {
         let status = sockRequest(fd, ["op": .string("status")])
         let health = status?["health"]
-        check("status health schema is exact and null-complete over real socket",
+        check("status health schema is exact and null-complete over real socket, as the cli fixture spells it",
               status?["pid"]?.intValue == Int64(getpid())
-                && sockHasExactKeys(health, [
-                    "schema", "owner", "world_seed",
-                    "focus_observer", "mode_subscription", "projection",
-                ])
+                && sockHasExactKeys(health, cliKeys)
+                && cliKeys.allSatisfy { key in
+                    guard let nested = cliFixture[key]?.objectValue else { return true }
+                    return sockHasExactKeys(health?.at(path: key), Set(nested.keys))
+                }
                 && health?.at(path: "schema")?.intValue == 2
                 && health?.at(path: "owner") == .string("resident")
-                && sockHasExactKeys(health?.at(path: "world_seed"), [
-                    "ready", "revision",
-                ])
-                && sockHasExactKeys(health?.at(path: "focus_observer"), [
-                    "ready", "window_notifications_ready", "pid", "generation",
-                    "degraded_reason",
-                ])
-                && sockHasExactKeys(health?.at(path: "mode_subscription"), [
-                    "connected", "ready", "epoch", "sequence", "degraded_reason",
-                ])
-                && sockHasExactKeys(health?.at(path: "projection"), [
-                    "required", "mounted", "degraded", "degraded_reason",
-                    "last_rendered_revision",
-                ])
                 && health?.at(path: "world_seed.revision") == .null
                 && health?.at(path: "focus_observer.pid") == .null
                 && health?.at(path: "mode_subscription.epoch") == .null
@@ -249,7 +237,7 @@ func runSocketSelfTest() -> Int32 {
 
     // Each component mutation is factual-only, while world_seed records its
     // accepted revision under the same lock used by status.
-    let healthPath = "/tmp/leyline-tests-\(getpid())/leylined-health-\(getpid()).sock"
+    let healthPath = selfTestSocketPath("leylined-health")
     defer { unlink(healthPath) }
     let healthServer = CoreServer(socketPath: healthPath)
     healthServer.updateFocusObserverHealth(AccessibilityObserverHealth(
@@ -292,8 +280,8 @@ func runSocketSelfTest() -> Int32 {
         healthServer.updateModeSubscriptionHealth(ModeHealth(
             connected: false, ready: false, epoch: "health-e", sequence: 7,
             degradedReason: "stream_closed"))
-        healthServer.updateProjectionHealth(.unavailable(
-            reason: "screen_height_unavailable"))
+        healthServer.updateProjectionHealth(CoreProjectionHealth(required: nil, mounted: false, degraded: true,
+            degradedReason: "screen_height_unavailable", lastRenderedRevision: nil))
         let degradedStatus = sockRequest(fd, ["op": .string("status")])
 
         healthServer.updateFocusObserverHealth(AccessibilityObserverHealth(
@@ -438,13 +426,13 @@ func runSocketSelfTest() -> Int32 {
         var sub: JSONObject = [:]
         sub["op"] = .string("subscribe")
         sub["from_revision"] = .int(1)
-        if CoreServer.writeAll(fd, CoreServer.encodeFrame(.object(sub))) {
-            let f2 = CoreServer.readFrame(fd).flatMap { try? JSONValue.parse($0) }?.objectValue
-            let f3 = CoreServer.readFrame(fd).flatMap { try? JSONValue.parse($0) }?.objectValue
+        if FramedJSONSocket.writeAll(fd, FramedJSONSocket.encode(.object(sub))) {
+            let f2 = FramedJSONSocket.readFrame(fd).flatMap { try? JSONValue.parse($0) }?.objectValue
+            let f3 = FramedJSONSocket.readFrame(fd).flatMap { try? JSONValue.parse($0) }?.objectValue
             check("subscribe from 1 replays exactly revisions 2, 3",
                   f2?["revision"]?.intValue == 2 && f3?["revision"]?.intValue == 3)
             server.applyWorldDelta(["event": .string("t4"), "n": .int(4)])
-            let f4 = CoreServer.readFrame(fd).flatMap { try? JSONValue.parse($0) }?.objectValue
+            let f4 = FramedJSONSocket.readFrame(fd).flatMap { try? JSONValue.parse($0) }?.objectValue
             check("live push after subscribe delivers revision 4 with its delta",
                   f4?["revision"]?.intValue == 4
                     && f4?["delta"]?.objectValue?["event"]?.stringValue == "t4")
@@ -462,8 +450,8 @@ func runSocketSelfTest() -> Int32 {
     if let fd = sockConnect(path) {
         var huge = UInt32(200 * 1024 * 1024).bigEndian
         let data = Data(bytes: &huge, count: 4)
-        _ = CoreServer.writeAll(fd, data)
-        let reply = CoreServer.readFrame(fd)
+        _ = FramedJSONSocket.writeAll(fd, data)
+        let reply = FramedJSONSocket.readFrame(fd)
         check("oversized frame prefix → connection closed, no reply", reply == nil)
         close(fd)
     } else {
@@ -473,7 +461,7 @@ func runSocketSelfTest() -> Int32 {
     // Regression: replay is queued before live publication and one writer
     // serializes both. Start the producer after reading replay revision 1 so
     // live frames race the still-pending replay queue.
-    let orderPath = "/tmp/leyline-tests-\(getpid())/leylined-order-\(getpid()).sock"
+    let orderPath = selfTestSocketPath("leylined-order")
     defer { unlink(orderPath) }
     let orderServer = CoreServer(socketPath: orderPath)
     if orderServer.start() {
@@ -484,11 +472,11 @@ func runSocketSelfTest() -> Int32 {
             ])
         }
         if let fd = sockConnect(orderPath),
-           CoreServer.writeAll(fd, CoreServer.encodeFrame(.object([
+           FramedJSONSocket.writeAll(fd, FramedJSONSocket.encode(.object([
                 "op": .string("subscribe"), "from_revision": .int(0),
            ]))) {
             var revisions: [Int64] = []
-            if let first = CoreServer.readFrame(fd)
+            if let first = FramedJSONSocket.readFrame(fd)
                 .flatMap({ try? JSONValue.parse($0) })?.at(path: "revision")?.intValue {
                 revisions.append(first)
             }
@@ -500,7 +488,7 @@ func runSocketSelfTest() -> Int32 {
                 }
             }
             while revisions.count < 320,
-                  let revision = CoreServer.readFrame(fd)
+                  let revision = FramedJSONSocket.readFrame(fd)
                     .flatMap({ try? JSONValue.parse($0) })?.at(path: "revision")?.intValue {
                 revisions.append(revision)
             }
@@ -516,12 +504,12 @@ func runSocketSelfTest() -> Int32 {
 
     // A non-reading subscriber cannot hold the timeline/status lock. Its
     // bounded writer queue overflows/disconnects independently.
-    let slowPath = "/tmp/leyline-tests-\(getpid())/leylined-slow-\(getpid()).sock"
+    let slowPath = selfTestSocketPath("leylined-slow")
     defer { unlink(slowPath) }
     let slowServer = CoreServer(
         socketPath: slowPath, maximumSubscriberQueuedFrames: 8)
     if slowServer.start(), let slowFd = sockConnect(slowPath),
-       CoreServer.writeAll(slowFd, CoreServer.encodeFrame(.object([
+       FramedJSONSocket.writeAll(slowFd, FramedJSONSocket.encode(.object([
             "op": .string("subscribe"), "from_revision": .int(0),
        ]))) {
         defer { slowServer.stop() }
@@ -551,17 +539,17 @@ func runSocketSelfTest() -> Int32 {
 
     // Same-UID clients are not an unbounded resource class: cap push streams,
     // return a typed refusal, and tear down a subscriber on post-subscribe input.
-    let capPath = "/tmp/leyline-tests-\(getpid())/leylined-cap-\(getpid()).sock"
+    let capPath = selfTestSocketPath("leylined-cap")
     defer { unlink(capPath) }
     let capServer = CoreServer(socketPath: capPath, maximumSubscribers: 2)
     if capServer.start(), let first = sockConnect(capPath), let second = sockConnect(capPath) {
         defer { capServer.stop() }
-        let subscribe = CoreServer.encodeFrame(.object([
+        let subscribe = FramedJSONSocket.encode(.object([
             "op": .string("subscribe"), "from_revision": .int(0),
         ]))
-        _ = CoreServer.writeAll(first, subscribe)
+        _ = FramedJSONSocket.writeAll(first, subscribe)
         let firstReady = sockWaitForSubscriberCount(capPath, 1)
-        _ = CoreServer.writeAll(second, subscribe)
+        _ = FramedJSONSocket.writeAll(second, subscribe)
         let secondReady = sockWaitForSubscriberCount(capPath, 2)
         if let third = sockConnect(capPath) {
             let refusal = sockRequest(third, [
@@ -585,6 +573,5 @@ func runSocketSelfTest() -> Int32 {
         capServer.stop()
     }
 
-    print("self-test socket: \(pass)/\(pass + fail) ok")
-    return fail == 0 ? 0 : 1
+    return test.finish("socket")
 }

@@ -4,8 +4,7 @@ import Foundation
 import LeylineModel
 
 func runResidentLifecycleScopeScenarios(check: (String, Bool) -> Void) {
-    let path = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-        .deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Fixtures/resident/lifecycle-scope.json")
+    let path = SelfTestFixtures.url("resident/lifecycle-scope.json")
     guard let data = try? Data(contentsOf: path), let fixture = try? JSONValue.parse(data),
           let scenarios = fixture.at(path: "scenarios")?.arrayValue, scenarios.count == 20,
           let managed = fixture.at(path: "managed")?.arrayValue, managed.count == 2,
@@ -15,8 +14,8 @@ func runResidentLifecycleScopeScenarios(check: (String, Bool) -> Void) {
     let ignoredID = ignored.at(path: "window_id")!.intValue!
     let secondID = managed[1].at(path: "window_id")!.intValue!
     for scenario in scenarios {
-        let event = scenario.at(path: "event")!.stringValue!
-        let mutation = scenario.at(path: "mutation")!.stringValue!
+        let event = scenario.requiredString("event")
+        let mutation = scenario.requiredString("mutation")
         var beforeWindows = managed, afterWindows = managed + [ignored]
         var target = ignoredID
         var afterIgnored = ignored.objectValue!
@@ -62,11 +61,11 @@ func runResidentLifecycleScopeScenarios(check: (String, Bool) -> Void) {
         let expected = scenario.at(path: "invalidates")!.boolValue!
         let direct = residentLifecycleInvalidatesInteraction(event: event, before: before, after: .object(after))
 
-        let server = CoreServer(socketPath: "/tmp/leyline-tests-\(getpid())/leylined-lifecycle-scope-\(getpid()).sock")
+        let server = CoreServer(socketPath: selfTestSocketPath("leylined-lifecycle-scope"))
         var seed = before.objectValue!
         seed.removeValue(forKey: "observer_epoch"); seed["event"] = .string("world_seed")
         _ = server.applyWorldDelta(seed)
-        _ = server.applyModeFrame(.init(type: .snapshot, epoch: fixture.at(path: "epoch")!.stringValue!, sequence: 0, mode: "resize"))
+        _ = server.applyModeFrame(.init(type: .snapshot, epoch: fixture.requiredString("epoch"), sequence: 0, mode: "resize"))
         let active = server.worldState
         after.removeValue(forKey: "observer_epoch"); after.removeValue(forKey: "model_state")
         after["event"] = .string(event)
@@ -74,7 +73,7 @@ func runResidentLifecycleScopeScenarios(check: (String, Bool) -> Void) {
         _ = server.applyWorldDelta(after)
         let actual = server.worldState
         let interaction = actual.at(path: "model_state.interaction")
-        check("lifecycle-scope/" + scenario.at(path: "name")!.stringValue!, direct == expected
+        check("lifecycle-scope/" + scenario.requiredString("name"), direct == expected
             && active.at(path: "mode")?.stringValue == "resize"
             && actual.at(path: "mode")?.stringValue == (expected ? "default" : "resize")
             && (expected ? interaction == nil : interaction == fixture.at(path: "interaction")))

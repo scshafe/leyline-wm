@@ -1,28 +1,27 @@
 #!/usr/bin/env bash
 # Required native/oracle/interface checks; missing binaries or corpora fail visibly.
+# The developer runner every native check defaults to; LEYLINE_CORE_BIN overrides it.
+test_core_bin() { printf '%s\n' "${LEYLINE_CORE_BIN:-$LEYLINE_HOME/bin/leylined-tests}"; }
 test_native() {
-  local binary="${LEYLINE_CORE_BIN:-$LEYLINE_HOME/bin/leylined-tests}" suite failed=0
+  local binary suite failed=0
+  binary="$(test_core_bin)"
   [[ -x "$binary" ]] || { wm_err "native test binary unavailable: $binary"; return 69; }
-  for suite in model decode fsm perf store socket projection feed responsiveness effector resident resident-commands resident-client space-partitions maintenance startup claims input-stop-barrier input shell presentation installation; do
+  for suite in model decode fsm timeline socket projection feed responsiveness effector resident-commands resident-client space-partitions maintenance startup claims input-stop-barrier input shell presentation installation; do
     wm_head "native/$suite"
     "$binary" self-test "$suite" || failed=$((failed+1))
   done
   (( failed == 0 ))
 }
-test_oracles() (
-  local binary="${LEYLINE_CORE_BIN:-$LEYLINE_HOME/bin/leylined-tests}" oracle_jq_directory
-  oracle_jq_directory="$("$LEYLINE_HOME/scripts/development/setup-oracle-jq.sh" --verify)" || return $?
-  export PATH="$oracle_jq_directory:$PATH"
+test_oracles() {
+  local binary
+  binary="$(test_core_bin)"
   [[ -x "$binary" ]] || { wm_err 'native oracle binary unavailable'; return 69; }
-  "$LEYLINE_HOME/tests/oracles/frozen-models.sh" || return $?
-  LEYLINE_CORE_BIN="$binary" LEYLINE_ARRANGEMENT_TEST_BACKEND=core "$LEYLINE_HOME/tests/oracles/arrangement-model-tests.sh" || return $?
-  LEYLINE_CORE_BIN="$binary" LEYLINE_NAV_TEST_BACKEND=core "$LEYLINE_HOME/tests/oracles/navigation-tests.sh" run || return $?
-  "$LEYLINE_HOME/tests/oracles/landed-equiv.sh" || return $?
+  LEYLINE_CORE_BIN="$binary" "$LEYLINE_HOME/tests/oracles/model-tests.sh" || return $?
+  LEYLINE_CORE_BIN="$binary" "$LEYLINE_HOME/tests/oracles/navigation-tests.sh" run || return $?
   /usr/bin/python3 "$LEYLINE_HOME/tests/oracles/test_largest_first_insertion.py" --core-bin "$binary"
-)
+}
 test_cli() {
-  /usr/bin/python3 "$LEYLINE_HOME/tests/native-cli/test_cli.py" || return $?
-  /bin/bash "$LEYLINE_HOME/tests/native-cli/keymap.sh"
+  /usr/bin/python3 "$LEYLINE_HOME/tests/native-cli/test_cli.py"
 }
 test_recovery() {
   local binary="${LEYLINE_RECOVERY_BIN:-$LEYLINE_HOME/bin/Leyline Recovery Tests.app/Contents/MacOS/leyline-recovery}"
@@ -44,7 +43,7 @@ test_release() {
   [[ -d "$corpus" ]] || { wm_err 'release verification corpus unavailable'; return 69; }
   for suite in "$corpus"/test_*.py; do [[ ! -f "$suite" ]] || count=$((count+1)); done
   (( count>0 )) || { wm_err 'release verification corpus empty'; return 69; }
-  LEYLINE_CORE_BIN="${LEYLINE_CORE_BIN:-$LEYLINE_HOME/bin/leylined-tests}" /usr/bin/python3 -m unittest discover -s "$corpus" -p 'test_*.py' -v
+  LEYLINE_CORE_BIN="$(test_core_bin)" /usr/bin/python3 -m unittest discover -s "$corpus" -p 'test_*.py' -v
 }
 test_main() {
   case "${1:-all}" in

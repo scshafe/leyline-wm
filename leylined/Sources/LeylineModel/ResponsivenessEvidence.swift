@@ -76,14 +76,17 @@ public enum ResponsivenessEvidence {
         var errors = exact.flatMap { $0.validate(expectedRevision: expectedRevision,
             expectedGeneration: expectedGeneration, endpoints: [from, to], liveRequired: liveRequired) }
         guard errors.isEmpty else { return errors }
-        var series = PerfSeries()
+        var durations: [UInt64] = []
         for sample in exact {
             guard let start = sample.stamps[from.rawValue]?.nanos, let end = sample.stamps[to.rawValue]?.nanos,
                   end >= start else { errors.append("nonmonotonic_endpoints"); continue }
-            series.record(end - start)
+            durations.append(end - start)
         }
-        if let p95 = series.percentileNanos(95), Double(p95) / 1_000_000 > p95CeilingMs {
-            errors.append("absolute_ceiling_missed")
+        if !durations.isEmpty {
+            // Nearest-rank p95.
+            let sorted = durations.sorted()
+            let p95 = sorted[max(0, min(sorted.count - 1, Int((0.95 * Double(sorted.count)).rounded(.up)) - 1))]
+            if Double(p95) / 1_000_000 > p95CeilingMs { errors.append("absolute_ceiling_missed") }
         }
         return errors
     }

@@ -5,16 +5,18 @@ import LeylineModel
 /// planning lane. It holds requested state through resize repetitions, while
 /// only CoreServer can commit a journaled arrangement and allocate a revision.
 final class ResidentActionController: @unchecked Sendable {
-    static let actionIDs = ResidentInput.retainedActionIds.subtracting(["service.restart"]).union(["window.select", "layout.regutter"])
+    // Restart and the Space toggle are lifecycle controls owned by CoreRuntimeServices, not planned actions.
+    static let actionIDs = ResidentInput.retainedActionIds
+        .subtracting(["service.restart", ResidentInputConstants.spaceToggleActionID]).union(["window.select"])
     private let queue = DispatchQueue(label: "leylined.commands", qos: .userInitiated)
     private let slots = DispatchSemaphore(value: 32)
     private let lock = NSLock()
     private let server: CoreServer
     private let axPort: ResidentAXPort
     private let journal: ResidentEffectorFileJournal
-    private var gap: Int
+    private let gap: Int
     /// Pure model fixtures can provide their declared canvas reservation.
-    /// Production leaves this nil so border width owns all edge spacing.
+    /// Production leaves this nil so the fixed border width owns all edge spacing.
     private let outerGap: Int?
     private var latest: CoreCommittedSnapshot
     private var desired: JSONValue
@@ -30,9 +32,10 @@ final class ResidentActionController: @unchecked Sendable {
         let admission: UInt64
     }
     private var pendingMinimums: [MinimumCandidate] = [] // planning queue only
+    private var startupDeferredMinimums: [MinimumCandidate] = [] // planning queue only
     private var minimumLearningStatus = "no_proven_floor_change"
     private var minimumAutomaticReplans: Set<String> = [] // planning queue only
-    private struct ConfirmedFocusCandidate: Sendable {
+    struct ConfirmedFocusCandidate: Sendable {
         let windowID: Int64
         let pid: Int64
         let windowGeneration: UInt64
@@ -48,7 +51,7 @@ final class ResidentActionController: @unchecked Sendable {
         }
     }
     private var pendingConfirmedFocus: ConfirmedFocusCandidate? // one newest proof, planning queue only
-    private struct CommandSource: Sendable {
+    struct CommandSource: Sendable {
         let actionID: String
         let origin: String
         let inputGeneration: UInt64?
@@ -79,7 +82,7 @@ final class ResidentActionController: @unchecked Sendable {
         let receiptBoundary: String
         init(_ snapshot: CoreCommittedSnapshot) {
             let capturedEvent = snapshot.world.at(path: "event")?.stringValue ?? "external-event"
-            let windowLifecycle = ["ax_window_created", "ax_window_destroyed", "ax_window_minimized", "ax_window_restored"].contains(capturedEvent)
+            let windowLifecycle = AccessibilityFocusEventKind.isWindowLifecycle(capturedEvent)
             let notification = windowLifecycle ? snapshot.world.at(path: "notification_receipt_uptime_ns")?.intValue : nil
             event = capturedEvent
             revision = snapshot.revision
@@ -92,6 +95,13 @@ final class ResidentActionController: @unchecked Sendable {
             }
             lifecycleCause = capturedEvent == "ax_window_minimized" ? "window.minimized"
                 : ["ax_window_destroyed", "app_terminated"].contains(capturedEvent) ? "window.destroyed" : nil
+        }
+        /// A command found the per-Space checkpoint behind current observation;
+        /// the reconcile that should have re-recorded it is owed.
+        init(repairing snapshot: CoreCommittedSnapshot) {
+            event = "stale_partition_repair"; revision = snapshot.revision; receipt = snapshot.receiptUptimeNs
+            notificationReceipt = nil; notificationWindowID = nil; lifecycleCause = nil
+            receiptBoundary = "committed_snapshot_receipt"
         }
         var metadata: JSONObject {
             ["source_event": .string(event), "source_event_revision": .int(Int64(clamping: revision)),
@@ -121,10 +131,41 @@ final class ResidentActionController: @unchecked Sendable {
         let generation: UInt64
     }
     private var deferredCommands: [DeferredCommand] = []
+    /// Whether the controller may plan at all: persistence, geometry and the
+    /// observation queue are all sound. Callers hold `lock`.
+    private var availableLocked: Bool { persistenceAvailable && geometryAvailable && !observationOverflowed }
+    /// No effect in flight or pending, and no command deferred behind one.
+    private var commandLaneIdle: Bool {
+        let effects = effector.snapshot()
+        return effects.at(path: "in_flight") == .null && effects.at(path: "pending_count")?.intValue == 0 && deferredCommands.isEmpty
+    }
+    /// Queue a command behind the in-flight effect; false when the queue is full and the caller must refuse.
+    private func deferCommand(actionID: String, requestID: String, arguments: JSONValue, receipt: UInt64,
+                              expectedRevision: UInt64?) -> Bool {
+        guard deferredCommands.count < 32 else { return false }
+        lock.lock(); let generation = admissionGeneration; lock.unlock()
+        deferredCommands.append(DeferredCommand(actionID: actionID, requestID: requestID, arguments: arguments,
+                                                receipt: receipt, expectedRevision: expectedRevision, generation: generation))
+        return true
+    }
     private var resultOrder: [String] = []
     private var reconcileScheduled = false
-    private var pendingReconciliationEvents: [ReconciliationEvent] = [] // planning queue; same64-bound as snapshot admission
+    private var pendingReconciliationEvents: [ReconciliationEvent] = [] // planning queue; same bound as snapshot admission
     private var reconciliationEventOverflow = false
+    /// The facts one reconcile carried, held until its outcome so a lost
+    /// authority race requeues them instead of stranding a stale checkpoint.
+    private struct ReconciliationBatch {
+        let events: [ReconciliationEvent]
+        let overflow: Bool
+        let attempt: Int
+    }
+    private var pendingReconciliationAttempt = 0
+    private var reconciliationBatches: [String: ReconciliationBatch] = [:]
+    static let reconciliationRaceReasons: Set<String> = [
+        "expected_revision_mismatch", "queued_command_invalidated", "effect_identity_or_context_changed"]
+    static let reconciliationRetryLimit = 3
+    /// Snapshot admission and the planning queue share the feed's input bound.
+    private static let observationQueueBound = ProjectionInputFeed.maximumPendingInputs
     private var pendingSnapshots: [CoreCommittedSnapshot] = []
     private var recoveredWorldRevisions: Set<UInt64> = []
     private var effectFenceRequests: [UInt64: Set<String>] = [:]
@@ -203,27 +244,26 @@ final class ResidentActionController: @unchecked Sendable {
         lock.lock()
         let previous = latest
         latest = snapshot
-        let event = snapshot.world.at(path: "event")?.stringValue ?? ""
+        let event = snapshot.world.worldEvent
         let changedSpaces = Set((snapshot.world.at(path: "invalidation_space_keys")?.arrayValue ?? []).compactMap(\.stringValue))
         let affectedRequests = activeEffectRequests.values.filter { !Set($0.windowSpaceKeys.values).isDisjoint(with: changedSpaces) }
         let scopedActivation = !changedSpaces.isEmpty && (!affectedRequests.isEmpty
             || snapshot.world.at(path: "mode_context_space_key")?.stringValue.map(changedSpaces.contains) == true)
-        let lifecycleEvent = ["ax_window_created", "ax_window_destroyed", "ax_window_minimized", "ax_window_restored"].contains(event)
+        let lifecycleEvent = AccessibilityFocusEventKind.isWindowLifecycle(event)
         let lifecycleInvalidating = lifecycleEvent
             && residentLifecycleInvalidatesInteraction(event: event, before: previous.world, after: snapshot.world)
-        let hardInvalidating = scopedActivation || ["geometry_configuration_changed",
-            "global_stop", "global_restart", "space_changed", "topology_changed", "trust_changed",
-            "app_terminated", "ax_observer_degraded", "ax_world_observer_degraded"].contains(event)
+        let foregroundRebind = WorldEvent.foregroundRebind.contains(event)
+        let hardInvalidating = scopedActivation || WorldEvent.hardInvalidating.contains(event)
             || lifecycleInvalidating
-            || snapshot.world.at(path: "observation.world_complete")?.boolValue == false
+            || snapshot.world.worldComplete == false
             || previous.world.at(path: "observer_epoch") != snapshot.world.at(path: "observer_epoch")
         let generationChanged = previous.world.at(path: "observer_generation") != snapshot.world.at(path: "observer_generation")
-        let available = persistenceAvailable && geometryAvailable && !observationOverflowed
+        let available = availableLocked
         let currentGeneration = Self.context(snapshot, persistenceAvailable: available).observerGeneration
         var obsolete: [String] = []
         for request in activeEffectRequests.values {
             let focusContinuous = !hardInvalidating && request.effectKind == .focus
-                && (!generationChanged || ["app_activated", "ax_focus_changed"].contains(event))
+                && (!generationChanged || foregroundRebind)
                 && effector.issuedTimestamp(for: request.requestID).flatMap {
                     Self.freshFocusedTargetStamp(request, snapshot: snapshot, available: available, issued: $0)
                 } != nil
@@ -233,10 +273,10 @@ final class ResidentActionController: @unchecked Sendable {
             }
             let continuous = !hardInvalidating && request.effectKind == .frame
                 && Self.frameScopeMatches(request, snapshot: snapshot, available: available)
-                && (!generationChanged || ["app_activated", "ax_focus_changed"].contains(event))
+                && (!generationChanged || foregroundRebind)
             if continuous { activeFrameGenerations[request.requestID] = currentGeneration }
             else if request.effectKind == .frame || generationChanged || hardInvalidating
-                || (activeFocusGenerations[request.requestID] != nil && ["app_activated", "ax_focus_changed"].contains(event)) {
+                || (activeFocusGenerations[request.requestID] != nil && foregroundRebind) {
                 activeFrameGenerations.removeValue(forKey: request.requestID)
                 activeFocusGenerations.removeValue(forKey: request.requestID)
                 obsolete.append(request.requestID)
@@ -244,10 +284,10 @@ final class ResidentActionController: @unchecked Sendable {
         }
         let invalidating = hardInvalidating || (generationChanged && (!obsolete.isEmpty || activeEffectRequests.isEmpty))
         if invalidating { admissionGeneration &+= 1 }
-        if ["world_seed", "wake_recovery", "explicit_recovery"].contains(event) {
+        if WorldEvent.fullRecovery.contains(event) {
             observationOverflowed = false
         }
-        if pendingSnapshots.count >= 64 {
+        if pendingSnapshots.count >= Self.observationQueueBound {
             observationOverflowed = true
             admissionGeneration &+= 1
             pendingSnapshots.removeAll()
@@ -255,8 +295,8 @@ final class ResidentActionController: @unchecked Sendable {
             effectFenceRequests.removeAll()
             ignoredLifecycleRevisions.removeAll()
         }
-        if previous.world.at(path: "observation.world_complete")?.boolValue == false
-            && snapshot.world.at(path: "observation.world_complete")?.boolValue == true {
+        if previous.world.worldComplete == false
+            && snapshot.world.worldComplete == true {
             recoveredWorldRevisions.insert(snapshot.revision)
         }
         pendingSnapshots.append(snapshot)
@@ -290,19 +330,20 @@ final class ResidentActionController: @unchecked Sendable {
 
     private func processSnapshot(_ snapshot: CoreCommittedSnapshot) {
         lock.lock()
-        let available = persistenceAvailable && geometryAvailable && !observationOverflowed
+        let available = availableLocked
         let worldRecovered = recoveredWorldRevisions.remove(snapshot.revision) != nil
         let fencedRequests = effectFenceRequests.removeValue(forKey: snapshot.revision) ?? []
         let ignoredLifecycle = ignoredLifecycleRevisions.remove(snapshot.revision) != nil
+        let worldEvent = snapshot.world.worldEvent
         let needsReconcile = available
-            && snapshot.world.at(path: "management_enabled")?.boolValue != false
-            && (["world_seed", "space_changed", "space_activation_changed", "topology_changed", "geometry_configuration_changed", "wake_recovery", "explicit_recovery", "app_terminated"].contains(snapshot.world.at(path: "event")?.stringValue ?? "")
-                || (["ax_window_created", "ax_window_destroyed", "ax_window_minimized", "ax_window_restored"].contains(snapshot.world.at(path: "event")?.stringValue ?? "") && !ignoredLifecycle)
-                || worldRecovered || (snapshot.world.at(path: "event")?.stringValue == "app_activated"
+            && snapshot.world.managementEnabled
+            && (WorldEvent.reconcileTriggers.contains(worldEvent)
+                || (AccessibilityFocusEventKind.isWindowLifecycle(worldEvent) && !ignoredLifecycle)
+                || worldRecovered || (worldEvent == "app_activated"
                     && snapshot.world.at(path: "observation.world_recovered")?.boolValue == true))
         let shouldReconcile = needsReconcile && !reconcileScheduled
         if needsReconcile {
-            if pendingReconciliationEvents.count < 64 { pendingReconciliationEvents.append(ReconciliationEvent(snapshot)) }
+            if pendingReconciliationEvents.count < Self.observationQueueBound { pendingReconciliationEvents.append(ReconciliationEvent(snapshot)) }
             else { reconciliationEventOverflow = true }
         }
         if shouldReconcile { reconcileScheduled = true }
@@ -313,8 +354,7 @@ final class ResidentActionController: @unchecked Sendable {
             _ = effector.confirmFocusedGoal(requestID: request.requestID, windowID: request.windowID,
                 windowGeneration: request.windowGenerations[request.windowID]!, observedContext: context, timestampNanos: stamp)
         }
-        effector.updateContext(context,             cause: snapshot.world.at(path: "event")?.stringValue == "geometry_configuration_changed"
-                ? "cancel" : snapshot.world.at(path: "event")?.stringValue ?? "external-event",
+        effector.updateContext(context, cause: snapshot.world.at(path: "event")?.stringValue ?? "external-event",
             eventID: "revision:\(snapshot.revision)", receiptNanos: snapshot.receiptUptimeNs,
             preservingFrameRequests: continuousFrameRequests(snapshot, available: available),
             invalidatingRequestIDs: fencedRequests,
@@ -332,44 +372,28 @@ final class ResidentActionController: @unchecked Sendable {
             }
         }
         // A cached row on a mode/settings/result delta is never landing evidence.
-        let event = snapshot.world.at(path: "event")?.stringValue ?? ""
+        let event = snapshot.world.worldEvent
         if ["ax_window_moved", "ax_window_resized", "ax_focus_changed", "ax_window_restored", "ax_window_created"].contains(event),
            let requestID = effector.snapshot().at(path: "in_flight")?.stringValue,
            let id = snapshot.world.at(path: "observation_window_id")?.intValue,
            let stamp = snapshot.world.at(path: "observation_completed_uptime_ns")?.intValue, stamp > 0,
            let window = snapshot.world.at(path: "windows")?.arrayValue?.first(where: { $0.at(path: "window_id")?.intValue == id }),
            let frame = Frame.from(window.at(path: "frame")) {
+            let observerGeneration = UInt64(max(0, snapshot.world.at(path: "observer_generation")?.intValue ?? 0))
+            let windowGeneration = window.at(path: "window_generation")?.intValue.flatMap { $0 >= 0 ? UInt64($0) : nil }
             _ = effector.observe(requestID: requestID, windowID: String(id), frame: frame,
-                generation: UInt64(max(0, snapshot.world.at(path: "observer_generation")?.intValue ?? 0)),
-                windowGeneration: window.at(path: "window_generation")?.intValue.flatMap { $0 >= 0 ? UInt64($0) : nil }, timestampNanos: UInt64(stamp))
+                generation: observerGeneration, windowGeneration: windowGeneration, timestampNanos: UInt64(stamp))
             if event == "ax_focus_changed", snapshot.world.at(path: "focus.window_id")?.intValue == id {
                 _ = effector.observeFocus(requestID: requestID, windowID: String(id),
-                    generation: UInt64(max(0, snapshot.world.at(path: "observer_generation")?.intValue ?? 0)),
-                windowGeneration: window.at(path: "window_generation")?.intValue.flatMap { $0 >= 0 ? UInt64($0) : nil }, timestampNanos: UInt64(stamp))
+                    generation: observerGeneration, windowGeneration: windowGeneration, timestampNanos: UInt64(stamp))
             }
         }
         lock.lock(); let isLatest = latest.revision == snapshot.revision; lock.unlock()
-        if isLatest, effector.snapshot().at(path: "in_flight") == .null,
-           effector.snapshot().at(path: "pending_count")?.intValue == 0, deferredCommands.isEmpty,
-           let published = snapshot.world.at(path: "model_state") {
+        if isLatest, commandLaneIdle, let published = snapshot.world.at(path: "model_state") {
             desired = published
         }
         if shouldReconcile {
-            queue.async { [self] in
-                lock.lock()
-                let events = pendingReconciliationEvents, overflow = reconciliationEventOverflow
-                pendingReconciliationEvents.removeAll(); reconciliationEventOverflow = false
-                reconcileScheduled = false
-                lock.unlock()
-                guard let first = events.first else { return }
-                let causes = Array(Set(events.compactMap(\.lifecycleCause))).sorted()
-                let arguments = JSONValue.object(first.metadata.merging([
-                    "source_events": .array(events.map { .object($0.metadata) }),
-                    "lifecycle_causes": .array(causes.map(JSONValue.string)),
-                    "reconciliation_source_overflow": .bool(overflow)]))
-                execute(actionID: "world.reconcile", requestID: UUID().uuidString,
-                        arguments: arguments, receipt: first.receipt)
-            }
+            queue.async { [self] in runPendingReconciliation() }
         }
         if let focus = Self.confirmedFocus(snapshot) {
             if pendingConfirmedFocus.map({ $0.observedNanos <= focus.observedNanos }) ?? true { pendingConfirmedFocus = focus }
@@ -377,42 +401,50 @@ final class ResidentActionController: @unchecked Sendable {
         }
     }
 
-    /// Only an actual fresh targeted focus/app read creates a history record.
-    /// Mode/settings/result publications cannot reuse an old focus timestamp.
-    private static func confirmedFocus(_ snapshot: CoreCommittedSnapshot) -> ConfirmedFocusCandidate? {
-        let world = snapshot.world, event = world.at(path: "event")?.stringValue ?? ""
-        guard ["world_seed", "app_activated", "ax_focus_changed"].contains(event),
-              world.at(path: "observation.reason")?.stringValue == event,
-              world.at(path: "observation.ready")?.boolValue == true,
-              world.at(path: "observation.world_complete")?.boolValue == true,
-              let focus = world.at(path: "focus"), focus.at(path: "eligible")?.boolValue == true,
-              focus.at(path: "managed")?.boolValue != false,
-              focus.at(path: "space_enabled")?.boolValue == true, focus.at(path: "space_visible")?.boolValue == true,
-              let id = focus.at(path: "window_id")?.intValue, id > 0,
-              let pid = focus.at(path: "pid")?.intValue, pid > 0,
-              let lifetime = focus.at(path: "window_generation")?.intValue, lifetime > 0,
-              let space = focus.at(path: "space_key")?.stringValue, !space.isEmpty, !space.contains("runtime:"),
-              let display = focus.at(path: "display_id")?.stringValue, !display.isEmpty,
-              let epoch = world.at(path: "observer_epoch")?.stringValue, !epoch.isEmpty,
-              let generation = world.at(path: "observer_generation")?.intValue, generation >= 0,
-              let stamp = focus.at(path: "observed_uptime_ns")?.intValue, stamp > 0,
-              let started = world.at(path: "observation.read_started_uptime_ns")?.intValue, started > 0, started <= stamp,
-              let completed = world.at(path: "observation.read_completed_uptime_ns")?.intValue, completed >= stamp,
-              UInt64(completed) <= DispatchTime.now().uptimeNanoseconds else { return nil }
-        if event == "ax_focus_changed" {
-            guard world.at(path: "observation.target_read_performed")?.boolValue == true,
-                  world.at(path: "observation.target_window_id")?.intValue == id,
-                  world.at(path: "observation.target_kind")?.stringValue == event else { return nil }
-        }
-        return ConfirmedFocusCandidate(windowID: id, pid: pid, windowGeneration: UInt64(lifetime),
-            spaceKey: space, displayID: display, observerEpoch: epoch, observerGeneration: UInt64(generation), observedNanos: UInt64(stamp))
+    private func runPendingReconciliation() {
+        lock.lock()
+        let events = pendingReconciliationEvents, overflow = reconciliationEventOverflow
+        let attempt = pendingReconciliationAttempt
+        pendingReconciliationEvents.removeAll(); reconciliationEventOverflow = false; pendingReconciliationAttempt = 0
+        reconcileScheduled = false
+        guard let first = events.first else { lock.unlock(); return }
+        let requestID = UUID().uuidString
+        reconciliationBatches[requestID] = ReconciliationBatch(events: events, overflow: overflow, attempt: attempt)
+        lock.unlock()
+        let causes = Array(Set(events.compactMap(\.lifecycleCause))).sorted()
+        let arguments = JSONValue.object(first.metadata.merging([
+            "source_events": .array(events.map { .object($0.metadata) }),
+            "lifecycle_causes": .array(causes.map(JSONValue.string)),
+            "reconciliation_source_overflow": .bool(overflow)]))
+        execute(actionID: "world.reconcile", requestID: requestID, arguments: arguments, receipt: first.receipt)
+    }
+
+    /// A command refused for a checkpoint that trails current observation owes the
+    /// reconcile that never landed. The refusal stays honest; the repair lets the
+    /// next command plan against re-recorded identities.
+    private func requestCheckpointRepair(_ snapshot: CoreCommittedSnapshot) {
+        lock.lock(); let pending = !pendingReconciliationEvents.isEmpty; lock.unlock()
+        if !pending { scheduleReconciliation([ReconciliationEvent(repairing: snapshot)]) }
+    }
+
+    /// Requeue owed facts ahead of newer ones; the caller holds no lock.
+    private func scheduleReconciliation(_ events: [ReconciliationEvent], overflow: Bool = false, attempt: Int = 0) {
+        lock.lock()
+        let merged = events + pendingReconciliationEvents
+        pendingReconciliationEvents = Array(merged.prefix(Self.observationQueueBound))
+        reconciliationEventOverflow = reconciliationEventOverflow || overflow || merged.count > Self.observationQueueBound
+        pendingReconciliationAttempt = max(pendingReconciliationAttempt, attempt)
+        let schedule = !reconcileScheduled
+        reconcileScheduled = true
+        lock.unlock()
+        if schedule { queue.async { [self] in runPendingReconciliation() } }
     }
 
     private func confirmedFocusScopeMatches(_ candidate: ConfirmedFocusCandidate) -> Bool {
         lock.lock(); let snapshot = latest
-        let available = persistenceAvailable && geometryAvailable && !observationOverflowed; lock.unlock()
+        let available = availableLocked; lock.unlock()
         let context = Self.context(snapshot, persistenceAvailable: available)
-        guard context.trusted, context.complete, snapshot.world.at(path: "management_enabled")?.boolValue != false,
+        guard context.trusted, context.complete, snapshot.world.managementEnabled,
               snapshot.world.at(path: "observer_epoch")?.stringValue == candidate.observerEpoch,
               context.observerGeneration == candidate.observerGeneration else { return false }
         let matches = (snapshot.world.at(path: "windows")?.arrayValue ?? []).filter { $0.at(path: "window_id")?.intValue == candidate.windowID }
@@ -432,9 +464,7 @@ final class ResidentActionController: @unchecked Sendable {
     /// History updates merge into the actual checkpoint only after the command
     /// lane drains, preserving any newer interaction and accumulated resize draft.
     private func drainConfirmedFocus() {
-        guard effector.snapshot().at(path: "in_flight") == .null,
-              effector.snapshot().at(path: "pending_count")?.intValue == 0, deferredCommands.isEmpty,
-              let candidate = pendingConfirmedFocus else { return }
+        guard commandLaneIdle, let candidate = pendingConfirmedFocus else { return }
         pendingConfirmedFocus = nil
         guard confirmedFocusScopeMatches(candidate) else { return }
         let snapshot = server.committedSnapshot
@@ -473,7 +503,7 @@ final class ResidentActionController: @unchecked Sendable {
     }
 
     private func validatedObservationGeneration(_ request: ResidentEffectRequest) -> UInt64? {
-        lock.lock(); let snapshot = latest; let available = persistenceAvailable && geometryAvailable && !observationOverflowed
+        lock.lock(); let snapshot = latest; let available = availableLocked
         let frameGeneration = activeFrameGenerations[request.requestID]; lock.unlock()
         let context = Self.context(snapshot, persistenceAvailable: available)
         if let required = request.sourceInputGeneration {
@@ -496,11 +526,7 @@ final class ResidentActionController: @unchecked Sendable {
               context.observerGeneration == request.observerGeneration,
               context.topologyRevision == request.topologyRevision,
               context.activeSpaceKey == request.activeSpaceKey else { return nil }
-        let windows = (snapshot.world.at(path: "windows")?.arrayValue ?? []).filter {
-            $0.at(path: "eligible")?.boolValue == true && $0.at(path: "space_visible")?.boolValue == true
-                && $0.at(path: "space_enabled")?.boolValue == true
-                && $0.at(path: "minimized")?.boolValue != true && $0.at(path: "destroyed")?.boolValue != true
-        }
+        let windows = (snapshot.world.at(path: "windows")?.arrayValue ?? []).filter(\.isLiveEnabledWindow)
         let requiredSpaces = Set(request.windowSpaceKeys.values)
         let scoped = requiredSpaces.isEmpty ? windows : windows.filter {
             $0.at(path: "space_key")?.stringValue.map(requiredSpaces.contains) == true
@@ -512,86 +538,6 @@ final class ResidentActionController: @unchecked Sendable {
             return request.windowGenerations[String(id)] == UInt64(generation)
         }
         return valid ? context.observerGeneration : nil
-    }
-
-    private static func frameScopeMatches(_ request: ResidentEffectRequest, snapshot: CoreCommittedSnapshot,
-                                          available: Bool) -> Bool {
-        request.effectKind == .frame && effectScopeMatches(request, snapshot: snapshot, available: available)
-    }
-
-    private static func effectScopeMatches(_ request: ResidentEffectRequest, snapshot: CoreCommittedSnapshot,
-                                          available: Bool) -> Bool {
-        let context = Self.context(snapshot, persistenceAvailable: available)
-        guard context.complete, context.trusted, context.spaceEnabled,
-              context.topologyRevision == request.topologyRevision,
-              let epoch = request.observerEpoch, !epoch.isEmpty,
-              snapshot.world.at(path: "observer_epoch")?.stringValue == epoch,
-              !request.windowGenerations.isEmpty,
-              Set(request.windowGenerations.keys) == Set(request.windowSpaceKeys.keys),
-              Set(request.windowGenerations.keys) == Set(request.windowPids.keys),
-              Set(request.windowGenerations.keys) == Set(request.windowDisplayIDs.keys) else { return false }
-        if let session = request.sessionGeneration,
-           snapshot.world.at(path: "session_generation")?.intValue != Int64(clamping: session) { return false }
-        let spaces = Set(request.windowSpaceKeys.values)
-        let windows = (snapshot.world.at(path: "windows")?.arrayValue ?? []).filter {
-            $0.at(path: "eligible")?.boolValue == true && $0.at(path: "space_visible")?.boolValue == true
-                && $0.at(path: "space_enabled")?.boolValue == true
-                && $0.at(path: "space_key")?.stringValue.map(spaces.contains) == true
-                && $0.at(path: "minimized")?.boolValue != true && $0.at(path: "destroyed")?.boolValue != true
-        }
-        guard windows.count == request.windowGenerations.count else { return false }
-        return windows.allSatisfy { window in
-            guard let id = window.at(path: "window_id")?.intValue,
-                  let generation = window.at(path: "window_generation")?.intValue, generation > 0,
-                  let pid = window.at(path: "pid")?.intValue ?? window.at(path: "owner_pid")?.intValue else { return false }
-            let key = String(id)
-            return request.windowGenerations[key] == UInt64(generation) && request.windowPids[key] == pid
-                && request.windowSpaceKeys[key] == window.at(path: "space_key")?.stringValue
-                && request.windowDisplayIDs[key] == window.at(path: "display_id")?.stringValue
-                && window.at(path: "space_identity_available")?.boolValue == true
-                && window.at(path: "minimized")?.boolValue != true && window.at(path: "destroyed")?.boolValue != true
-        }
-    }
-
-    private static func focusTargetMatches(_ request: ResidentEffectRequest, snapshot: CoreCommittedSnapshot,
-                                          available: Bool) -> Bool {
-        guard request.effectKind == .focus, effectScopeMatches(request, snapshot: snapshot, available: available),
-              let focus = snapshot.world.at(path: "focus"),
-              focus.at(path: "window_id")?.intValue.map(String.init) == request.windowID,
-              let generation = focus.at(path: "window_generation")?.intValue, generation > 0,
-              request.windowGenerations[request.windowID] == UInt64(generation),
-              focus.at(path: "pid")?.intValue == request.windowPids[request.windowID],
-              focus.at(path: "space_key")?.stringValue == request.windowSpaceKeys[request.windowID],
-              focus.at(path: "display_id")?.stringValue == request.windowDisplayIDs[request.windowID],
-              focus.at(path: "eligible")?.boolValue == true, focus.at(path: "space_enabled")?.boolValue == true,
-              focus.at(path: "space_visible")?.boolValue == true, focus.at(path: "space_identity_available")?.boolValue == true,
-              snapshot.world.at(path: "frontmost_pid")?.intValue == request.windowPids[request.windowID] else { return false }
-        return true
-    }
-
-    private static func observedFocusStamp(_ snapshot: CoreCommittedSnapshot, issued: UInt64) -> UInt64? {
-        guard let stamp = snapshot.world.at(path: "focus.observed_uptime_ns")?.intValue, stamp >= 0,
-              UInt64(stamp) >= issued else { return nil }
-        return UInt64(stamp)
-    }
-
-    private static func freshFocusedTargetStamp(_ request: ResidentEffectRequest, snapshot: CoreCommittedSnapshot,
-                                               available: Bool, issued: UInt64) -> UInt64? {
-        guard focusTargetMatches(request, snapshot: snapshot, available: available),
-              let stamp = observedFocusStamp(snapshot, issued: issued),
-              snapshot.world.at(path: "observation.ready")?.boolValue == true,
-              let started = snapshot.world.at(path: "observation.read_started_uptime_ns")?.intValue, started >= 0,
-              let completed = snapshot.world.at(path: "observation.read_completed_uptime_ns")?.intValue,
-              UInt64(started) >= issued, UInt64(started) <= stamp, completed >= 0, UInt64(completed) >= stamp else { return nil }
-        let event = snapshot.world.at(path: "event")?.stringValue
-        guard event == "app_activated" || event == "ax_focus_changed",
-              snapshot.world.at(path: "observation.reason")?.stringValue == event else { return nil }
-        if event == "ax_focus_changed" {
-            guard snapshot.world.at(path: "observation.target_read_performed")?.boolValue == true,
-                  snapshot.world.at(path: "observation.target_window_id")?.intValue.map(String.init) == request.windowID,
-                  snapshot.world.at(path: "observation.target_kind")?.stringValue == "ax_focus_changed" else { return nil }
-        }
-        return stamp
     }
 
     private func focusedGoalProof(_ snapshot: CoreCommittedSnapshot, available: Bool) -> (ResidentEffectRequest, UInt64)? {
@@ -628,7 +574,7 @@ final class ResidentActionController: @unchecked Sendable {
         lock.lock()
         let request = activeEffectRequests[requestID], receipt = inputReceipts[requestID]
         let generation = inputGenerations[requestID], handler = inputProgressHandler
-        let snapshot = latest, available = persistenceAvailable && geometryAvailable && !observationOverflowed
+        let snapshot = latest, available = availableLocked
         lock.unlock()
         guard let request, let receipt, let generation, request.sourceInputGeneration == generation,
               timestamp >= receipt, timestamp <= DispatchTime.now().uptimeNanoseconds,
@@ -684,13 +630,11 @@ final class ResidentActionController: @unchecked Sendable {
                 lock.unlock()
                 if existing.at(path: "phase")?.stringValue == "completed" {
                     queue.async { [self] in completion(reconciliationProof(existing)) }
-                } else { completion(.object(["ok": .bool(false), "status": .string("refused"),
-                    "phase": .string("completed"), "request_id": .string(requestID), "reason": .string("reconciliation_already_pending")])) }
+                } else { completion(ResidentReply.refused(requestID: .string(requestID), reason: "reconciliation_already_pending")) }
                 return
             }
             guard reconciliationCompletions.count < 32, slots.wait(timeout: .now()) == .success else {
-                lock.unlock(); completion(.object(["ok": .bool(false), "status": .string("refused"),
-                    "phase": .string("completed"), "request_id": .string(requestID), "reason": .string("command_queue_full")]))
+                lock.unlock(); completion(ResidentReply.refused(requestID: .string(requestID), reason: "command_queue_full"))
                 return
             }
             let admission = admissionGeneration
@@ -722,7 +666,8 @@ final class ResidentActionController: @unchecked Sendable {
     private func reconciliationProof(_ result: JSONValue) -> JSONValue {
         let verified = server.committedSnapshot
         var reason: String?
-        if !["accepted", "noop"].contains(result.at(path: "status")?.stringValue ?? "") {
+        if WmStatus(rawValue: result.at(path: "status")?.stringValue ?? "")?.isOK != true
+            && !CoreRuntimeServices.isMinimumShortfall(result) {
             reason = result.at(path: "reason")?.stringValue ?? "world_reconcile_failed"
         } else {
             let world = normalizedWorld(verified.world)
@@ -730,36 +675,19 @@ final class ResidentActionController: @unchecked Sendable {
             else if world.at(path: "trusted")?.boolValue != true { reason = "ax_untrusted" }
             else if verified.world.at(path: "management_enabled")?.boolValue == false { reason = "management_stopped" }
             else {
-                let rules = world.at(path: "rules") ?? .array([])
-                let observed = (world.at(path: "windows")?.arrayValue ?? []).filter {
-                    Autotile.tileable($0, rules) && $0.at(path: "minimized")?.boolValue != true && $0.at(path: "space_enabled")?.boolValue != false
-                }
-                if case .failure(let failure) = ResidentSpacePartitions.prepare(state: verified.world.at(path: "model_state") ?? .object([:]),
-                    world: world, topology: world.at(path: "topology") ?? .object([:]), observed: observed, reconcile: false) {
-                    reason = failure.reason
-                }
+                let state = verified.world.at(path: "model_state") ?? .object([:])
+                if let observed = ResidentPlanner.eligibleWindows(world.at(path: "windows")?.arrayValue ?? [], state: state) {
+                    if case .failure(let failure) = ResidentSpacePartitions.prepare(state: state,
+                        world: world, topology: world.at(path: "topology") ?? .object([:]), observed: observed, reconcile: false) {
+                        reason = failure.reason
+                    }
+                } else { reason = "fixed_aspect_store_invalid" }
             }
         }
         return .object((result.objectValue ?? [:]).merging(["reconciliation_ready": .bool(reason == nil),
             "reconciliation_failure_reason": reason.map(JSONValue.string) ?? .null,
             "reconciliation_verified_revision": .int(Int64(clamping: verified.revision)),
             "reconciliation_verified_scope": Self.reconciliationScope(verified.world)]))
-    }
-
-    /// Immutable membership/topology proof; unrelated focus and frame receipts
-    /// do not change partition admission. Ignored tooltip rows are excluded.
-    static func reconciliationScope(_ world: JSONValue) -> JSONValue {
-        let keys = ["window_id", "pid", "owner_pid", "window_generation", "space_key", "display_id", "display_uuid",
-            "eligible", "managed", "space_visible", "space_enabled", "role", "subrole", "resizable", "movable", "minimized", "destroyed"]
-        let windows = (world.at(path: "windows")?.arrayValue ?? []).filter {
-            $0.at(path: "eligible")?.boolValue == true && $0.at(path: "space_visible")?.boolValue == true
-        }.sorted { ($0.at(path: "window_id")?.intValue ?? -1) < ($1.at(path: "window_id")?.intValue ?? -1) }.map { window in
-            var record: JSONObject = [:]; for key in keys { record[key] = window.at(path: key) ?? .null }; return JSONValue.object(record)
-        }
-        return .object(["observer_epoch": world.at(path: "observer_epoch") ?? .null,
-            "topology_revision": world.at(path: "topology_revision") ?? .null, "topology": world.at(path: "topology") ?? .null,
-            "space_contexts": world.at(path: "space_contexts") ?? .null, "space_activation": world.at(path: "space_activation") ?? .null,
-            "windows": .array(windows)])
     }
 
     func handle(_ request: JSONObject, receipt: UInt64 = DispatchTime.now().uptimeNanoseconds,
@@ -770,7 +698,7 @@ final class ResidentActionController: @unchecked Sendable {
                 origin: origin ?? (inputGeneration == nil ? "socket" : "input"),
                 receipt: receipt, inputGeneration: inputGeneration)
         }
-        guard let id = request["request_id"]?.stringValue, !id.isEmpty, id.utf8.count <= 256 else { return reject("request_id_missing_or_invalid") }
+        guard let id = request["request_id"]?.stringValue, !id.isEmpty, id.utf8.count <= ResidentProtocolLimits.identifierBytes else { return reject("request_id_missing_or_invalid") }
         if request["op"]?.stringValue == "result" {
             lock.lock(); let existing = results[id]; lock.unlock()
             return existing ?? reject("request_unknown")
@@ -824,8 +752,8 @@ final class ResidentActionController: @unchecked Sendable {
             "args": .object(arguments)], origin: "menu")
     }
 
-    /// Geometry configuration is event-delivered and validated before it can
-    /// invalidate a native layout. Missing config is the explicit default8.
+    /// Palette configuration is event-delivered and checked before admission.
+    /// Missing files use the standard palette and fixed 1-point spacing.
     func setGeometryError(_ code: String?) {
         lock.lock(); let changed = geometryAvailable != (code == nil); geometryAvailable = code == nil
         if changed { admissionGeneration &+= 1 }; lock.unlock()
@@ -833,20 +761,6 @@ final class ResidentActionController: @unchecked Sendable {
         if changed {
             _ = server.applyWorldDelta(["event": .string(code == nil ? "geometry_configuration_valid" : "geometry_invalid"),
                 "geometry_available": .bool(code == nil), "resident_unavailable_reason": code.map(JSONValue.string) ?? .null])
-        }
-    }
-
-    func setGap(_ replacement: Int) {
-        guard replacement >= 0 else { invalidate(cause: "config-invalid"); return }
-        queue.async { [self] in
-            guard gap != replacement else { return }
-            gap = replacement
-            invalidate(cause: "topology")
-            _ = server.applyWorldDelta(["event": .string("geometry_configuration_changed"),
-                "geometry_gap": .int(Int64(replacement)),
-                "topology_revision": .int(Int64(clamping: server.currentRevision + 1))])
-            // The committed geometry event cancels obsolete effects first and
-            // then schedules reconciliation on the existing observation lane.
         }
     }
 
@@ -873,7 +787,7 @@ final class ResidentActionController: @unchecked Sendable {
         guard expectedAdmission == nil || expectedAdmission == admissionGeneration else { lock.unlock(); return nil }
         admissionGeneration &+= 1; let next = admissionGeneration; let snapshot = latest; lock.unlock()
         axPort.cancelAll()
-        effector.updateContext(Self.context(snapshot, persistenceAvailable: false),                                cause: cause, eventID: cause, receiptNanos: DispatchTime.now().uptimeNanoseconds)
+        effector.updateContext(Self.context(snapshot, persistenceAvailable: false), cause: cause, eventID: cause, receiptNanos: DispatchTime.now().uptimeNanoseconds)
         return next
     }
 
@@ -893,7 +807,7 @@ final class ResidentActionController: @unchecked Sendable {
     private func effectPublicationRefusal(_ request: ResidentEffectRequest, source: CommandSource,
                                            admission: UInt64) -> String? {
         if let reason = publicationRefusal(source, admission: admission) { return reason }
-        lock.lock(); let snapshot = latest; let available = persistenceAvailable && geometryAvailable && !observationOverflowed; lock.unlock()
+        lock.lock(); let snapshot = latest; let available = availableLocked; lock.unlock()
         return Self.effectScopeMatches(request, snapshot: snapshot, available: available)
             ? nil : "effect_identity_or_context_changed"
     }
@@ -907,16 +821,34 @@ final class ResidentActionController: @unchecked Sendable {
         }
     }
 
+    /// Startup publishes Running only after its reconcile completes, so its constraint
+    /// proofs wait instead of being discarded; every other fence still applies on resume.
+    static func startupDefersMinimumLearning(_ world: JSONValue) -> Bool {
+        world.at(path: "resident_starting")?.boolValue == true && world.at(path: "resident_running")?.boolValue != true
+    }
+
+    /// Called once startup has published Running: the deferred proofs drain through the
+    /// ordinary fences and their one constraint replan.
+    func resumeStartupMinimums() {
+        queue.async { [self] in
+            guard !startupDeferredMinimums.isEmpty else { return }
+            pendingMinimums.insert(contentsOf: startupDeferredMinimums, at: 0)
+            startupDeferredMinimums.removeAll()
+            drainMinimums()
+        }
+    }
+
     private func setMinimumStatus(_ value: String) { lock.lock(); minimumLearningStatus = value; lock.unlock() }
 
     /// An already admitted observational lesson survives ordinary modal release;
     /// global OFF, session/lifetime/Space/topology/trust changes still fence it.
-    private func minimumPublicationRefusal(_ request: ResidentEffectRequest, expectedGeneration: UInt64? = nil) -> String? {
+    private func minimumPublicationRefusal(_ request: ResidentEffectRequest, expectedGeneration: UInt64? = nil,
+                                           allowStarting: Bool = false) -> String? {
         lock.lock(); let snapshot = latest
-        let available = persistenceAvailable && geometryAvailable && !observationOverflowed; lock.unlock()
-        guard snapshot.world.at(path: "management_enabled")?.boolValue != false,
-              snapshot.world.at(path: "resident_running")?.boolValue != false,
-              snapshot.world.at(path: "session_locked")?.boolValue != true,
+        let available = availableLocked; lock.unlock()
+        guard snapshot.world.managementEnabled,
+              snapshot.world.at(path: "resident_running")?.boolValue != false
+                || (allowStarting && Self.startupDefersMinimumLearning(snapshot.world)),
               expectedGeneration == nil || snapshot.world.at(path: "observer_generation")?.intValue == expectedGeneration.map({ Int64(clamping: $0) }),
               Self.effectScopeMatches(request, snapshot: snapshot, available: available) else { return "minimum_learning_identity_or_context_changed" }
         return nil
@@ -925,17 +857,25 @@ final class ResidentActionController: @unchecked Sendable {
     /// Fold into the actual current checkpoint only after all already-planned
     /// effects drain. A later plan cannot overwrite floors with its older draft.
     private func drainMinimums() {
-        guard effector.snapshot().at(path: "in_flight") == .null,
-              effector.snapshot().at(path: "pending_count")?.intValue == 0, deferredCommands.isEmpty else { return }
+        guard commandLaneIdle else { return }
         while !pendingMinimums.isEmpty {
             let candidate = pendingMinimums.removeFirst()
             lock.lock(); let result = results[candidate.request.requestID]; lock.unlock()
             let clamped = candidate.evidence.contains { ResidentMinimumLearning.settledClampAxes($0) != nil }
-            let completed = result?.at(path: "status")?.stringValue == "accepted"
-                || (result?.at(path: "status")?.stringValue == "failed" && result?.at(path: "reason")?.stringValue == "minimum_constraint" && clamped)
+            let shaped = candidate.evidence.contains(where: ResidentMinimumLearning.settledShapeRefusal)
+            let status = WmStatus(rawValue: result?.at(path: "status")?.stringValue ?? "")
+            let reason = result?.at(path: "reason")?.stringValue
+            let completed = status == .accepted
+                || (status == .failed && reason == "minimum_constraint" && clamped)
+                || (status == .failed && reason == "fixed_aspect_constraint" && shaped)
             let evidenceGeneration = candidate.evidence.map { $0.confirmationGeneration ?? $0.observedGeneration }.max()
             guard completed, minimumPublicationRefusal(candidate.request, expectedGeneration: evidenceGeneration) == nil else {
-                setMinimumStatus("minimum_learning_obsolete"); continue
+                // Proven by the startup reconcile: learning waits for Running, not for a re-proof.
+                if completed, startupDeferredMinimums.count < 32, minimumPublicationRefusal(candidate.request,
+                    expectedGeneration: evidenceGeneration, allowStarting: true) == nil {
+                    startupDeferredMinimums.append(candidate); setMinimumStatus("minimum_learning_deferred_until_running")
+                } else { setMinimumStatus("minimum_learning_obsolete") }
+                continue
             }
             let snapshot = server.committedSnapshot
             guard var state = snapshot.world.at(path: "model_state")?.objectValue else { continue }
@@ -943,8 +883,13 @@ final class ResidentActionController: @unchecked Sendable {
             guard Minsize.validStore(prior) else { setMinimumStatus("minimum_store_invalid"); continue }
             let learned = ResidentMinimumLearning.learnedStore(evidence: candidate.evidence, request: candidate.request,
                 store: prior, topology: normalizedWorld(snapshot.world).at(path: "topology") ?? .object([:]))
-            guard learned != prior else { setMinimumStatus("no_proven_floor_change"); continue }
+            let priorFixed = state["fixed_aspect_apps"] ?? .array([])
+            guard ResidentPlanner.validFixedAspectStore(priorFixed) else { setMinimumStatus("fixed_aspect_store_invalid"); continue }
+            let learnedFixed = ResidentMinimumLearning.learnedFixedAspect(evidence: candidate.evidence,
+                request: candidate.request, store: priorFixed)
+            guard learned != prior || learnedFixed != priorFixed else { setMinimumStatus("no_proven_floor_change"); continue }
             state["minimum_sizes"] = learned
+            if learnedFixed != priorFixed { state["fixed_aspect_apps"] = learnedFixed }
             var replacedMove = false
             if clamped, candidate.request.actionID.hasPrefix("move."), state["interaction"] == nil,
                let priorInteraction = candidate.request.priorInteraction,
@@ -975,8 +920,9 @@ final class ResidentActionController: @unchecked Sendable {
                 completion: { [weak self] status, reason in
                     guard let self else { return }
                     setMinimumStatus(status == .accepted ? (publishedMove ? "move_preview_replaced_requires_confirmation"
-                        : clamped ? "new_floor_learned" : "known_floor_self_healed") : reason ?? "minimum_learning_refused")
-                    if status == .accepted, clamped, !candidate.request.actionID.hasPrefix("move."),
+                        : shaped ? "fixed_aspect_learned" : clamped ? "new_floor_learned" : "known_floor_self_healed")
+                        : reason ?? "minimum_learning_refused")
+                    if status == .accepted, clamped || shaped, !candidate.request.actionID.hasPrefix("move."),
                        !candidate.request.requestID.hasPrefix("minimum-replan:"),
                        !minimumAutomaticReplans.contains(candidate.request.requestID) {
                         if minimumAutomaticReplans.count >= 1024 { minimumAutomaticReplans.remove(minimumAutomaticReplans.first!) }
@@ -1015,7 +961,7 @@ final class ResidentActionController: @unchecked Sendable {
         let source = commandSources[requestID] ?? CommandSource(actionID: actionID, origin: "internal_reconcile",
             inputGeneration: nil, receipt: receipt, admissionGeneration: admissionGeneration, eventProvenance: provenance)
         commandSources[requestID] = source
-        let snapshot = latest; let available = persistenceAvailable && geometryAvailable && !observationOverflowed; lock.unlock()
+        let snapshot = latest; let available = availableLocked; lock.unlock()
         if isNewSource { Self.recordAdmission(snapshot, source: source, requestID: requestID) }
         if arguments.at(path: "reconciliation_source_overflow")?.boolValue == true {
             finish(requestID: requestID, status: .refused, reason: "reconciliation_source_queue_full"); return
@@ -1023,19 +969,18 @@ final class ResidentActionController: @unchecked Sendable {
         if let expectedRevision, expectedRevision != snapshot.revision {
             finish(requestID: requestID, status: .refused, reason: "expected_revision_mismatch"); return
         }
-        guard available, snapshot.world.at(path: "management_enabled")?.boolValue != false else {
+        guard available, snapshot.world.managementEnabled else {
             finish(requestID: requestID, status: .refused, reason: "planning_or_persistence_unavailable"); return
         }
-        let commutative = actionID.hasPrefix("resize.adjust.") || actionID == "world.reconcile"
-        let cancelling = ["move.cancel", "move.off", "resize.off"].contains(actionID)
+        let commutative = actionID.hasPrefix(ResidentActionIDs.resizeAdjustPrefix) || actionID == ResidentActionIDs.worldReconcile
+        let cancelling = ResidentActionIDs.cancelling.contains(actionID)
         if let reason = publicationRefusal(source, admission: source.admissionGeneration) {
             finish(requestID: requestID, status: .refused, reason: reason); return
         }
         if !commutative && !cancelling && effector.snapshot().at(path: "in_flight")?.stringValue != nil {
-            guard deferredCommands.count < 32 else { finish(requestID: requestID, status: .refused, reason: "ordered_planning_queue_full"); return }
-            lock.lock(); let generation = admissionGeneration; lock.unlock()
-            deferredCommands.append(DeferredCommand(actionID: actionID, requestID: requestID,
-                arguments: arguments, receipt: receipt, expectedRevision: expectedRevision, generation: generation))
+            if !deferCommand(actionID: actionID, requestID: requestID, arguments: arguments, receipt: receipt, expectedRevision: expectedRevision) {
+                finish(requestID: requestID, status: .refused, reason: "ordered_planning_queue_full")
+            }
             return
         }
         let commitAdmission: UInt64
@@ -1109,6 +1054,7 @@ final class ResidentActionController: @unchecked Sendable {
                 "candidate_id": (plan.state.at(path: "interaction.candidate.candidate_id")
                     ?? desired.at(path: "interaction.candidate.candidate_id")) ?? .null,
                 "targets": plan.targets]))
+        if plan.reason == "space_partitions_require_reconcile" { requestCheckpointRepair(snapshot) }
         guard plan.status == .accepted else { finish(requestID: requestID, status: plan.status, reason: plan.reason); return }
         guard let boundState = Self.bindCandidate(plan.state, snapshot: snapshot) else {
             finish(requestID: requestID, status: .refused, reason: "move_candidate_identity_unavailable"); return
@@ -1125,17 +1071,16 @@ final class ResidentActionController: @unchecked Sendable {
             let observed = snapshot.world.at(path: "windows")?.arrayValue?.first {
                 $0.at(path: "window_id")?.intValue.map(String.init) == id
             }.flatMap { Frame.from($0.at(path: "frame")) }
-            if observed.map({ !Geometry.frameEq($0, frame, tol: 0.5) }) ?? true { targets[id] = frame }
+            if observed.map({ !Geometry.frameEq($0, frame, tol: ResidentEffector.unchangedTolerance) }) ?? true { targets[id] = frame }
         }
         if targets.isEmpty && plan.focusTarget == nil {
             let persistentChanged = plan.state.at(path: "arrangement") != desired.at(path: "arrangement")
                 || plan.state.at(path: "space_partitions") != desired.at(path: "space_partitions")
             if persistentChanged {
                 if effector.snapshot().at(path: "in_flight")?.stringValue != nil {
-                    lock.lock(); let generation = admissionGeneration; lock.unlock()
-                    guard deferredCommands.count < 32 else { finish(requestID: requestID, status: .refused, reason: "ordered_planning_queue_full"); return }
-                    deferredCommands.append(DeferredCommand(actionID: actionID, requestID: requestID,
-                        arguments: arguments, receipt: receipt, expectedRevision: expectedRevision, generation: generation))
+                    if !deferCommand(actionID: actionID, requestID: requestID, arguments: arguments, receipt: receipt, expectedRevision: expectedRevision) {
+                        finish(requestID: requestID, status: .refused, reason: "ordered_planning_queue_full")
+                    }
                     return
                 }
                 commitStateOnly(plan.state, snapshot: snapshot, requestID: requestID, receipt: receipt,
@@ -1154,7 +1099,8 @@ final class ResidentActionController: @unchecked Sendable {
             Self.recordPlanCommit(result, state: plan.state, source: source, snapshot: snapshot, requestID: requestID)
             if result.status == .accepted { desired = plan.state }
             finish(requestID: requestID, status: result.status,
-                reason: result.status == .accepted && replacementPreview ? "candidate_replaced_requires_confirmation" : result.reason); return
+                reason: result.status == .accepted
+                    ? (replacementPreview ? "candidate_replaced_requires_confirmation" : plan.reason) : result.reason); return
         }
         let context = Self.context(snapshot, persistenceAvailable: available)
         let primaryID = plan.focusTarget.map(String.init) ?? targets.keys.sorted().first
@@ -1169,7 +1115,7 @@ final class ResidentActionController: @unchecked Sendable {
             expectedRevision: snapshot.revision, observerGeneration: context.observerGeneration,
             activeSpaceKey: space, topologyRevision: context.topologyRevision,
             receiptNanos: receipt, frame: primaryFrame)
-        request.ordered = !actionID.hasPrefix("resize.adjust.") && actionID != "world.reconcile"
+        request.ordered = !actionID.hasPrefix(ResidentActionIDs.resizeAdjustPrefix) && actionID != ResidentActionIDs.worldReconcile
         request.effectKind = plan.focusTarget == nil || !targets.isEmpty ? .frame : .focus
         request.requiresFocus = plan.focusTarget != nil && request.effectKind == .frame
         request.stackTopWindowIDs = Set((plan.targets.objectValue ?? [:]).compactMap { id, target -> String? in
@@ -1181,13 +1127,8 @@ final class ResidentActionController: @unchecked Sendable {
         request.proposedState = plan.state; request.frameTargets = targets
         request.sourceInputGeneration = sourceGeneration
         request.observerEpoch = snapshot.world.at(path: "observer_epoch")?.stringValue
-        request.sessionGeneration = snapshot.world.at(path: "session_generation")?.intValue.flatMap { $0 >= 0 ? UInt64($0) : nil }
         let goalIDs = Set(targets.keys).union([primaryID]).union(snapshot.world.at(path: "focus.window_id")?.intValue.map { [String($0)] } ?? [])
-        let enabledWindows = (world.at(path: "windows")?.arrayValue ?? []).filter {
-            $0.at(path: "eligible")?.boolValue == true && $0.at(path: "space_visible")?.boolValue == true
-                && $0.at(path: "space_enabled")?.boolValue == true
-                && $0.at(path: "minimized")?.boolValue != true && $0.at(path: "destroyed")?.boolValue != true
-        }
+        let enabledWindows = (world.at(path: "windows")?.arrayValue ?? []).filter(\.isLiveEnabledWindow)
         let scopedKeys = Set(enabledWindows.filter {
             $0.at(path: "window_id")?.intValue.map { goalIDs.contains(String($0)) } == true
         }.compactMap { $0.at(path: "space_key")?.stringValue })
@@ -1195,7 +1136,7 @@ final class ResidentActionController: @unchecked Sendable {
             guard let id = window.at(path: "window_id")?.intValue,
                   let generation = window.at(path: "window_generation")?.intValue, generation > 0,
                   let key = window.at(path: "space_key")?.stringValue,
-                  let pid = window.at(path: "pid")?.intValue ?? window.at(path: "owner_pid")?.intValue, pid > 0,
+                  let pid = window.at(path: "pid")?.intValue, pid > 0,
                   let display = window.at(path: "display_uuid")?.stringValue ?? window.at(path: "display_id")?.stringValue else {
                 finish(requestID: requestID, status: .refused, reason: "window_lifetime_unavailable"); return
             }
@@ -1212,102 +1153,6 @@ final class ResidentActionController: @unchecked Sendable {
         let admitted = effector.submit(request)
         if admitted.status == .accepted { desired = plan.state }
         else { finish(requestID: requestID, status: admitted.status, reason: admitted.reason) }
-    }
-
-    private static func modelProjection(state: JSONValue, event: String) -> JSONObject {
-        ["event": .string(event), "model_state": state,
-         "mode": state.at(path: "interaction.mode") ?? .string("default"),
-         "mode_context_window_id": state.at(path: "interaction.source_window_id") ?? .null,
-         "mode_context_space_key": state.at(path: "interaction.active_space_key") ?? .null]
-    }
-
-    /// Bind authored geometry to the immutable publication that will expose it.
-    /// Geometry and selection remain Planner-owned; only provenance is stamped.
-    private static func bindCandidate(_ state: JSONValue, snapshot: CoreCommittedSnapshot) -> JSONValue? {
-        guard var model = state.objectValue, var interaction = model["interaction"]?.objectValue else { return state }
-        guard let epoch = snapshot.world.at(path: "observer_epoch")?.stringValue, !epoch.isEmpty,
-              let sourceID = interaction["source_window_id"]?.intValue,
-              let cursorID = interaction["cursor_window_id"]?.intValue,
-              let generation = snapshot.world.at(path: "observer_generation")?.intValue, generation >= 0,
-              let topology = snapshot.world.at(path: "topology_revision")?.intValue, topology >= 0 else { return nil }
-        let windows = snapshot.world.at(path: "windows")?.arrayValue ?? []
-        let sources = windows.filter { $0.at(path: "window_id")?.intValue == sourceID }
-        guard sources.count == 1, let source = sources.first,
-              let pid = source.at(path: "pid")?.intValue, pid > 0,
-              let lifetime = source.at(path: "window_generation")?.intValue, lifetime > 0,
-              let sourceSpace = source.at(path: "space_key")?.stringValue, !sourceSpace.isEmpty,
-              let sourceDisplay = source.at(path: "display_id")?.stringValue, !sourceDisplay.isEmpty,
-              source.at(path: "eligible")?.boolValue == true, source.at(path: "space_enabled")?.boolValue == true,
-              source.at(path: "space_visible")?.boolValue == true else { return nil }
-        let sourceIdentity: JSONValue = .object(["window_id": .int(sourceID), "pid": .int(pid),
-            "window_generation": .int(lifetime), "space_key": .string(sourceSpace), "display_id": .string(sourceDisplay)])
-        if let prior = interaction["source_identity"], prior != sourceIdentity { return nil }
-        if let priorEpoch = interaction["observer_epoch"], priorEpoch != .string(epoch) { return nil }
-        interaction["source_identity"] = sourceIdentity; interaction["observer_epoch"] = .string(epoch)
-        if interaction["interaction_id"] == nil {
-            interaction["interaction_id"] = .string("\(epoch):\(sourceID):\(lifetime):\(snapshot.revision + 1)")
-        }
-        guard var candidate = interaction["candidate"]?.objectValue else {
-            model["interaction"] = .object(interaction); return .object(model)
-        }
-        guard var base = candidate["base"]?.objectValue else { return nil }
-        let referenced = Set((base["window_identities"]?.objectValue ?? [:]).keys)
-            .union([String(sourceID), String(cursorID)])
-        var identities: JSONObject = [:]
-        for id in referenced {
-            let matches = windows.filter { $0.at(path: "window_id")?.intValue.map(String.init) == id }
-            guard matches.count == 1, let window = matches.first,
-                  let pid = window.at(path: "pid")?.intValue, pid > 0,
-                  let lifetime = window.at(path: "window_generation")?.intValue, lifetime > 0,
-                  let space = window.at(path: "space_key")?.stringValue, !space.isEmpty, !space.contains("runtime:"),
-                  let display = window.at(path: "display_id")?.stringValue, !display.isEmpty,
-                  window.at(path: "eligible")?.boolValue == true,
-                  window.at(path: "space_visible")?.boolValue == true,
-                  window.at(path: "space_enabled")?.boolValue == true,
-                  window.at(path: "minimized")?.boolValue != true,
-                  window.at(path: "destroyed")?.boolValue != true else { return nil }
-            identities[id] = .object(["pid": .int(pid), "window_generation": .int(lifetime),
-                "space_key": .string(space), "display_id": .string(display),
-                "eligible": .bool(true), "space_visible": .bool(true), "space_enabled": .bool(true)])
-        }
-        guard let candidateSourceSpace = identities[String(sourceID)]?.at(path: "space_key") else { return nil }
-        base["observer_epoch"] = .string(epoch); base["observer_generation"] = .int(generation)
-        base["topology_revision"] = .int(topology); base["active_space_key"] = candidateSourceSpace
-        base["interaction_id"] = interaction["interaction_id"]
-        base["state_revision"] = .int(Int64(clamping: snapshot.revision + 1))
-        base["window_identities"] = .object(identities)
-        candidate["base"] = .object(base)
-        candidate["candidate_id"] = .string((candidate["candidate_id"]?.stringValue ?? "candidate").components(separatedBy: ":revision:").first!
-            + ":revision:\(snapshot.revision + 1)")
-        interaction["candidate"] = .object(candidate)
-        interaction["observer_generation"] = .int(generation); interaction["topology_revision"] = .int(topology)
-        interaction["active_space_key"] = candidateSourceSpace
-        model["interaction"] = .object(interaction)
-        return .object(model)
-    }
-
-    /// Re-observing the same lifetime under a healthy focus generation permits
-    /// intent refresh; a reused ID, changed Space/epoch/topology never does.
-    private static func moveIntentScopeMatches(_ state: JSONValue, snapshot: CoreCommittedSnapshot) -> Bool {
-        guard let interaction = state.at(path: "interaction"), interaction.at(path: "mode") == .string("move"),
-              interaction.at(path: "observer_epoch") == snapshot.world.at(path: "observer_epoch"),
-              interaction.at(path: "topology_revision") == snapshot.world.at(path: "topology_revision"),
-              let source = interaction.at(path: "source_identity"),
-              let sourceID = source.at(path: "window_id")?.intValue else { return false }
-        let windows = snapshot.world.at(path: "windows")?.arrayValue ?? []
-        let sourceMatches = windows.filter { $0.at(path: "window_id")?.intValue == sourceID }
-        guard sourceMatches.count == 1, let currentSource = sourceMatches.first else { return false }
-        for (field, expected) in source.objectValue ?? [:] { if currentSource.at(path: field) != expected { return false } }
-        let identities = interaction.at(path: "candidate.base.window_identities")?.objectValue
-            ?? [String(sourceID): source]
-        return identities.allSatisfy { id, identity in
-            let matches = windows.filter { $0.at(path: "window_id")?.intValue.map(String.init) == id }
-            guard matches.count == 1, let window = matches.first,
-                  window.at(path: "eligible")?.boolValue == true, window.at(path: "space_enabled")?.boolValue == true,
-                  window.at(path: "space_visible")?.boolValue == true,
-                  window.at(path: "minimized")?.boolValue != true, window.at(path: "destroyed")?.boolValue != true else { return false }
-            return (identity.objectValue ?? [:]).allSatisfy { window.at(path: $0.key) == $0.value }
-        }
     }
 
     /// An identified empty/OFF partition can change its durable model without
@@ -1425,23 +1270,6 @@ final class ResidentActionController: @unchecked Sendable {
             "windows": .array(windows), "focused_window_id": raw.at(path: "focus.window_id") ?? .null])
     }
 
-    private static func context(_ snapshot: CoreCommittedSnapshot, persistenceAvailable: Bool) -> ResidentEffectContext {
-        let world = snapshot.world
-        let focused = world.at(path: "focus")
-        let fallback = (world.at(path: "windows")?.arrayValue ?? []).first {
-            $0.at(path: "eligible")?.boolValue == true && $0.at(path: "space_visible")?.boolValue == true
-                && $0.at(path: "space_enabled")?.boolValue == true
-        }
-        let anchor = focused?.at(path: "space_enabled")?.boolValue == true ? focused : fallback
-        return ResidentEffectContext(revision: snapshot.revision,
-            observerGeneration: UInt64(max(0, world.at(path: "observer_generation")?.intValue ?? 0)),
-            activeSpaceKey: anchor?.at(path: "space_key")?.stringValue,
-            topologyRevision: UInt64(max(0, world.at(path: "topology_revision")?.intValue ?? world.at(path: "observer_generation")?.intValue ?? 0)),
-            trusted: world.at(path: "observation.failure_code")?.stringValue != "ax_untrusted",
-            complete: persistenceAvailable && world.at(path: "observation.world_complete")?.boolValue == true,
-            spaceEnabled: world.at(path: "management_enabled")?.boolValue != false && anchor?.at(path: "space_enabled")?.boolValue == true)
-    }
-
     private func activeWindowGeneration(requestID: String, windowID: String) -> UInt64? {
         lock.lock(); defer { lock.unlock() }; return activeRequestLifetimes[requestID]?[windowID]
     }
@@ -1488,11 +1316,11 @@ final class ResidentActionController: @unchecked Sendable {
             receipt: receipt ?? DispatchTime.now().uptimeNanoseconds, admissionGeneration: admission)
         ResidentPerformanceTrace.shared.record("refusal", fields: Self.traceFields(snapshot, source: source)
             .merging(["request_id": requestID.map(JSONValue.string) ?? .null, "reason": .string(reason)]))
-        return .object(["ok": .bool(false), "status": .string("refused"), "reason": .string(reason)])
+        return .object(["ok": .bool(false), "status": .string(WmStatus.refused.rawValue), "reason": .string(reason)])
     }
 
     private func finish(requestID: String, status: WmStatus, reason: String?) {
-        storeResult(requestID, value: .object(["ok": .bool(status == .accepted || status == .noop),
+        storeResult(requestID, value: .object(["ok": .bool(status.isOK),
             "status": .string(status.rawValue), "phase": .string("completed"), "request_id": .string(requestID),
             "reason": reason.map(JSONValue.string) ?? .null, "revision": .int(Int64(clamping: server.currentRevision))]), status: status)
     }
@@ -1519,6 +1347,7 @@ final class ResidentActionController: @unchecked Sendable {
         let action = requestActions.removeValue(forKey: id)
         let callback = callbacks.removeValue(forKey: id)
         let reconciled = reconciliationCompletions.removeValue(forKey: id)
+        let batch = reconciliationBatches.removeValue(forKey: id)
         lock.unlock()
         var trace = (value.objectValue ?? [:]).merging(metadata).merging(["request_id": .string(id),
             "observer_epoch": completedSnapshot.world.at(path: "observer_epoch") ?? .null,
@@ -1548,46 +1377,12 @@ final class ResidentActionController: @unchecked Sendable {
             || (action?.hasPrefix("move.") == true && value.at(path: "reason")?.stringValue == "minimum_constraint")
         callback?(retainedMoveSelection || replacementPreview ? 3 : status == .accepted ? 0 : status == .noop ? 1 : 4)
         if let reconciled { queue.async { [self] in reconciled(reconciliationProof(value)) } }
-    }
-
-    /// Registered requests own one admission fact. Re-execution of deferred
-    /// work and sources already registered by handle/startup cannot mint another.
-    private static func recordAdmission(_ snapshot: CoreCommittedSnapshot, source: CommandSource, requestID: String) {
-        ResidentPerformanceTrace.shared.record("admission", fields: traceFields(snapshot, source: source)
-            .merging(["request_id": .string(requestID)]), timestamp: source.receipt)
-    }
-
-    private static func traceFields(_ snapshot: CoreCommittedSnapshot, source: CommandSource) -> JSONObject {
-        let focus = snapshot.world.at(path: "focus")
-        return source.metadata.merging(["revision": .int(Int64(clamping: snapshot.revision)),
-            "observer_generation": snapshot.world.at(path: "observer_generation") ?? .null,
-            "observer_epoch": snapshot.world.at(path: "observer_epoch") ?? .null,
-            "topology_revision": snapshot.world.at(path: "topology_revision") ?? .null,
-            "window_id": focus?.at(path: "window_id") ?? .null, "pid": focus?.at(path: "pid") ?? .null,
-            "window_generation": focus?.at(path: "window_generation") ?? .null,
-            "space_key": focus?.at(path: "space_key") ?? .null, "display_id": focus?.at(path: "display_id") ?? .null])
-    }
-
-    /// Publication-return is an explicit endpoint bound to this accepted result,
-    /// never a nearby receipt or a guessed renderer/compositor observation.
-    private static func recordPlanCommit(_ result: WmResult, state: JSONValue, source: CommandSource,
-                                         snapshot: CoreCommittedSnapshot, requestID: String, request: ResidentEffectRequest? = nil) {
-        guard result.status == .accepted else { return }
-        let candidate = state.at(path: "interaction.candidate") ?? request?.priorInteraction?.at(path: "candidate")
-        var fields = traceFields(snapshot, source: source).merging([
-            "request_id": .string(requestID),
-            "revision": .int(Int64(clamping: result.revision.value)),
-            "committed_revision": .int(Int64(clamping: result.revision.value)),
-            "base_revision": .int(Int64(clamping: snapshot.revision)),
-            "boundary": .string("authoritative_publication_return"),
-            "candidate_id": candidate?.at(path: "candidate_id") ?? .null,
-            "targets": candidate?.at(path: "targets") ?? .object([:]),
-            "candidate_window_identities": candidate?.at(path: "base.window_identities") ?? .null])
-        if let request {
-            fields["target_frames"] = .object(JSONObject(unordered: request.frameTargets.mapValues(\.json)))
-            fields["window_pids"] = .object(JSONObject(unordered: request.windowPids.mapValues(JSONValue.int)))
-            fields["window_generations"] = .object(JSONObject(unordered: request.windowGenerations.mapValues { .int(Int64(clamping: $0)) }))
+        // A reconcile that lost an authority race never applied, so the lifecycle
+        // facts it carried are still owed. Replan them, bounded, on the newer world.
+        if let batch, status == .refused, batch.attempt < Self.reconciliationRetryLimit,
+           Self.reconciliationRaceReasons.contains(value.at(path: "reason")?.stringValue ?? "") {
+            scheduleReconciliation(batch.events, overflow: batch.overflow, attempt: batch.attempt + 1)
         }
-        ResidentPerformanceTrace.shared.record("plan_committed", fields: fields)
     }
+
 }

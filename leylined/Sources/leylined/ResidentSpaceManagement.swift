@@ -17,7 +17,7 @@ enum ResidentSpaceManagement {
         var spaces = current.spacesEnabled
         spaces[target.spaceKey] = next
         try ResidentSettingsStore.write(path: settingsPath, spacesEnabled: spaces,
-            desiredRunning: desiredRunning, globalGutterWidth: current.globalGutterWidth)
+            desiredRunning: desiredRunning)
         let result = commit(target.spaceKey, next)
         guard result.status == .accepted || result.status == .noop else {
             throw ResidentInputError(code: result.reason ?? "space_activation_commit_failed",

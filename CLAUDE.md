@@ -1,6 +1,6 @@
 # Leyline development context
 
-Leyline 1.0.0 is a native macOS window manager. Begin with [README.md](README.md),
+Leyline 1.0.1 is a native macOS window manager. Begin with [README.md](README.md),
 [the development guide](docs/development.md) and [the runtime map](docs/architecture/leylined-core.md).
 
 One `leylined` resident owns input, observation, planning, journaled effects,
@@ -14,10 +14,10 @@ exact preview/commit targets and honest accepted/noop/refused/failed outcomes.
 Partial observation cannot authorize an empty layout. No external script or
 renderer may become a second author of window state.
 
-Run `bin/ley test all` after a complete build. Targeted checks are `native`,
-`oracles`, `cli`, `recovery`, and `acceptance-tools`. Missing tools, fixtures or
-grants are failures. Automated fixtures do not certify physical input, visible
-latency, Space persistence across login or recovery timing.
+Run `bin/ley test all` after a complete build. Targeted checks include `native`,
+`oracles`, `cli`, `recovery`, `acceptance-tools` and `release`. Missing tools,
+fixtures or grants are failures. Automated fixtures do not certify physical input,
+visible latency, Space persistence across login or recovery timing.
 
 Keep production/test build boundaries explicit. Do not edit shared Swift sources
 while another build is using them. Preserve local configuration, journals,

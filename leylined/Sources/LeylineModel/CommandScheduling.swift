@@ -44,21 +44,6 @@ public struct CommandScheduling: Sendable {
         self.maximumCauseCount = maximumCauseCount
     }
 
-    /// Relative repeats accumulate against requested state, including an unlanded pending frame.
-    /// The accumulation commits only when admission succeeds, so overflow cannot alter intent.
-    public mutating func admitRelativeResize(requestID: String, lane: String, generation: UInt64,
-                                             receiptNanos: UInt64, baseline: Frame,
-                                             widthDelta: Double, heightDelta: Double) -> Admission {
-        let base = requestedFrames[lane] ?? baseline
-        let desired = Frame(x: base.x, y: base.y, w: base.w + widthDelta, h: base.h + heightDelta)
-        guard desired.w.isFinite, desired.h.isFinite, desired.w > 0, desired.h > 0 else {
-            refusedCount += 1
-            return Admission(accepted: false, reason: "invalid_resize_frame", supersededRequestID: nil)
-        }
-        return admit(Intent(requestID: requestID, lane: lane, generation: generation,
-                            receiptNanos: receiptNanos, desiredFrame: desired, ordered: false))
-    }
-
     /// A pending desired frame may only replace the tail. Crossing an ordered barrier refuses,
     /// preserving navigation/commit ordering while keeping at most one desired state per lane.
     public mutating func admit(_ intent: Intent) -> Admission {

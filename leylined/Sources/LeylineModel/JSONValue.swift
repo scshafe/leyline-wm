@@ -68,6 +68,13 @@ public struct JSONObject: Equatable, Sendable {
         }
     }
 
+    /// The entries `isIncluded` keeps, in their original insertion order.
+    public func filter(_ isIncluded: ((key: String, value: JSONValue)) -> Bool) -> JSONObject {
+        var result = JSONObject()
+        for entry in self where isIncluded(entry) { result[entry.key] = entry.value }
+        return result
+    }
+
     public func mapValues(_ transform: (JSONValue) -> JSONValue) -> JSONObject {
         var out = JSONObject()
         for k in keys { out[k] = transform(map[k]!) }
@@ -106,37 +113,17 @@ public enum JSONValue: Equatable, Sendable {
     case array([JSONValue])
     case object(JSONObject)
 
+    /// Integral doubles emit as JSON integers, matching jq number output.
+    static func number(_ d: Double) -> JSONValue {
+        if d == d.rounded(), abs(d) < 9_007_199_254_740_992 {
+            return .int(Int64(d))
+        }
+        return .double(d)
+    }
+
     public static func parse(_ data: Data) throws -> JSONValue {
         var parser = JSONParser(bytes: [UInt8](data))
         return try parser.parseDocument()
-    }
-
-    static func from(_ raw: Any) -> JSONValue {
-        switch raw {
-        case is NSNull:
-            return .null
-        case let n as NSNumber:
-            // NSNumber bools first (CFBoolean), then int-vs-double by objCType.
-            if CFGetTypeID(n) == CFBooleanGetTypeID() {
-                return .bool(n.boolValue)
-            }
-            let t = String(cString: n.objCType)
-            if t == "d" || t == "f" {
-                return .double(n.doubleValue)
-            }
-            return .int(n.int64Value)
-        case let s as String:
-            return .string(s)
-        case let a as [Any]:
-            return .array(a.map(from))
-        case let o as [String: Any]:
-            // Interop only (JSONSerialization loses order): sorted for determinism.
-            var obj = JSONObject()
-            for k in o.keys.sorted() { obj[k] = from(o[k]!) }
-            return .object(obj)
-        default:
-            return .null
-        }
     }
 
     /// Compact emission in jq -c style: object keys in INSERTION order, ints

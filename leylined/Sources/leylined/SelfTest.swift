@@ -1,5 +1,5 @@
 // Headless, rc-based self-checks (the house --self-check pattern; CLT ships no
-// test libraries). `ley test leylined` runs these; a suite that ran zero checks
+// test libraries). `ley test native` runs these; a suite that ran zero checks
 // fails — never a vacuous green.
 import Foundation
 import LeylineModel

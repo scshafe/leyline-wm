@@ -1,9 +1,0 @@
-{
-  "fn": "drop_side",
-  "note": "B3 aspect policy, the other half: same wide cell, but the moved window rides the display's east side (centre x=1680 > cell centre 960) -> east.",
-  "target_cell": {"frame": {"x": 0, "y": 540, "w": 1920, "h": 540}},
-  "moved_frame": {"x": 1440, "y": 0, "w": 480, "h": 540},
-  "display": {"frame": {"x": 0, "y": 0, "w": 1920, "h": 1080}},
-  "policy": "aspect",
-  "expect": "east"
-}

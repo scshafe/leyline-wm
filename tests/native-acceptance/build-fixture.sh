@@ -16,7 +16,7 @@ case "$fixture_architecture" in arm64|x86_64) ;; *) echo 'unsupported native arc
 xcrun swiftc -target "$fixture_architecture-apple-macos14.0" -swift-version 5 -O -framework AppKit -framework ScreenCaptureKit \
   -framework CoreMedia -framework CoreVideo -framework CoreImage -framework CryptoKit \
   "$source_dir/AcceptanceFixture.swift" -o "$app/Contents/MacOS/AcceptanceFixture"
-# Fail honestly if the stable signing identity is unavailable; no ad-hoc fallback.
+# Ad hoc unless LEYLINE_CODESIGN_IDENTITY names a certificate; signing failure fails the build.
 /usr/bin/codesign --force --sign "${LEYLINE_CODESIGN_IDENTITY:--}" \
   --identifier org.leyline.native-acceptance --timestamp=none "$app"
 /usr/bin/codesign --verify --strict "$app"

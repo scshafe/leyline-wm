@@ -1,9 +1,9 @@
 # Development and contributions
 
 Build on macOS 14 or later with Swift 6 and Xcode Command Line Tools. Developer
-verification additionally needs current `jq`, Python 3 and the explicit
-checksum-bound oracle tool setup below. Native downloaded apps need no compiler or Python. Optional CLI diagnostics
-require `jq`, which the Homebrew formula supplies.
+verification additionally needs `jq` and Python 3. Native downloaded apps need no
+compiler or Python. Optional CLI diagnostics require `jq`, which the Homebrew
+formula supplies.
 
 ## Source map
 
@@ -13,13 +13,15 @@ require `jq`, which the Homebrew formula supplies.
 | `leylined/Sources/leylined` | Resident authority, command client, observation, input, effects and presentation |
 | `leylined/Sources/CResidentAtomics` | Process-local atomic primitives |
 | `leylined/Fixtures` | Native hermetic and frozen regression inputs |
-| `keymap` | Shipping global/mode chords and US decode table |
-| `config/registry/borders.json` | Shipping border metadata/defaults |
+| `keymap` | Shipping global/mode chords and the US decode table for bound keys |
 | `commands`, `lib`, `bin/ley` | Explicit CLI operations and source verification |
 | `bin/leylined-build`, `bin/leyline-recovery-app-build` | Resident and Recovery builds |
-| `tests/native-cli`, `tests/native-acceptance` | CLI boundaries and scoped release-evidence tooling |
-| `tests/oracles` | Independent frozen model/navigation/geometry regression closure |
-| `scripts/release` | Clean source/app packaging and release checks |
+| `bin/leyline-recovery.swift` | The independent, grant-free Finder Recovery app |
+| `tests/native-cli` | CLI boundary checks |
+| `tests/native-acceptance` | Scoped live-evidence collectors behind `ley bench` ([notes](../tests/native-acceptance/README.md)) |
+| `tests/oracles` | Independent frozen model/navigation/geometry regressions |
+| `tests/release`, `tests/source_checks.py` | Packaging/installer regressions and source syntax/link/dependency checks |
+| `scripts/release`, `packaging`, `install.sh` | Clean exports, app packaging, privacy audit and archive installer |
 
 [Architecture](architecture/leylined-core.md) maps the one resident. Extend existing
 canonical capabilities instead of adding parallel writers, process owners or
@@ -31,7 +33,6 @@ renderer-side decisions.
 bin/ley build all
 bin/leylined-build --tests
 bin/leyline-recovery-app-build --tests
-scripts/development/setup-oracle-jq.sh
 bin/ley test all
 ```
 
@@ -47,24 +48,21 @@ Targeted checks are `bin/ley test native`, `oracles`, `cli`, `recovery`,
 `acceptance-tools`, `release`, `syntax`, `json`, `links` and `dependencies`.
 A missing binary, fixture/tool or empty inventory fails rather than skipping required coverage.
 Do not run actuating probes or launchd installation as part of a hermetic test.
+`ley test release` refuses to run while an `org.leyline.leylined` job is registered,
+leaving that job untouched.
 
-## Frozen oracle compiler
+To inspect the insertion cue's actual view drawing without opening decoration
+panels, run `bin/leylined-tests self-test projection --render-samples /tmp/leyline-preview-samples`.
+The output contains fixture-based PNGs for LEFT, RIGHT, ABOVE and BELOW; it does
+not certify live compositing or input timing.
 
-The independent oracle suite uses official jq 1.8.1 binaries whose arm64/x86_64
-SHA-256 digests are checked before execution. Run
-`scripts/development/setup-oracle-jq.sh` explicitly; it caches the selected tool
-under ignored `.release-build/oracle-jq`. The offline `--verify` mode rejects a
-missing or changed binary. `LEYLINE_ORACLE_JQ_DIR` selects an alternate cache
-root. `ley test oracles` verifies the tool and scopes its PATH to that suite;
-`ley test cli` and shipping diagnostic commands continue to use current jq.
+## Frozen oracles
 
-jq 1.8.2 has an upstream compile-time regression in transitive imports: library
-registration order can cause dead-code elimination to free a referenced helper.
-It aborts before evaluating valid frozen inputs. The fix is merged upstream in
-[jqlang/jq#3620](https://github.com/jqlang/jq/pull/3620), after the 1.8.2 release.
-The isolated 1.8.1 compiler processes only trusted repository regression inputs;
-it is neither bundled in the app nor substituted for user-facing jq. No frozen
-fixtures or oracle modules are rewritten to accommodate the compiler defect.
+`tests/oracles` holds independent frozen answers for grid geometry, recursive
+targets, tileability, display assignment, minimum learning, reclaim, insertion
+and directional navigation. `ley test oracles` runs them through the production
+model functions via the developer runner; `fixtures.sha256.json` pins their
+bytes. See [the oracle notes](../tests/oracles/README.md).
 
 ## Change discipline
 

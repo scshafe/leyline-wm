@@ -61,11 +61,17 @@ enum ResidentSpacePartitions {
         }
     }
 
-    /// Prepare a composite of enabled visible actual Spaces. Reconcile validates cached lifetimes
-    /// before pruning/adopting; commands require an already reconciled, identical membership context.
-    static func prepare(state: JSONValue, world: JSONValue, topology: JSONValue,
-                        observed: [JSONValue], reconcile: Bool) -> Result<Prepared, Failure> {
-        func refused(_ reason: String) -> Result<Prepared, Failure> { .failure(Failure(reason: reason)) }
+    struct ObservedContexts {
+        let epoch: String
+        let contexts: [Context]
+        let windowsByDisplay: [Int64: [JSONValue]]
+    }
+
+    /// Validate current OS Space membership and positive lifetime identities without
+    /// requiring saved layout geometry. Focus-only navigation and prepare share this gate.
+    static func observedContexts(world: JSONValue, topology: JSONValue,
+                                 observed: [JSONValue]) -> Result<ObservedContexts, Failure> {
+        func refused(_ reason: String) -> Result<ObservedContexts, Failure> { .failure(Failure(reason: reason)) }
         guard let epoch = world.at(path: "observer_epoch")?.stringValue, !epoch.isEmpty else {
             return refused("observer_epoch_unavailable")
         }
@@ -88,15 +94,6 @@ enum ResidentSpacePartitions {
         guard !contexts.isEmpty, Set(contexts.map(\.displayID)).count == contexts.count,
               Set(contexts.map(\.displayID)) == liveDisplays else { return refused("space_contexts_ambiguous_or_incomplete") }
         contexts.sort { $0.displayID < $1.displayID }
-        let cache = state.at(path: "space_partitions")
-        if let cache {
-            guard cache.at(path: "schema")?.stringValue == "leyline/resident-space-partitions/v1",
-                  cache.at(path: "partitions")?.objectValue != nil, cache.at(path: "visible")?.objectValue != nil else {
-                return refused("space_partition_checkpoint_invalid")
-            }
-        }
-        let partitions = cache?.at(path: "partitions")?.objectValue ?? [:]
-        let priorVisible = cache?.at(path: "visible")
         var observedByDisplay: [Int64: [JSONValue]] = [:]
         var seen: Set<Int64> = []
         for window in observed {
@@ -112,6 +109,29 @@ enum ResidentSpacePartitions {
             }
             observedByDisplay[display, default: []].append(window)
         }
+        return .success(ObservedContexts(epoch: epoch, contexts: contexts, windowsByDisplay: observedByDisplay))
+    }
+
+    /// Prepare a composite of enabled visible actual Spaces. Reconcile validates cached lifetimes
+    /// before pruning/adopting; commands require an already reconciled, identical membership context.
+    static func prepare(state: JSONValue, world: JSONValue, topology: JSONValue,
+                        observed: [JSONValue], reconcile: Bool) -> Result<Prepared, Failure> {
+        func refused(_ reason: String) -> Result<Prepared, Failure> { .failure(Failure(reason: reason)) }
+        let live: ObservedContexts
+        switch observedContexts(world: world, topology: topology, observed: observed) {
+        case .failure(let failure): return .failure(failure)
+        case .success(let value): live = value
+        }
+        let epoch = live.epoch, contexts = live.contexts, observedByDisplay = live.windowsByDisplay
+        let cache = state.at(path: "space_partitions")
+        if let cache {
+            guard cache.at(path: "schema")?.stringValue == "leyline/resident-space-partitions/v1",
+                  cache.at(path: "partitions")?.objectValue != nil, cache.at(path: "visible")?.objectValue != nil else {
+                return refused("space_partition_checkpoint_invalid")
+            }
+        }
+        let partitions = cache?.at(path: "partitions")?.objectValue ?? [:]
+        let priorVisible = cache?.at(path: "visible")
         var ready: [JSONValue] = []
         for context in contexts where context.enabled {
             let windows = observedByDisplay[context.displayID] ?? []
@@ -125,7 +145,7 @@ enum ResidentSpacePartitions {
                     return refused("space_partition_checkpoint_invalid")
                 }
             }
-            var base = cached?.at(path: "arrangement") ?? emptyArrangement
+            var base = cached?.at(path: "arrangement") ?? ResidentPlanner.emptyArrangement
             let sameEpoch = cached?.at(path: "observer_epoch")?.stringValue == epoch
             let sameGeometry = cached?.at(path: "display_geometry") == displayGeometry(topology, context.displayID)
             // Validate cached structure in the geometry that authored it. A
@@ -137,18 +157,34 @@ enum ResidentSpacePartitions {
                     displayID: context.displayID, current: subset) else { return refused("space_partition_geometry_invalid") }
                 validationTopology = recorded
             } else { validationTopology = subset }
-            guard uniqueIDs(base), Arrangement.allocationValid(base, topo: validationTopology) else { return refused("space_partition_shape_unsupported") }
-            if !sameEpoch || !sameGeometry { base = emptyArrangement }
+            guard Arrangement.allocationValid(base, topo: validationTopology) else { return refused("space_partition_shape_unsupported") }
+            if !sameEpoch || !sameGeometry { base = ResidentPlanner.emptyArrangement }
             let identities = cached?.at(path: "window_identities")?.objectValue ?? [:]
+            // A world re-observation renews every lifetime at once. Reconcile keeps
+            // the tile of a window whose owner and ID are unchanged and whose frame
+            // still covers that tile (a minimum may enlarge it); a displaced or
+            // reowned renewal re-enters as a newcomer.
+            let targets = reconcile && sameEpoch && sameGeometry
+                ? Arrangement.arrangementTargetsRec(bridge: Arrangement.bridgeArrangementNative(store: base, topo: subset),
+                                                    topo: subset).objectValue ?? [:] : [:]
             let survivors = windows.filter { window in
                 guard sameEpoch, sameGeometry else { return false }
                 guard let id = window.at(path: "window_id")?.intValue else { return false }
-                return identities[String(id)] == fingerprint(window)
+                if identities[String(id)] == fingerprint(window) { return true }
+                guard let target = Frame.from(targets[String(id)]?.at(path: "effect_frame") ?? targets[String(id)]?.at(path: "frame")),
+                      let frame = Frame.from(window.at(path: "frame")),
+                      let pid = window.at(path: "pid")?.intValue,
+                      identities[String(id)]?.at(path: "pid")?.intValue == pid else { return false }
+                return frame.x <= target.x + renewedTileTolerance && frame.y <= target.y + renewedTileTolerance
+                    && frame.maxX >= target.maxX - renewedTileTolerance && frame.maxY >= target.maxY - renewedTileTolerance
             }
             if reconcile {
                 // First retire absent/reused identities; only then may replacements re-enter as newcomers.
-                guard let retired = ResidentPlanner.settle(arrangement: base, observed: survivors, topology: subset,
-                                                          focus: world.at(path: "focused_window_id")?.intValue),
+                // No current lifetime may inherit an entirely retired partition. Its
+                // validated old shape need not support successive vacancy reclamation.
+                let retired = survivors.isEmpty ? ResidentPlanner.emptyArrangement : ResidentPlanner.settle(
+                    arrangement: base, observed: survivors, topology: subset, focus: world.at(path: "focused_window_id")?.intValue)
+                guard let retired,
                       let settled = ResidentPlanner.settle(arrangement: retired, observed: windows, topology: subset,
                                                           focus: world.at(path: "focused_window_id")?.intValue) else {
                     return refused("native_settle_shape_or_constraints_unsupported")
@@ -156,9 +192,9 @@ enum ResidentSpacePartitions {
                 ready.append(settled)
             } else {
                 guard cached != nil, sameEpoch, sameGeometry,
-                      Set(survivors.compactMap { $0.at(path: "window_id")?.intValue }) == Set(windows.compactMap { $0.at(path: "window_id")?.intValue }),
+                      Set(survivors.windowIDs) == Set(windows.windowIDs),
                       conserved(base, observed: windows),
-                      Arrangement.validMd(Arrangement.parseSegs(base.at(path: "segments")), Project.normTopology(subset)).at(path: "ok")?.boolValue == true else {
+                      Arrangement.segmentsValid(Arrangement.parseSegs(base.at(path: "segments")), topology: subset) else {
                     return refused("space_partitions_require_reconcile")
                 }
                 ready.append(Arrangement.bridgeArrangementNative(store: base, topo: subset))
@@ -173,16 +209,17 @@ enum ResidentSpacePartitions {
         return .success(prepared)
     }
 
-    static let emptyArrangement: JSONValue = .object([
-        "segments": .array([]), "bindings": .object([:]), "off_top": .array([]), "promotions": .array([])])
+    /// Edge slack for a renewed window still covering its tile: integer landing
+    /// and app size snapping, far below any displacement.
+    static let renewedTileTolerance = 4.0
 
     private static func fingerprint(_ window: JSONValue) -> JSONValue? {
-        guard let pid = window.at(path: "pid")?.intValue ?? window.at(path: "owner_pid")?.intValue, pid > 0,
+        guard let pid = window.at(path: "pid")?.intValue, pid > 0,
               let generation = window.at(path: "window_generation")?.intValue, generation > 0 else { return nil }
         return .object(["pid": .int(pid), "window_generation": .int(generation)])
     }
     private static func windowIDs(_ arrangement: JSONValue) -> [Int64] {
-        Arrangement.memberWindows(arrangement).compactMap { $0.at(path: "window_id")?.intValue }
+        Arrangement.memberWindows(arrangement).windowIDs
     }
     private static func uniqueIDs(_ arrangement: JSONValue) -> Bool {
         let ids = windowIDs(arrangement)
@@ -197,7 +234,7 @@ enum ResidentSpacePartitions {
         return Set(ids).count == ids.count && consistent(arrangement)
     }
     private static func conserved(_ arrangement: JSONValue, observed: [JSONValue]) -> Bool {
-        uniqueIDs(arrangement) && Set(windowIDs(arrangement)) == Set(observed.compactMap { $0.at(path: "window_id")?.intValue })
+        uniqueIDs(arrangement) && Set(windowIDs(arrangement)) == Set(observed.windowIDs)
     }
     private static func displayGeometry(_ topology: JSONValue, _ displayID: Int64) -> JSONValue {
         guard let display = (topology.at(path: "displays")?.arrayValue ?? []).first(where: { $0.at(path: "id")?.intValue == displayID }) else { return .null }
@@ -223,7 +260,7 @@ enum ResidentSpacePartitions {
         return .object(topology)
     }
     private static func extract(_ arrangement: JSONValue, displayID: Int64, topology: JSONValue) -> JSONValue? {
-        guard uniqueIDs(arrangement), Arrangement.allocationValid(arrangement, topo: topology) else { return nil }
+        guard Arrangement.allocationValid(arrangement, topo: topology) else { return nil }
         let normalized = Project.normTopology(topology)
         let split = Arrangement.bagsWithRejected(Arrangement.parseSegs(arrangement.at(path: "segments")), normalized)
         guard split.rejected.isEmpty, let bag = split.bags.first(where: { $0.displayId == displayID }) else { return nil }
@@ -233,7 +270,7 @@ enum ResidentSpacePartitions {
         }
         return .object(["segments": .array(bag.segments.map { segment in
             var value = segment.json.objectValue ?? [:]; value["display_id"] = .int(displayID); return .object(value)
-        }), "bindings": .object(bindings), "off_top": .array([]), "promotions": .array([])])
+        }), "bindings": .object(bindings), "off_top": .array([])])
     }
     private static func compose(_ arrangements: [JSONValue], topology: JSONValue) -> JSONValue? {
         var segments: [JSONValue] = [], bindings: JSONObject = [:]
@@ -244,9 +281,9 @@ enum ResidentSpacePartitions {
             }
         }
         let value: JSONValue = .object(["segments": .array(segments), "bindings": .object(bindings),
-            "off_top": .array([]), "promotions": .array([])])
-        guard Arrangement.validMd(Arrangement.parseSegs(.array(segments)), Project.normTopology(topology)).at(path: "ok")?.boolValue == true,
-              uniqueIDs(value), Arrangement.allocationValid(value, topo: topology) else { return nil }
+            "off_top": .array([])])
+        guard Arrangement.segmentsValid(Arrangement.parseSegs(.array(segments)), topology: topology),
+              Arrangement.allocationValid(value, topo: topology) else { return nil }
         return Arrangement.bridgeArrangementNative(store: value, topo: topology)
     }
 }

@@ -1,39 +1,10 @@
-// Hermetic Step-5B feed tests: fake AX/lifecycle events and fake hotkeyd
-// framed connections drive the real generation, epoch, reconnect, and core
-// transition boundaries. No AppKit, live socket, file mirror, or timer runs.
+// Hermetic feed tests: fake AX/lifecycle events drive the real generation,
+// epoch and core transition boundaries. No AppKit, live socket, file mirror,
+// or timer runs.
 import ApplicationServices
 import CoreGraphics
 import Foundation
 import LeylineModel
-
-private final class FakeAccessibilityObserver: AccessibilityFocusObserving, @unchecked Sendable {
-    var onEvent: ((AccessibilityFocusEvent) -> Void)?
-    var onHealthChanged: ((AccessibilityObserverHealth) -> Void)?
-    var attaches: [(pid_t, UInt64)] = []
-    var detachGenerations: [UInt64] = []
-    var nextHealth: AccessibilityObserverHealth?
-
-    func attach(to pid: pid_t, generation: UInt64) -> AccessibilityObserverHealth {
-        attaches.append((pid, generation))
-        return nextHealth ?? AccessibilityObserverHealth(
-            ready: true, pid: pid, generation: generation,
-            windowNotificationsReady: true, degradedReason: nil)
-    }
-
-    func detach(generation: UInt64) {
-        detachGenerations.append(generation)
-    }
-
-    func emit(_ kind: AccessibilityFocusEventKind, pid: pid_t, generation: UInt64,
-              windowGeneration: UInt64 = 0, element: AXUIElement? = nil, windowId: Int64? = nil) {
-        onEvent?(AccessibilityFocusEvent(kind: kind, pid: pid, generation: generation,
-            windowGeneration: windowGeneration, element: element, windowId: windowId))
-    }
-
-    func emitHealth(_ health: AccessibilityObserverHealth) {
-        onHealthChanged?(health)
-    }
-}
 
 private final class AccessibilityHealthFixture: @unchecked Sendable {
     private let lock = NSLock()
@@ -86,70 +57,6 @@ private final class FeedDeliveryFixture: @unchecked Sendable {
     }
 }
 
-private final class DeferredOperations: @unchecked Sendable {
-    typealias Operation = @Sendable () -> Void
-    private let lock = NSLock()
-    private var mainOperations: [Operation] = []
-    private var workOperations: [Operation] = []
-    private var retryOperations: [(Int, Operation)] = []
-
-    func enqueueMain(_ operation: @escaping Operation) {
-        lock.lock(); mainOperations.append(operation); lock.unlock()
-    }
-
-    func enqueueWork(_ operation: @escaping Operation) {
-        lock.lock(); workOperations.append(operation); lock.unlock()
-    }
-
-    func enqueueRetry(delay: Int, operation: @escaping Operation) {
-        lock.lock(); retryOperations.append((delay, operation)); lock.unlock()
-    }
-
-    var mainCount: Int { lock.withLock { mainOperations.count } }
-    var workCount: Int { lock.withLock { workOperations.count } }
-    var retryDelays: [Int] { lock.withLock { retryOperations.map(\.0) } }
-
-    func runNextMain() {
-        let operation: Operation? = lock.withLock {
-            mainOperations.isEmpty ? nil : mainOperations.removeFirst()
-        }
-        operation?()
-    }
-
-    func runNextWork() {
-        let operation: Operation? = lock.withLock {
-            workOperations.isEmpty ? nil : workOperations.removeFirst()
-        }
-        operation?()
-    }
-
-    func takeNextWork() -> Operation? {
-        lock.withLock {
-            workOperations.isEmpty ? nil : workOperations.removeFirst()
-        }
-    }
-
-    func runNextRetry() {
-        let operation: Operation? = lock.withLock {
-            retryOperations.isEmpty ? nil : retryOperations.removeFirst().1
-        }
-        operation?()
-    }
-
-    func takeNextRetry() -> Operation? {
-        lock.withLock {
-            retryOperations.isEmpty ? nil : retryOperations.removeFirst().1
-        }
-    }
-}
-
-private extension NSLock {
-    func withLock<T>(_ body: () -> T) -> T {
-        lock(); defer { unlock() }
-        return body()
-    }
-}
-
 private func feedFocus(_ windowId: Int64, x: Double) -> JSONValue {
     .object([
         "window_id": .int(windowId),
@@ -158,16 +65,6 @@ private func feedFocus(_ windowId: Int64, x: Double) -> JSONValue {
             "w": .double(400), "h": .double(300),
         ]),
     ])
-}
-
-private func modePayload(
-    _ type: String, epoch: String, sequence: Int64, mode: String
-) -> Data {
-    Data(JSONValue.object([
-        "ok": .bool(true), "type": .string(type),
-        "epoch": .string(epoch), "sequence": .int(sequence),
-        "mode": .string(mode),
-    ]).canonical().utf8)
 }
 
 func runFeedSelfTest() -> Int32 {
@@ -179,20 +76,41 @@ func runFeedSelfTest() -> Int32 {
         && !projectionIsSystemUIOwner(bundleIdentifier: "third.party.WindowManager", executablePath: systemPath)
         && !projectionIsSystemUIOwner(bundleIdentifier: nil, executablePath: nil),
         "feed/unknown-and-spoofed-owners-still-require-complete-AX-classification")
+    // Live shape 2026-10-13: Safari native full-screen on type-4 Space 918; the
+    // toolbar strip (no AX window) and the full-screen window occupy only 918.
+    let spaceTypes: [UInt64: Int] = [4: 0, 874: 0, 800: 4, 918: 4]
+    let memberships: [Int64: [UInt64]] = [13223: [918], 13161: [918], 5641: [4], 7: [4, 918], 8: [999], 9: []]
+    let excluded = projectionNonDesktopOnlyWindowIds([13223, 13161, 5641, 7, 8, 9, 10], spaceTypes: spaceTypes) { memberships[$0] }
+    test.check(excluded == [13223, 13161],
+        "feed/full-screen-only-rows-are-outside-the-desktop-inventory-contract")
+    test.check(!excluded.contains(5641) && !excluded.contains(7) && !excluded.contains(8)
+        && !excluded.contains(9) && !excluded.contains(10),
+        "feed/desktop-shared-unknown-empty-and-unreadable-memberships-stay-required")
+    test.check(projectionNonDesktopOnlyWindowIds([13223], spaceTypes: [4: 0, 918: 0]) { memberships[$0] }.isEmpty,
+        "feed/no-known-non-desktop-Space-excludes-nothing")
+    // Live shape 2026-10-16: Xcode's Device Hub was a regular running app with
+    // processIdentifier -1; enrolling it failed AXObserverCreate and refused
+    // every world read for 12 h.
+    test.check(projectionInventoryOwnerPids(visibleOwners: [1153, 10194], regularApplications: [675, 1153, 47208, -1, 0],
+        excluded: [821]) == [675, 1153, 10194, 47208],
+        "feed/regular-app-without-a-process-is-not-an-AX-enrollment-owner")
+    test.check(projectionInventoryOwnerPids(visibleOwners: [821, 900], regularApplications: [821, 901],
+        excluded: [821, 900]) == [901],
+        "feed/self-and-system-owners-stay-excluded-from-the-owner-cohort")
 
     let observer = FakeAccessibilityObserver()
     let snapshots = FeedSnapshotFixture()
     let deliveries = FeedDeliveryFixture()
     let feedHealth = AccessibilityHealthFixture()
-    let operations = DeferredOperations()
+    let operations = ManualExecutor()
     let integratedCore = CoreServer(
-        socketPath: "/tmp/leyline-tests-\(getpid())/leylined-feed-integrated-\(getpid()).sock")
+        socketPath: selfTestSocketPath("leylined-feed-integrated"))
     snapshots.set(ProjectionWorldSnapshot(
         windowsOnscreen: 2, focus: feedFocus(101, x: 0)))
     let feed = ProjectionInputFeed(
         observer: observer,
         capture: { snapshots.capture($0) },
-        executeOnMain: { operations.enqueueMain($0) },
+        executeOnObservationLane: { operations.enqueue($0) },
         onHealthChanged: {
             feedHealth.append($0)
             integratedCore.updateFocusObserverHealth($0)
@@ -226,9 +144,9 @@ func runFeedSelfTest() -> Int32 {
         windowsOnscreen: 2, focus: feedFocus(102, x: 10)))
     observer.emit(.focusedWindowChanged, pid: 111, generation: firstGeneration)
     test.check(
-        operations.mainCount == 1 && deliveries.all.count == 1,
+        operations.pending == 1 && deliveries.all.count == 1,
         "feed/ax-callback-reenters-main-before-delivery")
-    operations.runNextMain()
+    operations.runOne()
     test.check(
         deliveries.all.last?["event"]?.stringValue == "ax_focus_changed"
             && deliveries.all.last?["focus"]?.at(path: "window_id")?.intValue == 102,
@@ -237,11 +155,11 @@ func runFeedSelfTest() -> Int32 {
     observer.emitHealth(.degraded(
         pid: 111, generation: feed.currentGeneration,
         reason: "ax_window_registration_failed:test"))
-    operations.runNextMain()
+    operations.runOne()
     observer.emitHealth(AccessibilityObserverHealth(
         ready: true, pid: 111, generation: feed.currentGeneration,
         windowNotificationsReady: true, degradedReason: nil))
-    operations.runNextMain()
+    operations.runOne()
     test.check(
         feedHealth.all.contains {
             $0.degradedReason == "ax_window_registration_failed:test"
@@ -252,7 +170,7 @@ func runFeedSelfTest() -> Int32 {
     snapshots.set(ProjectionWorldSnapshot(
         windowsOnscreen: 2, focus: feedFocus(102, x: 20)))
     observer.emit(.focusedWindowMoved, pid: 111, generation: firstGeneration)
-    operations.runNextMain()
+    operations.runOne()
     test.check(
         deliveries.all.last?["event"]?.stringValue == "ax_window_moved"
             && deliveries.all.last?["focus"]?.at(path: "frame.x")?.numberValue == 20,
@@ -261,7 +179,7 @@ func runFeedSelfTest() -> Int32 {
     snapshots.set(ProjectionWorldSnapshot(
         windowsOnscreen: 2, focus: feedFocus(102, x: 30)))
     observer.emit(.focusedWindowResized, pid: 111, generation: firstGeneration)
-    operations.runNextMain()
+    operations.runOne()
     test.check(
         deliveries.all.last?["event"]?.stringValue == "ax_window_resized"
             && deliveries.all.last?["focus"]?.at(path: "frame.x")?.numberValue == 30,
@@ -279,7 +197,7 @@ func runFeedSelfTest() -> Int32 {
 
     let afterActivationCount = deliveries.all.count
     observer.emit(.focusedWindowChanged, pid: 111, generation: firstGeneration)
-    operations.runNextMain()
+    operations.runOne()
     test.check(
         deliveries.all.count == afterActivationCount,
         "feed/late-prior-generation-callback-is-suppressed")
@@ -295,7 +213,7 @@ func runFeedSelfTest() -> Int32 {
     snapshots.set(ProjectionWorldSnapshot(windowsOnscreen: 2, focus: .null))
     observer.emit(
         .focusedWindowChanged, pid: 222, generation: feed.currentGeneration)
-    operations.runNextMain()
+    operations.runOne()
     test.check(
         deliveries.all.last?["focus"] == .null,
         "feed/focus-null-clears-stale-focus")
@@ -323,15 +241,8 @@ func runFeedSelfTest() -> Int32 {
     test.check(
         snapshots.captures == idleCaptureCount
             && deliveries.all.count == idleDeliveryCount
-            && operations.mainCount == 0,
+            && operations.pending == 0,
         "feed/no-autonomous-polling-or-timer-work")
-
-    test.check(
-        ModeFrame.parse(modePayload(
-            "mode_snapshot", epoch: "e1", sequence: 0, mode: "default"))
-            == ModeFrame(type: .snapshot, epoch: "e1", sequence: 0, mode: "default")
-            && ModeFrame.parse(Data("{}".utf8)) == nil,
-        "mode/frame-parser-requires-complete-typed-shape")
 
     var cursor = ModeFrameCursor()
     test.check(
@@ -371,7 +282,7 @@ func runFeedSelfTest() -> Int32 {
             == .ignoredRetiredEpoch,
         "mode/retired-epoch-cannot-return")
 
-    let corePath = "/tmp/leyline-tests-\(getpid())/leylined-feed-core-\(getpid()).sock"
+    let corePath = selfTestSocketPath("leylined-feed-core")
     let core = CoreServer(socketPath: corePath)
     _ = core.applyWorldDelta(["event": .string("world_seed"), "focus": .null])
     let modeAccepted = core.applyModeFrame(
@@ -509,6 +420,8 @@ private final class TargetedFeedWindowFixture: TargetedProjectionWindowReading, 
 
 private final class TargetedFeedSpaceFixture: ProjectionSpaceObserving, @unchecked Sendable {
     var contexts: [Int64: ProjectionSpaceContext] = [:]
+    /// Windows on a Space created after the baseline: no context, still on a Space.
+    var unbaselined: Set<Int64> = []
     var unavailable = false
     var baselineCalls = 0
     var contextCalls = 0
@@ -538,11 +451,11 @@ private final class TargetedFeedSpaceFixture: ProjectionSpaceObserving, @uncheck
         let grouped = Dictionary(grouping: contexts.values, by: \.displayId)
         return .success(grouped.keys.sorted().compactMap { grouped[$0]?.first })
     }
+    func occupiesSpace(windowId: Int64) -> Bool { contexts[windowId] != nil || unbaselined.contains(windowId) }
 }
 
 private final class TargetedFeedWorldObserverFixture: ProjectionWorldObserving, @unchecked Sendable {
     var onEvent: (@Sendable (AccessibilityFocusEvent) -> Void)?
-    var generations: [UInt64] = []
     var windowIds: Set<Int64> = []
     var nextFailure: ProjectionObservationFailure?
     var begins = 0
@@ -555,7 +468,6 @@ private final class TargetedFeedWorldObserverFixture: ProjectionWorldObserving, 
         return .success(())
     }
     func replace(inventory: ProjectionWindowInventory, generation: UInt64) -> Result<Void, ProjectionObservationFailure> {
-        generations.append(generation)
         windowIds = Set(inventory.handles.map(\.windowId))
         if let nextFailure { return .failure(nextFailure) }
         return .success(())
@@ -597,7 +509,7 @@ private final class TargetedLifetimeFixture {
     let trust = TargetedFeedTrustFixture()
     let session = TargetedFeedSessionFixture()
     let observer = FakeAccessibilityObserver()
-    let operations = DeferredOperations()
+    let operations = ManualExecutor()
     let deliveries = FeedDeliveryFixture()
     let snapshots: TargetedProjectionSnapshot
     let feed: ProjectionInputFeed
@@ -619,7 +531,7 @@ private final class TargetedLifetimeFixture {
             sessionGeneration: { session.generation.load(ordering: .acquiring) })
         let snapshots = snapshots, operations = operations, deliveries = deliveries
         feed = ProjectionInputFeed(observer: observer, captureTargeted: { snapshots.capture($0) },
-            executeOnMain: { operations.enqueueMain($0) }, onHealthChanged: { core?.updateFocusObserverHealth($0) },
+            executeOnObservationLane: { operations.enqueue($0) }, onHealthChanged: { core?.updateFocusObserverHealth($0) },
             deliver: { deliveries.append($0); _ = core?.applyWorldDelta($0) })
         let feed = feed
         snapshots.onWorldEvent = { feed.worldAccessibilityEvent($0) }
@@ -654,10 +566,54 @@ private func targetedLifetimePlannerWorld(_ scenario: TargetedLifetimeFixture, f
         "focused_window_id": .int(scenario.id)])
 }
 
+/// A Mission Control move reaches the resident only as a window-server Space
+/// notification. A cached window now on another Space admits one sweep through
+/// the production feed; creation and destruction stay with the AX lifecycle.
+private func runTargetedProjectionWindowSpaceScenarios(rows: [JSONValue], test: inout SelfTest) {
+    let core = CoreServer(socketPath: selfTestSocketPath("leylined-window-space"))
+    let scenario = TargetedLifetimeFixture(rows, core: core)
+    let moved = scenario.reader.records.keys.max()!
+    let origin = scenario.spaces.contexts[moved]!
+    let tokens = scenario.snapshots.windowGenerations
+    test.check(!scenario.snapshots.windowChangedSpace(windowId: moved)
+        && !scenario.snapshots.windowChangedSpace(windowId: moved + 1_000),
+        "window-space/unchanged-or-uncached-window-owes-no-sweep")
+    scenario.spaces.contexts[moved] = nil
+    test.check(!scenario.snapshots.windowChangedSpace(windowId: moved),
+        "window-space/window-on-no-space-is-left-to-the-ax-lifecycle")
+    scenario.spaces.unbaselined = [moved]
+    test.check(scenario.snapshots.windowChangedSpace(windowId: moved),
+        "window-space/window-on-a-space-created-after-the-baseline-owes-a-sweep")
+    scenario.spaces.unbaselined = []
+
+    let elsewhere = "space:uuid:window-space-elsewhere"
+    scenario.spaces.contexts[moved] = .init(key: elsewhere, displayId: origin.displayId, visible: false)
+    let record = scenario.reader.records[moved]!
+    scenario.reader.records[moved] = TargetedWindowObservation(windowId: moved, pid: record.pid, frame: record.frame,
+        role: record.role, subrole: record.subrole, title: record.title, resizable: record.resizable,
+        movable: record.movable, minimized: false, onscreen: false)
+    let inventories = scenario.reader.inventoryCalls
+    let owed = scenario.snapshots.windowChangedSpace(windowId: moved)
+    scenario.feed.windowSpaceChanged(frontmost: scenario.app)
+    let delivered = scenario.deliveries.all.last
+    let row = delivered?["windows"]?.arrayValue?.first { $0.at(path: "window_id")?.intValue == moved }
+    test.check(owed && delivered?["event"]?.stringValue == "window_space_changed"
+        && scenario.reader.inventoryCalls == inventories + 1
+        && row?.at(path: "space_key")?.stringValue == elsewhere && row?.at(path: "space_visible")?.boolValue == false
+        && row?.at(path: "managed")?.boolValue == false
+        && core.worldState.at(path: "event")?.stringValue == "window_space_changed"
+        && core.worldState.at(path: "observation.world_complete")?.boolValue == true
+        && scenario.snapshots.windowGenerations == tokens,
+        "window-space/window-on-another-space-sweeps-into-core-and-keeps-lifetimes")
+    test.check(!scenario.snapshots.windowChangedSpace(windowId: moved),
+        "window-space/second-notification-of-the-same-move-owes-nothing")
+    scenario.finish()
+}
+
 /// App activation enters through the production feed and publishes into the
 /// actual core. Only AX inventory/identity and notification backends are fake.
 private func runTargetedProjectionActivationScenarios(rows: [JSONValue], test: inout SelfTest) {
-    let core = CoreServer(socketPath: "/tmp/leyline-tests-\(getpid())/leylined-activation-\(getpid()).sock")
+    let core = CoreServer(socketPath: selfTestSocketPath("leylined-activation"))
     let active = TargetedLifetimeFixture(rows, core: core)
     let before = active.snapshots.windowGenerations
     let source = active.worldObserver.activeGeneration
@@ -700,20 +656,20 @@ private func runTargetedProjectionActivationScenarios(rows: [JSONValue], test: i
     test.check({ if case .failure(let failure) = refusal { return failure.code == "window_resolver_lifetime_generation_mismatch" }; return false }(),
         "targeted-activation/old-background-effect-token-cannot-resolve-recovered-same-pid-id")
     active.worldObserver.emit(.focusedWindowDestroyed, pid: active.pid, generation: source, element: oldElement, windowId: staleId)
-    active.operations.runNextMain()
+    active.operations.runOne()
     test.check(active.snapshots.windowGenerations == restored
         && core.worldState.at(path: "observation.world_complete")?.boolValue == true,
         "targeted-activation/old-retained-element-callback-cannot-destroy-refreshed-member")
     active.finish()
 
-    let failedCore = CoreServer(socketPath: "/tmp/leyline-tests-\(getpid())/leylined-activation-failure-\(getpid()).sock")
+    let failedCore = CoreServer(socketPath: selfTestSocketPath("leylined-activation-failure"))
     let failed = TargetedLifetimeFixture(rows, core: failedCore)
     let oldTokens = failed.snapshots.windowGenerations
     let failingId = failed.reader.records.keys.max()!
     failed.reader.reuseWindowId(failingId)
     failed.reader.inventoryFailure = .init(code: "fixture_activation_inventory_failure")
     failed.feed.applicationActivated(failed.app)
-    test.check(failed.reader.inventoryCalls == 2 && failed.operations.mainCount == 0
+    test.check(failed.reader.inventoryCalls == 2 && failed.operations.pending == 0
         && failed.snapshots.windowGenerations.isEmpty && failedCore.worldState.at(path: "focus") == .null
         && failedCore.worldState.at(path: "observation.ready")?.boolValue == false
         && failedCore.worldState.at(path: "observation.world_complete")?.boolValue == false
@@ -743,8 +699,7 @@ private func runTargetedProjectionActivationScenarios(rows: [JSONValue], test: i
 /// Actual activation/feed/provider pipeline. AX/CG inventory and lifecycle
 /// backends are fixtures; no focus setters, live AX calls or pixel matching.
 private func runTargetedIgnoredRetainedHandleScenarios(rows: [JSONValue], test: inout SelfTest) {
-    let path = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-        .deletingLastPathComponent().appendingPathComponent("Fixtures/feed/ignored-retained-identity.json")
+    let path = SelfTestFixtures.url("feed/ignored-retained-identity.json")
     guard let data = try? Data(contentsOf: path), let proof = try? JSONValue.parse(data),
           let cases = proof.at(path: "unsafe_cases")?.arrayValue?.compactMap(\.stringValue), cases.count == 11 else {
         test.check(false, "ignored-retained/nonvacuous-fixture"); return
@@ -825,13 +780,13 @@ private func runTargetedIgnoredRetainedHandleScenarios(rows: [JSONValue], test: 
 /// Independent failure/reuse/recovery episodes drive actual resolver and cached
 /// partition admission. Every episode starts with nonzero lifetime authority.
 private func runTargetedProjectionLifetimeScenarios(test: inout SelfTest) {
-    let path = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-        .deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Fixtures/feed/lifetime-scenes.json")
+    let path = SelfTestFixtures.url("feed/lifetime-scenes.json")
     guard let data = try? Data(contentsOf: path), let fixture = try? JSONValue.parse(data),
           let rows = fixture.at(path: "windows")?.arrayValue, rows.count == 2 else {
         test.check(false, "targeted-lifetime/nonvacuous-fixture-load"); return
     }
     runTargetedProjectionActivationScenarios(rows: rows, test: &test)
+    runTargetedProjectionWindowSpaceScenarios(rows: rows, test: &test)
     runTargetedIgnoredRetainedHandleScenarios(rows: rows, test: &test)
     for gap in ["baseline", "inventory", "observer", "trust", "off"] {
         let scenario = TargetedLifetimeFixture(rows)
@@ -852,7 +807,7 @@ private func runTargetedProjectionLifetimeScenarios(test: inout SelfTest) {
         case "inventory": scenario.reader.inventoryFailure = .init(code: "fixture_inventory_failure"); scenario.recover(); scenario.reader.inventoryFailure = nil
         case "observer":
             scenario.worldObserver.emit(.worldObserverDegraded, pid: scenario.pid, generation: source, element: nil, windowId: nil)
-            scenario.operations.runNextMain()
+            scenario.operations.runOne()
         case "trust": scenario.trust.trusted = false; scenario.feed.trustChanged(frontmost: scenario.app); scenario.trust.trusted = true
         default: scenario.snapshots.stop()
         }
@@ -875,7 +830,7 @@ private func runTargetedProjectionLifetimeScenarios(test: inout SelfTest) {
         let deliveries = scenario.deliveries.all.count
         scenario.worldObserver.emit(.focusedWindowDestroyed, pid: scenario.pid, generation: source,
             element: scenario.reader.elements[scenario.id], windowId: scenario.id)
-        test.check(scenario.operations.mainCount == 0 && scenario.deliveries.all.count == deliveries && scenario.token == renewed,
+        test.check(scenario.operations.pending == 0 && scenario.deliveries.all.count == deliveries && scenario.token == renewed,
             "targeted-lifetime/\(gap)-old-concrete-source-callback-cannot-enter-recovered-feed")
         scenario.finish()
     }
@@ -887,11 +842,11 @@ private func runTargetedProjectionLifetimeScenarios(test: inout SelfTest) {
     continuous.feed.applicationActivated(continuous.app)
     test.check(continuous.token == initial && continuous.worldObserver.begins == begins && continuous.worldObserver.stops == stops,
         "targeted-lifetime/ordinary-app-rebind-retains-concrete-all-app-lifecycle-source")
-    let receipt = UInt64(fixture.at(path: "receipt_uptime_ns")!.intValue!)
+    let receipt = fixture.requiredUInt64("receipt_uptime_ns")
     continuous.worldObserver.onEvent?(AccessibilityFocusEvent(kind: .focusedWindowMoved, pid: continuous.pid,
         generation: oldSource, element: continuous.reader.elements[continuous.id], windowId: continuous.id, receiptUptimeNs: receipt,
         isWorldObservation: true))
-    continuous.operations.runNextMain()
+    continuous.operations.runOne()
     let observation = continuous.deliveries.all.last?["observation"]
     test.check(continuous.token == initial && observation?.at(path: "source_observer_generation")?.intValue == Int64(oldSource)
         && observation?.at(path: "admission_observer_generation")?.intValue == Int64(continuous.feed.currentGeneration)
@@ -905,11 +860,11 @@ private func runTargetedProjectionLifetimeScenarios(test: inout SelfTest) {
     continuous.reader.reuseWindowId(continuous.id)
     continuous.worldObserver.emit(.windowCreated, pid: continuous.pid, generation: oldSource,
         element: continuous.reader.elements[continuous.id], windowId: continuous.id)
-    continuous.operations.runNextMain()
+    continuous.operations.runOne()
     let recreated = continuous.token!
     continuous.worldObserver.emit(.focusedWindowDestroyed, pid: continuous.pid, generation: oldSource,
         element: oldElement, windowId: continuous.id)
-    continuous.operations.runNextMain()
+    continuous.operations.runOne()
     test.check(recreated > initial && continuous.token == recreated
         && continuous.deliveries.all.last?["observation"]?.at(path: "failure_code")?.stringValue == "lifecycle_notification_identity_mismatch",
         "targeted-lifetime/late-destroyed-old-element-does-not-retire-same-id-new-window")
@@ -936,8 +891,7 @@ private func runTargetedProjectionLifetimeScenarios(test: inout SelfTest) {
 /// Session changes retire the real snapshot provider's authority independently
 /// of AX permission. Injected windows/Spaces expose every attempted read.
 private func runTargetedProjectionSessionScenarios(test: inout SelfTest) {
-    let fixtureRoot = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-        .deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Fixtures/feed")
+    let fixtureRoot = SelfTestFixtures.url("feed")
     guard let windowData = try? Data(contentsOf: fixtureRoot.appendingPathComponent("lifetime-scenes.json")),
           let fixture = try? JSONValue.parse(windowData), let rows = fixture.at(path: "windows")?.arrayValue,
           rows.count == 2,
@@ -1026,7 +980,7 @@ private func runTargetedProjectionSessionScenarios(test: inout SelfTest) {
     let deliveries = active.deliveries.all.count
     active.worldObserver.emit(.focusedWindowDestroyed, pid: active.pid, generation: oldSource,
         element: active.reader.elements[active.id], windowId: active.id)
-    test.check(active.operations.mainCount == 0 && active.deliveries.all.count == deliveries,
+    test.check(active.operations.pending == 0 && active.deliveries.all.count == deliveries,
         "targeted-session/pre-lock-source-callback-cannot-enter-unlocked-recovery")
     active.finish()
 
@@ -1063,8 +1017,7 @@ private func runTargetedProjectionSessionScenarios(test: inout SelfTest) {
 /// Real feed/provider/core transitions with injectable OS reads. Fixture scenes
 /// freeze warm six/stress twenty windows; counters are actual adapter invocations.
 private func runTargetedEffectHandleRefreshScenarios(test: inout SelfTest) {
-    let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-        .deletingLastPathComponent().appendingPathComponent("Fixtures/feed/effect-handle-refresh.json")
+    let url = SelfTestFixtures.url("feed/effect-handle-refresh.json")
     guard let data = try? Data(contentsOf: url), let fixture = try? JSONValue.parse(data),
           let rows = fixture.at(path: "windows")?.arrayValue, rows.count == 2 else {
         test.check(false, "effect-handle-refresh/fixture-load"); return
@@ -1159,9 +1112,7 @@ func runTargetedProjectionScenarios(test: inout SelfTest) {
     runProjectionInventoryClassificationScenarios(test: &test)
     runProjectionNamedWindowDescriptionScenarios(test: &test)
     runProjectionWindowOnscreenScenarios(test: &test)
-    let fixtureURL = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-        .deletingLastPathComponent().deletingLastPathComponent()
-        .appendingPathComponent("Fixtures/feed/window-scenes.json")
+    let fixtureURL = SelfTestFixtures.url("feed/window-scenes.json")
     guard let data = try? Data(contentsOf: fixtureURL), let fixture = try? JSONValue.parse(data) else {
         test.check(false, "targeted-feed/frozen-warm-stress-scenes-missing")
         return
@@ -1178,11 +1129,11 @@ func runTargetedProjectionScenarios(test: inout SelfTest) {
             spaces: spaces, spaceEnabled: { $0 == "space:uuid:fixture-a" }, worldObserver: worldObserver,
             identityIsCurrent: { _ in true })
         let observer = FakeAccessibilityObserver()
-        let operations = DeferredOperations()
+        let operations = ManualExecutor()
         let deliveries = FeedDeliveryFixture()
         let core = CoreServer(socketPath: "/tmp/leyline-tests-\(getpid())/leylined-targeted-\(name)-\(getpid()).sock")
         let feed = ProjectionInputFeed(observer: observer, captureTargeted: { snapshots.capture($0) },
-            executeOnMain: { operations.enqueueMain($0) }, deliver: {
+            executeOnObservationLane: { operations.enqueue($0) }, deliver: {
                 deliveries.append($0)
                 _ = core.applyWorldDelta($0)
             })
@@ -1209,14 +1160,14 @@ func runTargetedProjectionScenarios(test: inout SelfTest) {
             reader.focusedId = id
             observer.emit(.focusedWindowChanged, pid: pid, generation: generation,
                 windowGeneration: UInt64(index + 1), element: reader.elements[id], windowId: id)
-            operations.runNextMain()
+            operations.runOne()
             reader.move(id, x: Double(index + 100))
             observer.emit(.focusedWindowMoved, pid: pid, generation: generation,
                 windowGeneration: UInt64(index + 1), element: reader.elements[id], windowId: id)
-            operations.runNextMain()
+            operations.runOne()
             observer.emit(.focusedWindowResized, pid: pid, generation: generation,
                 windowGeneration: UInt64(index + 1), element: reader.elements[id], windowId: id)
-            operations.runNextMain()
+            operations.runOne()
         }
         _ = core.applyModeFrame(.init(type: .snapshot, epoch: "targeted-\(name)", sequence: 0, mode: "default"))
         test.check(reader.inventoryCalls == 1 && spaces.baselineCalls == 1
@@ -1253,46 +1204,46 @@ func runTargetedProjectionScenarios(test: inout SelfTest) {
         let beforeStale = deliveries.all.count
         observer.emit(.focusedWindowMoved, pid: pid, generation: generation,
             windowGeneration: 0, element: reader.elements[firstId], windowId: firstId)
-        operations.runNextMain()
+        operations.runOne()
         observer.emit(.focusedWindowMoved, pid: pid + 1, generation: generation,
             windowGeneration: UInt64(expectedCount), element: reader.elements[lastId], windowId: lastId)
-        operations.runNextMain()
+        operations.runOne()
         test.check(deliveries.all.count == beforeStale,
             "targeted-feed/\(name)-old-window-generation-and-foreign-pid-refuse-before-read")
         worldObserver.emit(.focusedWindowMoved, pid: pid, generation: generation,
             element: reader.elements[firstId], windowId: firstId)
-        operations.runNextMain()
+        operations.runOne()
         test.check(deliveries.all.last?["focus"]?.at(path: "window_id")?.intValue == lastId
             && reader.readIds.last == firstId && reader.inventoryCalls == 1,
             "targeted-feed/\(name)-background-window-update-does-not-retarget-focus")
         worldObserver.emit(.focusedWindowMoved, pid: pid, generation: generation,
             element: reader.elements[firstId], windowId: firstId, windowGeneration: 10)
-        operations.runNextMain()
+        operations.runOne()
         let beforeOldRegistration = deliveries.all.count
         worldObserver.emit(.focusedWindowMoved, pid: pid, generation: generation,
             element: reader.elements[firstId], windowId: firstId, windowGeneration: 9)
-        operations.runNextMain()
+        operations.runOne()
         test.check(deliveries.all.count == beforeOldRegistration,
             "targeted-feed/\(name)-same-pid-and-window-id-old-registration-token-is-rejected")
         worldObserver.emit(.focusedWindowDestroyed, pid: pid, generation: generation,
             element: reader.elements[lastId], windowId: lastId)
-        operations.runNextMain()
+        operations.runOne()
         test.check(deliveries.all.last?["focus"] == .null
             && deliveries.all.last?["windows"]?.arrayValue?.count == expectedCount - 1
             && reader.inventoryCalls == 1,
             "targeted-feed/\(name)-destruction-revokes-focus-and-cache-without-read")
         observer.emit(.focusedWindowChanged, pid: pid, generation: generation,
             windowGeneration: UInt64(expectedCount + 1), element: reader.elements[firstId], windowId: firstId)
-        operations.runNextMain()
+        operations.runOne()
         observer.emit(.focusedWindowMinimized, pid: pid, generation: generation,
             windowGeneration: UInt64(expectedCount + 1), element: reader.elements[firstId], windowId: firstId)
-        operations.runNextMain()
+        operations.runOne()
         test.check(deliveries.all.last?["focus"] == .null,
             "targeted-feed/\(name)-minimize-clears-ring-authority-immediately")
-        reader.readFailure = .init(code: "ax_attribute_read_failed:AXPosition:cannotComplete")
+        reader.readFailure = .init(code: "ax_attribute_read_failed:AXPosition:-25204")
         observer.emit(.focusedWindowChanged, pid: pid, generation: generation,
             windowGeneration: UInt64(expectedCount + 2), element: reader.elements[firstId], windowId: firstId)
-        operations.runNextMain()
+        operations.runOne()
         test.check(deliveries.all.last?["focus"] == .null
             && deliveries.all.last?["observation"]?.at(path: "ready")?.boolValue == false
             && deliveries.all.last?["observation"]?.at(path: "world_complete")?.boolValue == false,
@@ -1301,7 +1252,7 @@ func runTargetedProjectionScenarios(test: inout SelfTest) {
         reader.recycledIdentity = true
         observer.emit(.focusedWindowChanged, pid: pid, generation: generation,
             windowGeneration: UInt64(expectedCount + 3), element: reader.elements[firstId], windowId: firstId)
-        operations.runNextMain()
+        operations.runOne()
         test.check(deliveries.all.last?["focus"] == .null
             && deliveries.all.last?["observation"]?.at(path: "failure_code")?.stringValue == "ax_notification_identity_mismatch",
             "targeted-feed/\(name)-recycled-ax-identity-does-not-authorize-another-window")
@@ -1309,7 +1260,7 @@ func runTargetedProjectionScenarios(test: inout SelfTest) {
         spaces.unavailable = true
         observer.emit(.focusedWindowChanged, pid: pid, generation: generation,
             windowGeneration: UInt64(expectedCount + 4), element: reader.elements[firstId], windowId: firstId)
-        operations.runNextMain()
+        operations.runOne()
         test.check(deliveries.all.last?["focus"] == .null
             && deliveries.all.last?["observation"]?.at(path: "failure_code")?.stringValue == "independent_window_space_unknown_or_ambiguous",
             "targeted-feed/\(name)-unknown-space-has-no-runtime-identity-fallback")
@@ -1328,9 +1279,9 @@ func runTargetedProjectionScenarios(test: inout SelfTest) {
             observer.emit(.focusedWindowMoved, pid: pid, generation: feed.currentGeneration,
                 windowGeneration: 1, element: reader.elements[firstId], windowId: firstId)
         }
-        test.check(operations.mainCount == 1 && deliveries.all.count == beforeOverflow,
+        test.check(operations.pending == 1 && deliveries.all.count == beforeOverflow,
             "targeted-feed/\(name)-burst-mailbox-has-one-drain-and-bounded-admission")
-        operations.runNextMain()
+        operations.runOne()
         test.check(deliveries.all.count == beforeOverflow + 1
             && deliveries.all.last?["event"]?.stringValue == "projection_feed_input_overflow"
             && deliveries.all.last?["focus"] == .null
@@ -1340,12 +1291,12 @@ func runTargetedProjectionScenarios(test: inout SelfTest) {
             "targeted-feed/\(name)-overflow-refuses-batch-and-invalidates-before-further-authority")
         observer.emit(.focusedWindowMoved, pid: pid, generation: feed.currentGeneration,
             windowGeneration: 2, element: reader.elements[firstId], windowId: firstId)
-        test.check(operations.mainCount == 0,
+        test.check(operations.pending == 0,
             "targeted-feed/\(name)-overflow-fences-further-notifications-until-recovery")
         feed.spaceChanged(frontmost: .init(pid: pid, name: "Fixture"))
         observer.emit(.focusedWindowMoved, pid: pid, generation: feed.currentGeneration,
             windowGeneration: 1, element: reader.elements[firstId], windowId: firstId)
-        operations.runNextMain()
+        operations.runOne()
         test.check(deliveries.all.last?["event"]?.stringValue == "ax_window_moved"
             && deliveries.all.last?["observation"]?.at(path: "world_complete")?.boolValue == true,
             "targeted-feed/\(name)-recovery-replaces-generation-and-resumes-authority")
@@ -1363,7 +1314,7 @@ func runTargetedProjectionScenarios(test: inout SelfTest) {
             "targeted-feed/\(name)-app-observer-generation-rebind-preserves-live-window-lifetime")
         worldObserver.emit(.windowCreated, pid: pid, generation: worldObserver.activeGeneration,
             element: reader.elements[firstId], windowId: firstId, windowGeneration: 321)
-        operations.runNextMain()
+        operations.runOne()
         let recreatedLifetime = snapshots.windowGenerations[String(firstId)]!
         let resolverResult = snapshots.resolveWindow(windowId: firstId, observerGeneration: feed.currentGeneration,
             expectedWindowGeneration: lifetimeBeforeRebind)
@@ -1418,7 +1369,7 @@ func runTargetedProjectionScenarios(test: inout SelfTest) {
         && grantedRecovery.observation["failure_code"] == .null,
         "targeted-feed/startup-without-trust-recovers-from-live-trust-provider-after-grant")
     changingSnapshot.stop()
-    let independentObserver = AccessibilityFocusObserver(trusted: false)
+    let independentObserver = AccessibilityFocusObserver(trustedProvider: { false })
     test.check(independentObserver.isObservationRunLoopIndependentOfMain,
         "targeted-feed/observer-runloop-executes-independently-of-appkit-main-thread")
     test.check(TargetedProjectionSnapshot.axReadTimeoutSeconds > 0
@@ -1430,15 +1381,14 @@ func runTargetedProjectionScenarios(test: inout SelfTest) {
 /// Exercises the live inventory's canonical classifier with AX/clock injection.
 /// No actual Accessibility attribute or window-server identity read occurs.
 private func runProjectionInventoryClassificationScenarios(test: inout SelfTest) {
-    let path = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-        .deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Fixtures/feed/inventory-classification.json")
+    let path = SelfTestFixtures.url("feed/inventory-classification.json")
     guard let data = try? Data(contentsOf: path), let fixture = try? JSONValue.parse(data),
           let pid = fixture.at(path: "pid")?.intValue,
           let scenarios = fixture.at(path: "scenarios")?.arrayValue, scenarios.count == 14 else {
         test.check(false, "inventory-classification/nonvacuous-fixture-load"); return
     }
     for scenario in scenarios {
-        let name = scenario.at(path: "name")!.stringValue!
+        let name = scenario.requiredString("name")
         let element = AXUIElementCreateApplication(pid_t(pid))
         var attributes: [String] = []
         var identityReads = 0
@@ -1470,7 +1420,7 @@ private func runProjectionInventoryClassificationScenarios(test: inout SelfTest)
         case .success(let identity): observed = identity == nil ? "excluded" : "retained"
         }
         let expectedAttributes = scenario.at(path: "expected_attributes")!.arrayValue!.compactMap(\.stringValue)
-        let expected = scenario.at(path: "expected")!.stringValue!
+        let expected = scenario.requiredString("expected")
         let classificationFailed = expected.contains("attribute_unavailable") || expected.contains("unknown")
             || expected.contains("deadline_exceeded") || expected.contains("timeout_configuration_failed")
         test.check(observed == expected && attributes == expectedAttributes && identityReads == (classificationFailed ? 0 : 1)
@@ -1483,15 +1433,13 @@ private func runProjectionInventoryClassificationScenarios(test: inout SelfTest)
 /// The injected description reader inspects pointers without dereferencing them;
 /// every response and refusal is independent of the user's actual window list.
 private func runProjectionNamedWindowDescriptionScenarios(test: inout SelfTest) {
-    let sourceRoot = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-    let fixturePath = sourceRoot.deletingLastPathComponent().deletingLastPathComponent()
-        .appendingPathComponent("Fixtures/feed/named-window-description.json")
+    let fixturePath = SelfTestFixtures.url("feed/named-window-description.json")
     guard let data = try? Data(contentsOf: fixturePath), let fixture = try? JSONValue.parse(data),
           let scenarios = fixture.at(path: "scenarios")?.arrayValue, scenarios.count == 10 else {
         test.check(false, "named-window-description/nonvacuous-fixture-load"); return
     }
     for scenario in scenarios {
-        let name = scenario.at(path: "name")!.stringValue!
+        let name = scenario.requiredString("name")
         let windowID = CGWindowID(scenario.at(path: "window_id")!.intValue!)
         var readerCalls = 0
         var exactRawIntegerRequest = true
@@ -1513,11 +1461,13 @@ private func runProjectionNamedWindowDescriptionScenarios(test: inout SelfTest) 
             exactReturnedRecord = (row[kCGWindowNumber as String] as? NSNumber)?.uint64Value == UInt64(windowID)
                 && row["fixture_marker"] as? String == scenario.at(path: "descriptions")?.arrayValue?.first?.at(path: "fixture_marker")?.stringValue
         }
-        test.check(observed == scenario.at(path: "expected")!.stringValue!
-            && readerCalls == Int(scenario.at(path: "reader_calls")!.intValue!)
+        test.check(observed == scenario.requiredString("expected")
+            && readerCalls == scenario.requiredInt("reader_calls")
             && exactRawIntegerRequest && exactReturnedRecord, "named-window-description/" + name)
     }
-    let source = try? String(contentsOf: sourceRoot.appendingPathComponent("TargetedProjectionSnapshot.swift"), encoding: .utf8)
+    // The compiled source tree, not the fixture root: this pins the production reader's text.
+    let sourceRoot = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+    let source = try? String(contentsOf: sourceRoot.appendingPathComponent("LiveTargetedProjectionWindowReader.swift"), encoding: .utf8)
     let start = source?.range(of: "func projectionNamedWindowDescription(")
     let end = start.flatMap { source?.range(of: "/// @canonical projection_inventory_identity", range: $0.upperBound..<source!.endIndex) }
     let helper = start.flatMap { start in end.map { String(source![start.lowerBound..<$0.lowerBound]) } }
@@ -1529,17 +1479,16 @@ private func runProjectionNamedWindowDescriptionScenarios(test: inout SelfTest) 
 /// Uses concrete CFBoolean/CFNumber objects so Swift NSNumber-to-Bool coercion
 /// cannot make malformed Quartz metadata look like an observed visibility flag.
 private func runProjectionWindowOnscreenScenarios(test: inout SelfTest) {
-    let path = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-        .deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Fixtures/feed/window-onscreen.json")
+    let path = SelfTestFixtures.url("feed/window-onscreen.json")
     guard let data = try? Data(contentsOf: path), let fixture = try? JSONValue.parse(data),
           let scenarios = fixture.at(path: "scenarios")?.arrayValue, scenarios.count == 8 else {
         test.check(false, "window-onscreen/nonvacuous-fixture-load"); return
     }
     for scenario in scenarios {
-        let name = scenario.at(path: "name")!.stringValue!
+        let name = scenario.requiredString("name")
         let value: Any?
         var exactFixtureType = true
-        switch scenario.at(path: "kind")!.stringValue! {
+        switch scenario.requiredString("kind") {
         case "absent": value = nil
         case "cfboolean":
             let flag = scenario.at(path: "value")!.boolValue! ? kCFBooleanTrue! : kCFBooleanFalse!
@@ -1553,7 +1502,7 @@ private func runProjectionWindowOnscreenScenarios(test: inout SelfTest) {
             value = number
             exactFixtureType = CFGetTypeID(number) == CFNumberGetTypeID()
                 && CFGetTypeID(number) != CFBooleanGetTypeID()
-        case "string": value = scenario.at(path: "value")!.stringValue! as NSString
+        case "string": value = scenario.requiredString("value") as NSString
         default: value = NSNull()
         }
         let observed: String
@@ -1561,6 +1510,6 @@ private func runProjectionWindowOnscreenScenarios(test: inout SelfTest) {
         case .failure(let failure): observed = failure.code
         case .success(let visible): observed = visible ? "true" : "false"
         }
-        test.check(exactFixtureType && observed == scenario.at(path: "expected")!.stringValue!, "window-onscreen/" + name)
+        test.check(exactFixtureType && observed == scenario.requiredString("expected"), "window-onscreen/" + name)
     }
 }

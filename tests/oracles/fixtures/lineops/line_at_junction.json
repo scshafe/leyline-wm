@@ -1,9 +1,0 @@
-{ "fn": "line_at",
-  "note": "mouse-line-drag M0: a point within tol of BOTH a v and an h segment is a JUNCTION; hits are v-first (the move_lines canonical order).",
-  "arr": { "segments": [ { "axis": "h", "coord": 540, "lo": 0, "hi": 1920 },
-                         { "axis": "v", "coord": 960, "lo": 0, "hi": 1080 } ],
-           "bindings": {} },
-  "x": 955, "y": 545, "tol": 12,
-  "expect": { "kind": "junction",
-              "hits": [ { "axis": "v", "coord": 960, "lo": 0, "hi": 1080 },
-                        { "axis": "h", "coord": 540, "lo": 0, "hi": 1920 } ] } }

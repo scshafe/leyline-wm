@@ -1,0 +1,84 @@
+{
+  "schema": "leyline/insertion-direction-cues/v1",
+  "base_case": "insert_with_reclaim",
+  "directions": [
+    {
+      "side": "west",
+      "axis": "v",
+      "scope": "edge",
+      "level": 0,
+      "label": "← INSERT LEFT",
+      "frame": {
+        "x": 404,
+        "y": 30,
+        "w": 240,
+        "h": 381
+      },
+      "unavailable_label": "← LEFT WON'T FIT"
+    },
+    {
+      "side": "east",
+      "axis": "v",
+      "scope": "edge",
+      "level": 0,
+      "label": "→ INSERT RIGHT",
+      "frame": {
+        "x": 960,
+        "y": 30,
+        "w": 240,
+        "h": 381
+      },
+      "unavailable_label": "→ RIGHT WON'T FIT"
+    },
+    {
+      "side": "north",
+      "axis": "h",
+      "scope": "run",
+      "level": 1,
+      "label": "↑ INSERT ABOVE",
+      "frame": {
+        "x": 404,
+        "y": 30,
+        "w": 796,
+        "h": 240
+      },
+      "unavailable_label": "↑ ABOVE WON'T FIT"
+    },
+    {
+      "side": "south",
+      "axis": "h",
+      "scope": "parent",
+      "level": 2,
+      "label": "↓ INSERT BELOW",
+      "frame": {
+        "x": 0,
+        "y": 560,
+        "w": 1200,
+        "h": 240
+      },
+      "unavailable_label": "↓ BELOW WON'T FIT"
+    }
+  ],
+  "invalid_directions": [
+    {
+      "name": "unknown-side",
+      "side": "diagonal",
+      "axis": "h"
+    },
+    {
+      "name": "missing-side",
+      "side": null,
+      "axis": "h"
+    },
+    {
+      "name": "axis-side-disagreement",
+      "side": "north",
+      "axis": "v"
+    },
+    {
+      "name": "unknown-axis",
+      "side": "north",
+      "axis": "x"
+    }
+  ]
+}

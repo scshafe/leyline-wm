@@ -11,12 +11,10 @@ _wm_doctor_resident_jobs_typed() {
       and (.registered | type == "boolean")
       and (.pid | pid)
       and ((.registered == true) or (.pid == null));
-    . as $jobs
+    . as $jobs | ["leylined"] as $ids
     | (type == "object")
-      and (($jobs | keys | sort)
-        == ["leylined"])
-      and all(["leylined"][];
-        . as $id | ($jobs | has($id)) and ($jobs[$id] | fact))
+      and (($jobs | keys | sort) == $ids)
+      and all($ids[]; . as $id | ($jobs | has($id)) and ($jobs[$id] | fact))
   ' >/dev/null 2>&1
 }
 
@@ -79,6 +77,8 @@ _wm_doctor_resident_status_typed() {
   ' >/dev/null 2>&1
 }
 
+# One row per arm of wm_doctor_resident_verdicts; doctor_main refuses a shorter report.
+wm_doctor_resident_verdict_rows=7
 wm_doctor_resident_verdicts() {
   local jobs="$1" core="$2"
   if ! command -v jq >/dev/null 2>&1; then
@@ -174,11 +174,10 @@ wm_doctor_resident_verdicts() {
           . as $key | ($input[$key] | type == "boolean"))
         and ($input.mode | IN("default","move","resize"))
         and ($input.generation | type == "number" and . >= 0 and . == floor)
-        and ($input.normal_path_subprocesses == 0)
         and ($input.active_action_ids | type == "array")
         and ($input.active_action_ids | all(.[]; type == "string" and length > 0))
     ' >/dev/null 2>&1; then
-    printf 'fail\tnative input facts missing/malformed — require in-process mode source, tap/claim facts and zero normal-path subprocesses\n'
+    printf 'fail\tnative input facts missing/malformed — require in-process mode source and tap/claim facts\n'
   elif $globally_off; then
     if printf '%s' "$core" | jq -e '
         .health.resident.input as $input
@@ -272,12 +271,12 @@ _wm_doctor_collect_jobs_json() {
 }
 
 doctor_main() {
-  case "${1:-all}" in all|health) ;; --help|-h) printf '%s\n' 'ley doctor [all|health]'; return 0 ;; *) wm_err 'usage: ley doctor [all|health]'; return 64 ;; esac
+  case "${1:-}" in '') ;; --help|-h) printf '%s\n' 'ley doctor'; return 0 ;; *) wm_err 'usage: ley doctor'; return 64 ;; esac
   command -v jq >/dev/null 2>&1 || { wm_err 'doctor requires jq for typed diagnostics'; return 69; }
-  local jobs core envelope rows level message errors=0 count=0 client="${LEYLINE_RESIDENT_CLIENT_BIN:-$LEYLINE_HOME/bin/leylined}"
-  [[ -x "$client" ]] || { wm_err 'resident client unavailable; native health unverified'; return 69; }
+  local jobs core envelope rows level message errors=0 count=0
+  wm_resident_client 'resident client unavailable; native health unverified' || return $?
   jobs="$(_wm_doctor_collect_jobs_json)" || { wm_err 'launchd facts unavailable; native ownership unverified'; return 65; }
-  envelope="$("$client" status --json)" || { wm_err 'resident health client failed'; return 65; }
+  envelope="$("$LEYLINE_RESIDENT_CLIENT_BIN" status)" || { wm_err 'resident health client failed'; return 65; }
   core="$(printf '%s' "$envelope" | jq -ec 'select(.error==null) | .data | select(type=="object")')" || { wm_err 'resident status envelope malformed'; return 65; }
   rows="$(wm_doctor_resident_verdicts "$jobs" "$core")" || return 65
   while IFS=$'\t' read -r level message; do
@@ -285,12 +284,7 @@ doctor_main() {
     count=$((count+1))
     case "$level" in ok) wm_ok "$message" ;; warn) wm_warn "$message" ;; fail) wm_err "$message"; errors=$((errors+1)) ;; *) errors=$((errors+1)) ;; esac
   done <<< "$rows"
-  source "$LEYLINE_HOME/lib/resident_keymap.sh" || return 70
-  local issues
-  issues="$(wm_keymap_tap_disjoint_claims)" || return 65
-  printf '%s\n' "$issues"
-  printf '%s' "$issues" | jq -e 'type=="array" and length>0 and all(.[]; .level!="error") and any(.[]; .code=="resident_claims_audit")' >/dev/null || errors=$((errors+1))
-  [[ "$count" -ge 7 ]] || errors=$((errors+1))
+  [[ "$count" -ge "$wm_doctor_resident_verdict_rows" ]] || errors=$((errors+1))
   if (( errors>0 )); then wm_err "$errors resident diagnostic checks failed"; return 1; fi
   wm_ok 'resident diagnostics passed'
 }

@@ -9,7 +9,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import math
 import socket
 from pathlib import Path
 import struct
@@ -18,9 +17,8 @@ import time
 from typing import Any
 import zlib
 
-ROOT = Path(__file__).resolve().parent
-SCENARIOS = ROOT / "scenarios.json"
-SCENARIOS_SHA256 = "f5a7fbdb18e5b0c7cb2c6a744236e827a2caef2ef15bc040caae40e63dd12c0d"
+from acceptance_scenarios import SCENARIOS, SCENARIOS_SHA256, nearest_rank, scenario_digest
+
 IDENTITY_FIELDS = ("revision", "observer_generation", "input_generation", "observer_epoch",
                    "space_key", "topology_revision", "window_id", "pid", "lifetime")
 
@@ -325,16 +323,11 @@ def validate_sample(sample: dict[str, Any], admission: dict[str, Any], budget: d
     return (end - start) / 1e6
 
 
-def percentile(values: list[float], percentile_value: int) -> float:
-    return sorted(values)[max(0, math.ceil(len(values) * percentile_value / 100) - 1)]
-
-
 def validate(samples: list[dict[str, Any]], admissions: dict[str, dict[str, Any]],
              scenarios: dict[str, Any], capture: CaptureEvidence | None,
              binary_hash: str, full: bool) -> dict[str, Any]:
     """Retain all admitted attempts; fail missing populations and ceiling misses."""
-    frozen = hashlib.sha256(json.dumps(scenarios, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-    if frozen != SCENARIOS_SHA256:
+    if scenario_digest(scenarios) != SCENARIOS_SHA256:
         raise EvidenceError("frozen_scenario_thresholds_or_inventory_changed")
     budgets = {row["id"]: row for row in scenarios["budgets"]}
     seen, seen_requests, errors, groups, counts = set(), set(), [], {}, {}
@@ -378,7 +371,7 @@ def validate(samples: list[dict[str, Any]], admissions: dict[str, dict[str, Any]
             errors.append({"group": list(group), "code": "insufficient_scenario_samples"})
         if values:
             for p in (50, 95, 99):
-                row[f"p{p}_ms"] = percentile(values, p)
+                row[f"p{p}_ms"] = nearest_rank(values, p)
             row["max_ms"] = max(values)
             for field in ("p50_ms", "p95_ms", "p99_ms", "max_ms"):
                 if field in budget and (row[field] >= budget[field] if budget.get("strict_less") else row[field] > budget[field]):

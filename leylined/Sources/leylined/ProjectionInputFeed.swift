@@ -1,8 +1,8 @@
 // The pure projection-input coordinator. Workspace and AX adapters report
 // lifecycle events here; the coordinator owns observer generations, captures
 // a targeted snapshot for every accepted event, and funnels one typed world
-// delta to the core. The executor is the observation lane; its legacy
-// executeOnMain label remains source compatible. No timer or polling API.
+// delta to the core. `executeOnObservationLane` is the observation-lane executor.
+// No timer or polling API.
 import Foundation
 import LeylineModel
 
@@ -46,7 +46,7 @@ struct ProjectionSnapshotRequest: Sendable {
 typealias ProjectionSnapshotCapture = @Sendable (ProjectionApplication?) -> ProjectionWorldSnapshot
 typealias TargetedProjectionSnapshotCapture = @Sendable (ProjectionSnapshotRequest) -> ProjectionWorldSnapshot
 typealias ProjectionWorldDelivery = @Sendable (JSONObject) -> Void
-typealias ProjectionMainExecutor = @Sendable (@escaping @Sendable () -> Void) -> Void
+typealias ProjectionObservationExecutor = @Sendable (@escaping @Sendable () -> Void) -> Void
 typealias ProjectionFeedHealthDelivery = @Sendable (AccessibilityObserverHealth) -> Void
 
 /// @canonical projection_input_feed -- all event-driven focus projection
@@ -66,7 +66,7 @@ final class ProjectionInputFeed: @unchecked Sendable {
     private let observer: AccessibilityFocusObserving
     private let capture: TargetedProjectionSnapshotCapture
     private let deliver: ProjectionWorldDelivery
-    private let executeOnMain: ProjectionMainExecutor
+    private let executeOnObservationLane: ProjectionObservationExecutor
     private let onHealthChanged: ProjectionFeedHealthDelivery
     private let transientRecovery: ProjectionTransientRecovery?
     private let recoverySessionGeneration: @Sendable () -> UInt64
@@ -74,7 +74,6 @@ final class ProjectionInputFeed: @unchecked Sendable {
     private let recoveryPermitted: @Sendable () -> Bool
     private var cacheAudit: ProjectionCacheIntegrityAudit?
     private var makeAuditSeed: (@Sendable (UInt64) -> Result<ProjectionCacheAuditSeed, ProjectionObservationFailure>)?
-    private var finishAudit: (@Sendable (ProjectionCacheAuditSeed, ProjectionCacheAuditProbe) -> JSONObject)?
 
     private var application: ProjectionApplication?
     private(set) var currentGeneration: UInt64 = 0
@@ -91,22 +90,25 @@ final class ProjectionInputFeed: @unchecked Sendable {
     private var observerHealth = AccessibilityObserverHealth.detached(
         generation: 0, reason: "not_started")
 
+    #if LEYLINE_BUILD_TESTS
+    /// Developer checks capture by application only; production always captures a targeted request.
     convenience init(
         observer: AccessibilityFocusObserving,
         capture: @escaping ProjectionSnapshotCapture,
-        executeOnMain: @escaping ProjectionMainExecutor,
+        executeOnObservationLane: @escaping ProjectionObservationExecutor,
         onHealthChanged: @escaping ProjectionFeedHealthDelivery = { _ in },
         deliver: @escaping ProjectionWorldDelivery
     ) {
         self.init(observer: observer, captureTargeted: { capture($0.application) },
-                  executeOnMain: executeOnMain, onHealthChanged: onHealthChanged,
+                  executeOnObservationLane: executeOnObservationLane, onHealthChanged: onHealthChanged,
                   deliver: deliver)
     }
+    #endif
 
     init(
         observer: AccessibilityFocusObserving,
         captureTargeted: @escaping TargetedProjectionSnapshotCapture,
-        executeOnMain: @escaping ProjectionMainExecutor,
+        executeOnObservationLane: @escaping ProjectionObservationExecutor,
         onHealthChanged: @escaping ProjectionFeedHealthDelivery = { _ in },
         transientRecovery: ProjectionTransientRecovery? = nil,
         recoverySessionGeneration: @escaping @Sendable () -> UInt64 = { 0 },
@@ -116,7 +118,7 @@ final class ProjectionInputFeed: @unchecked Sendable {
     ) {
         self.observer = observer
         self.capture = captureTargeted
-        self.executeOnMain = executeOnMain
+        self.executeOnObservationLane = executeOnObservationLane
         self.onHealthChanged = onHealthChanged
         self.transientRecovery = transientRecovery
         self.recoverySessionGeneration = recoverySessionGeneration
@@ -134,8 +136,6 @@ final class ProjectionInputFeed: @unchecked Sendable {
     }
 
     /// Attach the initial frontmost app and synchronously publish world_seed.
-    /// The caller invokes this before CoreServer.start(requireWorldSeed:true),
-    /// making revision >= 1 a mechanical precondition of socket visibility.
     func start(frontmost application: ProjectionApplication?) {
         rebind(to: application)
         emit(event: "world_seed", extra: [:])
@@ -146,6 +146,12 @@ final class ProjectionInputFeed: @unchecked Sendable {
         // always replace the generation and all AX registrations.
         rebind(to: application)
         emit(event: "space_changed", extra: [:])
+    }
+
+    /// A cached window moved to another Space while the active Spaces stayed.
+    func windowSpaceChanged(frontmost application: ProjectionApplication?) {
+        rebind(to: application)
+        emit(event: "window_space_changed", extra: [:])
     }
 
     func applicationActivated(_ application: ProjectionApplication?) {
@@ -266,7 +272,7 @@ final class ProjectionInputFeed: @unchecked Sendable {
         drainScheduled = true
         mailboxLock.unlock()
         if schedule {
-            executeOnMain { [weak self] in self?.drainMailbox() }
+            executeOnObservationLane { [weak self] in self?.drainMailbox() }
         }
     }
 
@@ -400,7 +406,7 @@ final class ProjectionInputFeed: @unchecked Sendable {
     func configureCacheAudit(_ coordinator: ProjectionCacheIntegrityAudit,
                              makeSeed: @escaping @Sendable (UInt64) -> Result<ProjectionCacheAuditSeed, ProjectionObservationFailure>,
                              finish: @escaping @Sendable (ProjectionCacheAuditSeed, ProjectionCacheAuditProbe) -> JSONObject) {
-        cacheAudit = coordinator; makeAuditSeed = makeSeed; finishAudit = finish
+        cacheAudit = coordinator; makeAuditSeed = makeSeed
         coordinator.onResult = { [weak self] seed, probe, reason in
             guard let self else { return }
             var delta = finish(seed, probe); delta["cache_audit_reason"] = .string(reason)
@@ -419,13 +425,12 @@ final class ProjectionInputFeed: @unchecked Sendable {
         switch makeAuditSeed(currentGeneration) {
         case .failure(let failure):
             deliver(["event": .string("cache_audit_refused"), "cache_audit_requires_recovery": .bool(false), "cache_integrity": .object([
-                "status": .string("refused"), "failure_code": .string(failure.code),
+                "status": .string(WmStatus.refused.rawValue), "failure_code": .string(failure.code),
                 "session_generation": .int(Int64(clamping: recoverySessionGeneration())),
                 "observation_epoch": .int(Int64(clamping: recoveryObservationEpoch()))])]); return false
         case .success(let seed): return cacheAudit.request(seed, reason: reason)
         }
     }
-    func cancelCacheAudit() { cacheAudit?.cancelForForeground() }
 
     private func setHealth(_ health: AccessibilityObserverHealth) {
         healthLock.lock()

@@ -1,0 +1,210 @@
+{
+  "schema": "leyline/minimum-overlap/v2",
+  "_doc": "Hand-computed frames for windows whose known minimum exceeds their tile. When some cut fits every known floor, lines move the least distance to reach it, inner splits before the lines bounding their parcel (expect: recut). Otherwise the lines that can still move do, and a window grows across cuts that split its own band, anchored at the edges it does not share, so it overlaps only the windows those cuts separate; when its split cannot hold it, it grows from the display edges it touches over its neighbours (expect: overlap). Only a minimum larger than the display falls back to automatic overload resolution (expect: fallback).",
+  "scenes": {
+    "quadrant_pair": {
+      "_doc": "Live 2x2 layout with the top-left quadrant split by v480.5 (spanning only that quadrant). Window 2 needs 574 points: the inner split moves to 385, so window 1 keeps 383.5 and the quadrant line v960 stays.",
+      "expect": "recut",
+      "topology": {"displays": [{"id": 1, "frame": {"x": 0, "y": 0, "w": 1920, "h": 1243}, "usable": {"x": 0, "y": 38, "w": 1920, "h": 1205}}], "gap": 1, "outer_gap": 1},
+      "segments": [
+        {"axis": "v", "coord": 960, "lo": 39, "hi": 1242},
+        {"axis": "h", "coord": 640.5, "lo": 1, "hi": 960},
+        {"axis": "h", "coord": 640.5, "lo": 960, "hi": 1919},
+        {"axis": "v", "coord": 480.5, "lo": 39, "hi": 640.5}
+      ],
+      "bindings": {
+        "1:0:0": {"window_id": 1},
+        "1:1:0": {"window_id": 2, "min_size": {"w": 574}},
+        "1:2:0": {"window_id": 3},
+        "1:0:1": {"window_id": 4},
+        "1:2:1": {"window_id": 5}
+      },
+      "expected_frames": {
+        "1": [1, 39, 383.5, 601],
+        "2": [385.5, 39, 574, 601],
+        "3": [960.5, 39, 958.5, 601],
+        "4": [1, 641, 958.5, 601],
+        "5": [960.5, 641, 958.5, 601]
+      }
+    },
+    "exceeds_region": {
+      "_doc": "The same layout with a 1000-point minimum. The inner split cannot make room inside the 958.5-point quadrant, so the full-height line v960 moves to 1481.5; the inner split then fits where it is.",
+      "expect": "recut",
+      "topology": {"displays": [{"id": 1, "frame": {"x": 0, "y": 0, "w": 1920, "h": 1243}, "usable": {"x": 0, "y": 38, "w": 1920, "h": 1205}}], "gap": 1, "outer_gap": 1},
+      "segments": [
+        {"axis": "v", "coord": 960, "lo": 39, "hi": 1242},
+        {"axis": "h", "coord": 640.5, "lo": 1, "hi": 960},
+        {"axis": "h", "coord": 640.5, "lo": 960, "hi": 1919},
+        {"axis": "v", "coord": 480.5, "lo": 39, "hi": 640.5}
+      ],
+      "bindings": {
+        "1:0:0": {"window_id": 1},
+        "1:1:0": {"window_id": 2, "min_size": {"w": 1000}},
+        "1:2:0": {"window_id": 3},
+        "1:0:1": {"window_id": 4},
+        "1:2:1": {"window_id": 5}
+      },
+      "expected_frames": {
+        "1": [1, 39, 479, 601],
+        "2": [481, 39, 1000, 601],
+        "3": [1482, 39, 437, 601],
+        "4": [1, 641, 1480, 601],
+        "5": [1482, 641, 437, 601]
+      }
+    },
+    "three_column_shift": {
+      "_doc": "Columns 0..100, 100..500 and 500..1200. Window 2 needs 700: v100 alone cannot make room, so v500 moves to 800 and window 3 keeps 400.",
+      "expect": "recut",
+      "topology": {"displays": [{"id": 1, "frame": {"x": 0, "y": 0, "w": 1200, "h": 800}}], "gap": 0, "outer_gap": 0},
+      "segments": [
+        {"axis": "v", "coord": 100, "lo": 0, "hi": 800},
+        {"axis": "v", "coord": 500, "lo": 0, "hi": 800}
+      ],
+      "bindings": {
+        "1:0:0": {"window_id": 1},
+        "1:1:0": {"window_id": 2, "min_size": {"w": 700}},
+        "1:2:0": {"window_id": 3}
+      },
+      "expected_frames": {
+        "1": [0, 0, 100, 800],
+        "2": [100, 0, 700, 800],
+        "3": [800, 0, 400, 800]
+      }
+    },
+    "column_vertical": {
+      "_doc": "Left column 0..600; right column split by h400 (spanning only that column). Window 3 needs 500 points of height: h400 moves up to 300.",
+      "expect": "recut",
+      "topology": {"displays": [{"id": 1, "frame": {"x": 0, "y": 0, "w": 1200, "h": 800}}], "gap": 0, "outer_gap": 0},
+      "segments": [
+        {"axis": "v", "coord": 600, "lo": 0, "hi": 800},
+        {"axis": "h", "coord": 400, "lo": 600, "hi": 1200}
+      ],
+      "bindings": {
+        "1:0:0": {"window_id": 1},
+        "1:1:0": {"window_id": 2},
+        "1:1:1": {"window_id": 3, "min_size": {"h": 500}}
+      },
+      "expected_frames": {
+        "1": [0, 0, 600, 800],
+        "2": [600, 0, 600, 300],
+        "3": [600, 300, 600, 500]
+      }
+    },
+    "quadrant_pair_tight": {
+      "_doc": "The quadrant layout where no cut fits: window 1 needs 420 beside window 2's 574 inside 958.5, and window 3's 958 holds v960. Window 2 keeps x maxX 959.5 and grows left to 385.5 over window 1 only.",
+      "expect": "overlap",
+      "topology": {"displays": [{"id": 1, "frame": {"x": 0, "y": 0, "w": 1920, "h": 1243}, "usable": {"x": 0, "y": 38, "w": 1920, "h": 1205}}], "gap": 1, "outer_gap": 1},
+      "segments": [
+        {"axis": "v", "coord": 960, "lo": 39, "hi": 1242},
+        {"axis": "h", "coord": 640.5, "lo": 1, "hi": 960},
+        {"axis": "h", "coord": 640.5, "lo": 960, "hi": 1919},
+        {"axis": "v", "coord": 480.5, "lo": 39, "hi": 640.5}
+      ],
+      "bindings": {
+        "1:0:0": {"window_id": 1, "min_size": {"w": 420}},
+        "1:1:0": {"window_id": 2, "min_size": {"w": 574}},
+        "1:2:0": {"window_id": 3, "min_size": {"w": 958}},
+        "1:0:1": {"window_id": 4},
+        "1:2:1": {"window_id": 5}
+      },
+      "expected_frames": {
+        "1": [1, 39, 479, 601],
+        "2": [385.5, 39, 574, 601],
+        "3": [960.5, 39, 958.5, 601],
+        "4": [1, 641, 958.5, 601],
+        "5": [960.5, 641, 958.5, 601]
+      },
+      "expected_overlap": [2]
+    },
+    "exceeds_display_row": {
+      "_doc": "Windows 2 and 3 each need 1000 points in one 1918-point row: no cut fits and window 2's quadrant is only 958.5 wide, so it grows 260.75 both ways from its tile, and window 3 grows left from the display edge.",
+      "expect": "overlap",
+      "topology": {"displays": [{"id": 1, "frame": {"x": 0, "y": 0, "w": 1920, "h": 1243}, "usable": {"x": 0, "y": 38, "w": 1920, "h": 1205}}], "gap": 1, "outer_gap": 1},
+      "segments": [
+        {"axis": "v", "coord": 960, "lo": 39, "hi": 1242},
+        {"axis": "h", "coord": 640.5, "lo": 1, "hi": 960},
+        {"axis": "h", "coord": 640.5, "lo": 960, "hi": 1919},
+        {"axis": "v", "coord": 480.5, "lo": 39, "hi": 640.5}
+      ],
+      "bindings": {
+        "1:0:0": {"window_id": 1},
+        "1:1:0": {"window_id": 2, "min_size": {"w": 1000}},
+        "1:2:0": {"window_id": 3, "min_size": {"w": 1000}},
+        "1:0:1": {"window_id": 4},
+        "1:2:1": {"window_id": 5}
+      },
+      "expected_frames": {
+        "1": [1, 39, 479, 601],
+        "2": [220.25, 39, 1000, 601],
+        "3": [919, 39, 1000, 601],
+        "4": [1, 641, 958.5, 601],
+        "5": [960.5, 641, 958.5, 601]
+      },
+      "expected_overlap": [2, 3]
+    },
+    "exceeds_display": {
+      "_doc": "Window 2 needs 2000 points on a 1918-point display: no growth can hold it, so automatic overload resolution keeps every member in one explicit stack.",
+      "expect": "fallback",
+      "topology": {"displays": [{"id": 1, "frame": {"x": 0, "y": 0, "w": 1920, "h": 1243}, "usable": {"x": 0, "y": 38, "w": 1920, "h": 1205}}], "gap": 1, "outer_gap": 1},
+      "segments": [
+        {"axis": "v", "coord": 960, "lo": 39, "hi": 1242},
+        {"axis": "h", "coord": 640.5, "lo": 1, "hi": 960},
+        {"axis": "h", "coord": 640.5, "lo": 960, "hi": 1919},
+        {"axis": "v", "coord": 480.5, "lo": 39, "hi": 640.5}
+      ],
+      "bindings": {
+        "1:0:0": {"window_id": 1},
+        "1:1:0": {"window_id": 2, "min_size": {"w": 2000}},
+        "1:2:0": {"window_id": 3},
+        "1:0:1": {"window_id": 4},
+        "1:2:1": {"window_id": 5}
+      },
+      "expected_fallback_members": [1, 2, 3, 4, 5]
+    },
+    "recorder_columns": {
+      "_doc": "Live columns split at v960 with row lines h609.5 (left) and h640.5 (right). Window 4 needs 1060x732 and window 3 needs 632 of height: h640.5 moves up to 509.5, past h609.5, so cells reorder and each window must keep its own; v960 then moves to 858.5.",
+      "expect": "recut",
+      "topology": {"displays": [{"id": 1, "frame": {"x": 0, "y": 0, "w": 1920, "h": 1243}, "usable": {"x": 0, "y": 38, "w": 1920, "h": 1205}}], "gap": 1, "outer_gap": 1},
+      "segments": [
+        {"axis": "v", "coord": 960, "lo": 39, "hi": 1242},
+        {"axis": "h", "coord": 609.5, "lo": 1, "hi": 960},
+        {"axis": "h", "coord": 640.5, "lo": 960, "hi": 1919}
+      ],
+      "bindings": {
+        "1:0:0": {"window_id": 1},
+        "1:1:0": {"window_id": 2},
+        "1:0:1": {"window_id": 3, "min_size": {"h": 632}},
+        "1:1:2": {"window_id": 4, "min_size": {"w": 1060, "h": 732}}
+      },
+      "expected_frames": {
+        "1": [1, 39, 857, 570],
+        "2": [859, 39, 1060, 470],
+        "3": [1, 610, 857, 632],
+        "4": [859, 510, 1060, 732]
+      }
+    },
+    "recorder_columns_infeasible": {
+      "_doc": "The same columns once window 3 also needs 960 points of width: 960 beside 1060 exceeds the 1918-point display. h640.5 still moves up to 509.5 for window 4's height, v960 stays, and the two windows grow from their display edges: window 3 right by 1.5, window 4 left to 859.",
+      "expect": "overlap",
+      "topology": {"displays": [{"id": 1, "frame": {"x": 0, "y": 0, "w": 1920, "h": 1243}, "usable": {"x": 0, "y": 38, "w": 1920, "h": 1205}}], "gap": 1, "outer_gap": 1},
+      "segments": [
+        {"axis": "v", "coord": 960, "lo": 39, "hi": 1242},
+        {"axis": "h", "coord": 609.5, "lo": 1, "hi": 960},
+        {"axis": "h", "coord": 640.5, "lo": 960, "hi": 1919}
+      ],
+      "bindings": {
+        "1:0:0": {"window_id": 1},
+        "1:1:0": {"window_id": 2},
+        "1:0:1": {"window_id": 3, "min_size": {"w": 960, "h": 632}},
+        "1:1:2": {"window_id": 4, "min_size": {"w": 1060, "h": 732}}
+      },
+      "expected_frames": {
+        "1": [1, 39, 958.5, 570],
+        "2": [960.5, 39, 958.5, 470],
+        "3": [1, 610, 960, 632],
+        "4": [859, 510, 1060, 732]
+      },
+      "expected_overlap": [3, 4]
+    }
+  }
+}

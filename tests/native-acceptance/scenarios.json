@@ -1,6 +1,6 @@
 {
   "schema": "leyline/native-acceptance-scenarios/v1",
-  "spec": "docs/contracts/core-window-manager-spec.md#acceptance-and-performance-contract",
+  "spec": "docs/contracts/event-driven-responsiveness.md#numerical-requirements",
   "window_counts": [
     1,
     6,

@@ -11,7 +11,6 @@ setup_main() {
     install|uninstall|service-status|service-start|service-stop|service-restart) ;;
     *) wm_err 'setup requires a native installation or service operation'; return 64 ;;
   esac
-  local client="${LEYLINE_RESIDENT_CLIENT_BIN:-$LEYLINE_HOME/bin/leylined}"
-  [[ -x "$client" ]] || { wm_err 'native installer unavailable'; return 69; }
-  "$client" "$operation" "$@"
+  wm_resident_client 'native installer unavailable' || return $?
+  "$LEYLINE_RESIDENT_CLIENT_BIN" "$operation" "$@"
 }

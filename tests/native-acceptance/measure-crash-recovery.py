@@ -11,7 +11,6 @@ import argparse
 import ctypes
 import hashlib
 import json
-import math
 import os
 from pathlib import Path
 import signal
@@ -19,6 +18,8 @@ import socket
 import struct
 import subprocess
 import time
+
+from acceptance_scenarios import load_frozen_scenarios, nearest_rank
 
 
 def rpc(path: Path, operation: str) -> dict:
@@ -85,9 +86,16 @@ def converged(snapshot: dict) -> bool:
 
 
 def distribution(values: list[float]) -> dict:
-    values = sorted(values)
-    return {f"p{rank}_ms": values[math.ceil(len(values) * rank / 100) - 1]
-            for rank in (50, 95, 99)} | {"max_ms": max(values)} if values else {}
+    return {f"p{rank}_ms": nearest_rank(values, rank) for rank in (50, 95, 99)} | {"max_ms": max(values)} if values else {}
+
+
+def ceilings(scenarios: dict) -> dict:
+    """The crash budgets and scene inventory the frozen scenarios own; no number here is local."""
+    budgets = {row["id"]: row for row in scenarios["budgets"]}
+    serving, converged = budgets["crash_serving"], budgets["serving_converged"]
+    return {"serving_p95_ms": serving["p95_ms"], "convergence_p95_ms": converged["p95_ms"],
+            "minimum_trials": max(serving["minimum_samples"], converged["minimum_samples"]),
+            "window_counts": list(scenarios["window_counts"])}
 
 
 def main() -> int:
@@ -97,9 +105,12 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--build-binding", type=Path, required=True)
-    parser.add_argument("--trials", type=int, default=20)
+    parser.add_argument("--trials", type=int, help="attempts; default is the frozen minimum population")
     parser.add_argument("--label", default="org.leyline.leylined")
     args = parser.parse_args()
+    limits = ceilings(load_frozen_scenarios())
+    if args.trials is None:
+        args.trials = limits["minimum_trials"]
     if not 1 <= args.trials <= 200 or args.output.exists():
         parser.error("trials must be1..200 and output must be new")
     binary = args.binary.resolve()
@@ -185,14 +196,14 @@ def main() -> int:
     serving = distribution([(r["serving_ns"] - r["receipt_ns"]) / 1e6 for r in attempts if r.get("serving_ns")])
     convergence = distribution([(r["converged_ns"] - r["serving_ns"]) / 1e6 for r in attempts if r.get("converged_ns")])
     checks_passed = (len(attempts) == args.trials and all(r["correctness"] for r in attempts)
-              and serving.get("p95_ms", float("inf")) <= 3000
-              and convergence.get("p95_ms", float("inf")) <= 2000)
-    sufficient = args.trials >= 20 and window_count in (1, 6, 12, 20)
+              and serving.get("p95_ms", float("inf")) <= limits["serving_p95_ms"]
+              and convergence.get("p95_ms", float("inf")) <= limits["convergence_p95_ms"])
+    sufficient = args.trials >= limits["minimum_trials"] and window_count in limits["window_counts"]
     passed = checks_passed and sufficient
     report = {"schema": "leyline/native-crash-recovery/v1", "binary_sha256": binary_hash,
               "source_commit": args.source_commit, "requested_trials": args.trials,
               "attempts": len(attempts), "serving": serving, "convergence": convergence,
-              "checks_passed": checks_passed, "window_count": window_count,
+              "checks_passed": checks_passed, "window_count": window_count, "ceilings": limits,
               "population_sufficient": sufficient, "full_product_certified": False,
               "passed": passed, "physical_evidence": False, "kickstart_count": 0,
               "receipt_boundary": "pre-SIGKILL conservative lower-bound; observed exit time not substituted",

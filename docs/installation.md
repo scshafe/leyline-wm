@@ -5,8 +5,8 @@ universal app archive contains Apple silicon (`arm64`) and Intel (`x86_64`) slic
 for both Leyline and Recovery. Automated native and package checks run on Apple
 Silicon and Intel macOS runners; live Intel desktop integration remains untested.
 A downloaded native package needs no Python, Swift compiler or Xcode tools.
-Optional `ley doctor` and keymap-validation commands require `jq`; native health
-queries and the app/Recovery/installer do not.
+`ley doctor` and applying `ley ctl reset` require `jq`; native health queries and
+the app/Recovery/installer do not.
 
 ## Native archive
 
@@ -55,9 +55,11 @@ Install the new archive into the same locations with an explicit update:
 ```
 
 For a Homebrew/package installation, `ley install --update --start` copies the
-packaged apps and updates the service. An installed app's `ley install` delegates
-to the native installer when no outer archive install script remains.
-The native launchd interface supports direct management of the installed app:
+packaged apps and updates the service. Run from an app already installed in
+`~/Applications`, `ley install` uses the app's native installer instead, which
+starts the job unless `--no-start` is given. A source checkout has no packaged
+apps; use Homebrew or the release archive. The native launchd interface supports
+direct management of the installed app:
 
 ```sh
 ley setup launchd install --no-start
@@ -82,19 +84,19 @@ brew install scshafe/tap/leyline
 ley install --start
 ```
 
-`ley install` copies both apps to `~/Applications` and installs the per-user job.
-It preserves settings/journals. Use `--no-start` to prepare without starting.
+`ley install` copies both apps to `~/Applications` and installs the per-user job
+without starting it unless `--start` is given. It preserves settings and journals.
 The formula supplies `jq`. Source builds use Swift 6 or newer and the Python 3
 interpreter supplied by Xcode Command Line Tools; a full Xcode application is not
 required. Developer checks also need Python 3.
 See [development](development.md) for isolated test profiles.
 
 Versioned source, universal app archives and checksums are available in the
-[GitHub release](https://github.com/scshafe/leyline-wm/releases/tag/v1.0.0).
+[GitHub release](https://github.com/scshafe/leyline-wm/releases/tag/v1.0.1).
 
 ## Signing and Gatekeeper
 
-The prepared 1.0.0 universal app is **ad-hoc signed and unnotarized**. Local
+The prepared 1.0.1 universal app is **ad-hoc signed and unnotarized**. Local
 Homebrew/source builds are also ad-hoc signed. These signatures do not establish
 Developer ID signing or notarization. Do not treat an archive
 checksum as Gatekeeper approval. Normal direct distribution uses a Developer ID

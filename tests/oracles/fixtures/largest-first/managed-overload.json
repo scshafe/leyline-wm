@@ -1,0 +1,90 @@
+{
+  "displays": [
+    {
+      "id": 1,
+      "frame": [
+        0,
+        0,
+        1600,
+        900
+      ]
+    }
+  ],
+  "seed": [
+    [
+      1,
+      0,
+      0,
+      1600,
+      900
+    ]
+  ],
+  "accepted_cases": [
+    {
+      "name": "minimum-constrained",
+      "newcomers": [
+        2
+      ],
+      "binding_fields": {
+        "min_size": {
+          "w": 1800,
+          "h": 1000
+        }
+      },
+      "expect_hidden_newcomer": true
+    },
+    {
+      "name": "binding-minimum",
+      "newcomers": [
+        2
+      ],
+      "binding_fields": {
+        "binding": {
+          "min_size": {
+            "w": 1800,
+            "h": 1000
+          }
+        }
+      },
+      "expect_hidden_newcomer": true
+    },
+    {
+      "name": "contents-minimum",
+      "newcomers": [
+        2
+      ],
+      "binding_fields": {
+        "contents": [
+          {
+            "window_id": 1,
+            "min_size": {
+              "w": 1800,
+              "h": 1000
+            }
+          }
+        ]
+      },
+      "expect_hidden_newcomer": true
+    },
+    {
+      "name": "stacked-store",
+      "newcomers": [
+        2
+      ],
+      "binding_fields": {
+        "contents": [
+          {
+            "window_id": 1
+          },
+          {
+            "window_id": 3
+          }
+        ]
+      },
+      "expect_existing_stack": [
+        1,
+        3
+      ]
+    }
+  ]
+}

@@ -13,7 +13,8 @@ private struct SpacePartitionsFixture {
         state.at(path: "space_partitions.partitions")?.objectValue?[partitionKey(name)]
     }
     func world(_ names: [String] = ["A1", "B1"], enabled: [String: Bool] = [:], focus: Int64? = 11,
-               epoch: String? = nil, removed: Set<Int64> = [], lifetimes: [Int64: Int64] = [:]) -> JSONValue {
+               epoch: String? = nil, removed: Set<Int64> = [], lifetimes: [Int64: Int64] = [:],
+               pids: [Int64: Int64] = [:], frames: [Int64: JSONValue] = [:]) -> JSONValue {
         var contexts: [JSONValue] = [], windows: [JSONValue] = []
         for name in names {
             let spec = space(name), display = spec.at(path: "display_id")!.intValue!
@@ -22,17 +23,17 @@ private struct SpacePartitionsFixture {
                 "space_enabled": .bool(on), "space_visible": .bool(true), "space_identity_available": .bool(true)]))
             let ids = (spec.at(path: "window_ids")?.arrayValue ?? []).compactMap(\.intValue)
             for (index, id) in ids.enumerated() where !removed.contains(id) {
-                windows.append(.object(["window_id": .int(id), "pid": .int(500 + id), "window_generation": .int(lifetimes[id] ?? 1),
+                windows.append(.object(["window_id": .int(id), "pid": .int(pids[id] ?? 500 + id), "window_generation": .int(lifetimes[id] ?? 1),
                     "display": .int(display), "display_id": .int(display), "space_uuid": uuid, "space_key": .string(key(name)),
                     "space_enabled": .bool(on), "space_visible": .bool(true), "space_identity_available": .bool(true),
                     "eligible": .bool(true), "resizable": .bool(true), "movable": .bool(true), "minimized": .bool(false),
                     "role": .string("AXWindow"), "subrole": .string("AXStandardWindow"),
-                    "frame": .object(["x": .int((display - 1) * 1200 + Int64(index) * 600), "y": .int(30), "w": .int(596), "h": .int(770)])]))
+                    "frame": frames[id] ?? .object(["x": .int((display - 1) * 1200 + Int64(index) * 600), "y": .int(30), "w": .int(596), "h": .int(770)])]))
             }
         }
         let anchor = windows.first(where: { $0.at(path: "window_id")?.intValue == focus })
             ?? windows.first(where: { $0.at(path: "space_enabled")?.boolValue == true })
-        return .object(["complete": .bool(true), "trusted": .bool(true), "observer_epoch": .string(epoch ?? value.at(path: "observer_epoch")!.stringValue!),
+        return .object(["complete": .bool(true), "trusted": .bool(true), "observer_epoch": .string(epoch ?? value.requiredString("observer_epoch")),
             "observer_generation": .int(8), "topology_revision": .int(4), "topology": topology, "space_contexts": .array(contexts),
             "space_enabled": anchor?.at(path: "space_enabled") ?? .bool(false), "active_space_key": anchor?.at(path: "space_key") ?? .null,
             "windows": .array(windows), "focused_window_id": focus.map(JSONValue.int) ?? .null])
@@ -52,7 +53,7 @@ private func spacePartitionsRefusesUnchanged(_ plan: ResidentPlan, _ state: JSON
 /// Hermetic replay over actual planner/cache authoring; no AX reads, effects, menu or live input.
 func runSpacePartitionsSelfTest() -> Int32 {
     var test = SelfTest()
-    let path = responsivenessRepositoryRoot() + "/leylined/Fixtures/space_partitions/display_spaces.json"
+    let path = SelfTestFixtures.path("space_partitions/display_spaces.json")
     guard let data = FileManager.default.contents(atPath: path), let value = try? JSONValue.parse(data) else {
         test.check(false, "space-partitions/fixture-load"); return test.finish("space-partitions")
     }
@@ -160,14 +161,32 @@ func runSpacePartitionsSelfTest() -> Int32 {
         && fixture.partition(state, "A1") == manualA1 && fixture.partition(state, "B1") == manualB1,
         "space-partitions/all-OFF-is-zero-effects-with-both-arrangements-dormant")
     _ = reconcile(fixture.world())
-    let reusedWorld = fixture.world(lifetimes: [11: 2])
+    // Landed windows sit on their authored tiles.
+    let landed = Arrangement.arrangementTargetsRec(bridge: state.at(path: "arrangement")!, topo: fixture.topology)
+    let tiles = Dictionary(uniqueKeysWithValues: (landed.objectValue ?? [:]).compactMap { key, target in
+        Int64(key).map { ($0, target.at(path: "effect_frame") ?? target.at(path: "frame") ?? .null) } })
+    let renewedWorld = fixture.world(lifetimes: [11: 2, 12: 2, 31: 2, 32: 2], frames: tiles)
+    test.check(spacePartitionsRefusesUnchanged(ResidentPlanner.plan(actionID: "resize.start", state: state, world: renewedWorld), state),
+        "space-partitions/renewed-lifetimes-refuse-commands-until-reconciled")
+    let renewed = ResidentPlanner.plan(actionID: "world.reconcile", state: state, world: renewedWorld)
+    test.check(renewed.status == .accepted && spacePartitionsDivider(fixture.partition(renewed.state, "A1")) == 640
+        && spacePartitionsDivider(fixture.partition(renewed.state, "B1")) == 1840
+        && fixture.partition(renewed.state, "A1")?.at(path: "arrangement.bindings") == manualA1?.at(path: "arrangement.bindings")
+        && fixture.partition(renewed.state, "A1")?.at(path: "window_identities.12.window_generation")?.intValue == 2,
+        "space-partitions/renewed-lifetimes-of-same-owners-covering-their-tiles-keep-manual-geometry")
+    let displaced = ResidentPlanner.plan(actionID: "world.reconcile", state: state,
+        world: fixture.world(lifetimes: [11: 2, 12: 2], frames: [11: tiles[12]!, 12: tiles[11]!]))
+    test.check(displaced.status == .accepted && spacePartitionsDivider(fixture.partition(displaced.state, "A1")) == 600
+        && fixture.partition(displaced.state, "B1") == manualB1,
+        "space-partitions/renewed-lifetimes-displaced-from-their-tiles-re-enter-as-newcomers")
+    let reusedWorld = fixture.world(lifetimes: [11: 2], pids: [11: 911])
     test.check(spacePartitionsRefusesUnchanged(ResidentPlanner.plan(actionID: "resize.start", state: state, world: reusedWorld), state),
         "space-partitions/reused-window-id-lifetime-refuses-command-with-zero-mutation")
     let reuse = reconcile(reusedWorld)
     test.check(reuse.status == .accepted && spacePartitionsIds(state) == [11, 12, 31, 32]
         && fixture.partition(state, "A1")?.at(path: "window_identities.11.window_generation")?.intValue == 2
-        && fixture.partition(state, "B1") == manualB1 && fixture.partition(state, "A1") != manualA1,
-        "space-partitions/reused-id-is-reclaimed-and-reinserted-as-deterministic-newcomer")
+        && fixture.partition(state, "B1") == manualB1 && spacePartitionsDivider(fixture.partition(state, "A1")) == 600,
+        "space-partitions/reused-id-of-another-owner-is-reclaimed-and-reinserted-as-deterministic-newcomer")
     let restoredEpoch = reconcile(fixture.world(epoch: "fixture-windowserver-epoch-2"))
     test.check(restoredEpoch.status == .accepted && spacePartitionsDivider(fixture.partition(state, "A1")) == 600
         && spacePartitionsDivider(fixture.partition(state, "B1")) == 1800,
@@ -321,7 +340,7 @@ private func runSpacePartitionRefusalScenarios(fixture: SpacePartitionsFixture, 
 }
 
 private func runRecursiveSpacePartitionScenarios(fixture: SpacePartitionsFixture, test: inout SelfTest) {
-    let path = responsivenessRepositoryRoot() + "/leylined/Fixtures/space_partitions/recursive_allocations.json"
+    let path = SelfTestFixtures.path("space_partitions/recursive_allocations.json")
     guard let data = FileManager.default.contents(atPath: path), let value = try? JSONValue.parse(data),
           let variants = value.at(path: "variants")?.objectValue else { test.check(false, "space-partitions/recursive-fixture-load"); return }
     let world = fixture.world(), baseline = ResidentPlanner.plan(actionID: "world.reconcile", state: .object([:]), world: world).state

@@ -1,6 +1,6 @@
 # Core window-manager contract
 
-Leyline 1.0.0 manages eligible tiled windows, borders, move previews and controls
+Leyline 1.0.1 manages eligible tiled windows, borders, move previews and controls
 in one native `leylined` resident. On-demand CLI clients and the independent
 Finder Recovery app do not own layout authority.
 
@@ -30,10 +30,21 @@ longer dimension. Equal choices are deterministic. Ordinary insertion preserves
 unrelated ownership and boundaries.
 
 Known application minimum sizes compose upward through nested owners. A common
-cut must satisfy the source and every surviving participant. If automatic adoption
-cannot fit another independent tile, an overload leaf retains all members at a
-shared footprint; the Windows menu makes each member selectable. Manual move or
-resize operations with no feasible cut refuse without changing the layout.
+cut must satisfy the source and every surviving participant along the split axis;
+a floor wider than the cell's other side is left to the re-cut or overlap below. If
+automatic adoption cannot fit another independent tile, an overload leaf retains
+all members at a shared footprint; the Windows menu makes each member selectable.
+
+When a known minimum later exceeds a window's tile, lines move the least distance
+that lets every known minimum fit, inner splits before the lines bounding their
+parcel; the partition's structure and bindings stay. When no cut fits every known
+minimum, the lines that can still move do and the rest stay. The window grows across
+the cut that splits its own band (the cut no longer than the tile's side), keeping
+the edges it does not share, so it overlaps only the windows that cut separates;
+when that region cannot hold it, it grows from the display edges it touches over its
+neighbours. Only a minimum larger than the display falls back to an overload leaf. Manual move or resize operations
+never increase how far a window extends outside its tile; with no feasible cut they
+refuse without changing the layout.
 
 Close/minimize/removal reclaims only the affected owner using the fixed even
 policy, subject to geometry, minima, pinned boundaries and conservation. Preserve
@@ -42,10 +53,10 @@ confirmed eligible survivor. See [reclaim](reclaim-policy.md).
 
 ## Geometry and borders
 
-The default border width is 1 point. Width `b` reserves `b` at the display perimeter
-and one shared `b` between adjacent windows. The active outside stroke fits that
-shared buffer. Nested owners apply no additional spacing. Width zero disables both
-stroke and spacing. Target origins and opposite edges are rounded together.
+The border width is fixed at 1 point. This reserves 1 point at the display perimeter
+and one shared point between adjacent windows. The active outside stroke fits that
+shared buffer. Nested owners apply no additional spacing. OFF Spaces have no
+management borders. Target origins and opposite edges are rounded together.
 
 The tiling canvas covers the display below the menu bar/notch and includes the
 Dock area; a visible Dock may overlay it. Border decoration derives current window
@@ -93,6 +104,13 @@ separate later identical confirmation. Cached no-op values, early mismatch and
 observation failures cannot teach a floor. A known-floor self-heal requires actual
 successful writes and later exact-identity observations. At most one bounded
 constraint replan follows the original failure.
+
+A window that refuses its tile's shape through a refused identical rewrite,
+staying above the target on one axis and below it on the other (a fixed aspect
+ratio such as the iOS Simulator's device window), fails `fixed_aspect_constraint`
+and adds its application to the durable `fixed_aspect_apps` set. Those
+applications' windows stay untiled. A shortfall in only one direction is never
+this evidence.
 
 ## Evidence boundaries
 

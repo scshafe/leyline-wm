@@ -1,12 +1,8 @@
 {
   "schema": "leyline/mode-release-regressions/v1",
   "entry_chord": "cmd + ctrl + alt + shift - m",
-  "cursor_chord": "l",
   "exit_chord": "0x35",
-  "default_mode": "default",
-  "move_mode": "move",
   "release_reason": "external_context_invalidated",
-  "focus_action": "nav.focus.east",
   "authority_world": {
     "mode": "move",
     "focus": {
@@ -20,6 +16,5 @@
         "token": "old-interaction"
       }
     }
-  },
-  "hard_exit_chord": "0x5A"
+  }
 }

@@ -1,0 +1,273 @@
+{
+  "schema": "leyline/focus-navigation-recovery/v1",
+  "gap": 1,
+  "outer_gap": 1,
+  "world": {
+    "event": "world_seed",
+    "observer_generation": 8,
+    "topology_revision": 4,
+    "management_enabled": true,
+    "mode": "default",
+    "observation": {
+      "ready": true,
+      "world_complete": true,
+      "failure_code": null,
+      "world_failure_code": null
+    },
+    "topology": [
+      {
+        "id": 1,
+        "display_id": "display-A",
+        "frame": {
+          "x": 0,
+          "y": 0,
+          "w": 1920,
+          "h": 1243
+        },
+        "usable_frame": {
+          "x": 0,
+          "y": 38,
+          "w": 1920,
+          "h": 1205
+        },
+        "usable_frame_known": true
+      }
+    ],
+    "space_contexts": [
+      {
+        "space_key": "display-A/space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      }
+    ],
+    "space_activation": {
+      "display-A/space-A": true
+    },
+    "windows": [
+      {
+        "window_id": 1,
+        "pid": 501,
+        "display_id": "display-A",
+        "space_key": "display-A/space-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true,
+        "eligible": true,
+        "role": "AXWindow",
+        "subrole": "AXStandardWindow",
+        "resizable": true,
+        "movable": true,
+        "minimized": false,
+        "window_generation": 1,
+        "frame": {
+          "x": 1,
+          "y": 39,
+          "w": 959,
+          "h": 601
+        },
+        "managed": true,
+        "observer_generation": 8,
+        "app": "FixtureTerminal",
+        "onscreen": true
+      },
+      {
+        "window_id": 2,
+        "pid": 502,
+        "display_id": "display-A",
+        "space_key": "display-A/space-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true,
+        "eligible": true,
+        "role": "AXWindow",
+        "subrole": "AXStandardWindow",
+        "resizable": true,
+        "movable": true,
+        "minimized": false,
+        "window_generation": 1,
+        "frame": {
+          "x": 1,
+          "y": 641,
+          "w": 959,
+          "h": 601
+        },
+        "managed": true,
+        "observer_generation": 8,
+        "app": "FixtureChat",
+        "onscreen": true
+      },
+      {
+        "window_id": 3,
+        "pid": 503,
+        "display_id": "display-A",
+        "space_key": "display-A/space-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true,
+        "eligible": true,
+        "role": "AXWindow",
+        "subrole": "AXStandardWindow",
+        "resizable": true,
+        "movable": true,
+        "minimized": false,
+        "window_generation": 1,
+        "frame": {
+          "x": 961,
+          "y": 39,
+          "w": 958,
+          "h": 601
+        },
+        "managed": true,
+        "observer_generation": 8,
+        "app": "FixtureTerminal",
+        "onscreen": true
+      },
+      {
+        "window_id": 4,
+        "pid": 504,
+        "display_id": "display-A",
+        "space_key": "display-A/space-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true,
+        "eligible": true,
+        "role": "AXWindow",
+        "subrole": "AXStandardWindow",
+        "resizable": true,
+        "movable": true,
+        "minimized": false,
+        "window_generation": 1,
+        "frame": {
+          "x": 961,
+          "y": 641,
+          "w": 958,
+          "h": 601
+        },
+        "managed": true,
+        "observer_generation": 8,
+        "app": "FixtureWeb",
+        "onscreen": true
+      }
+    ],
+    "focus": {
+      "window_id": 1,
+      "pid": 501,
+      "display_id": "display-A",
+      "space_key": "display-A/space-A",
+      "space_enabled": true,
+      "space_visible": true,
+      "space_identity_available": true,
+      "eligible": true,
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "movable": true,
+      "minimized": false,
+      "window_generation": 1,
+      "frame": {
+        "x": 1,
+        "y": 39,
+        "w": 959,
+        "h": 601
+      },
+      "managed": true,
+      "observer_generation": 8,
+      "app": "FixtureTerminal",
+      "onscreen": true
+    },
+    "active_context": {
+      "space_key": "display-A/space-A",
+      "display_id": "display-A",
+      "space_enabled": true,
+      "space_visible": true,
+      "space_identity_available": true
+    }
+  },
+  "store": {
+    "segments": [
+      {
+        "axis": "v",
+        "coord": 960,
+        "lo": 39,
+        "hi": 640.5,
+        "display_id": 1,
+        "relation": "pinned"
+      },
+      {
+        "axis": "h",
+        "coord": 640.5,
+        "lo": 1,
+        "hi": 960,
+        "display_id": 1,
+        "relation": "pinned"
+      },
+      {
+        "axis": "v",
+        "coord": 960,
+        "lo": 640.5,
+        "hi": 1242,
+        "display_id": 1,
+        "relation": "pinned"
+      },
+      {
+        "axis": "h",
+        "coord": 640.5,
+        "lo": 960,
+        "hi": 1919,
+        "display_id": 1,
+        "relation": "pinned"
+      }
+    ],
+    "bindings": {
+      "1:0:0": {
+        "window_id": 1
+      },
+      "1:0:1": {
+        "window_id": 2
+      },
+      "1:1:0": {
+        "window_id": 3
+      },
+      "1:1:1": {
+        "window_id": 4
+      }
+    },
+    "off_top": [],
+    "promotions": []
+  },
+  "minimum_sizes": {
+    "FixtureChat": {
+      "w": 641
+    },
+    "FixtureWeb": {
+      "w": 336
+    }
+  },
+  "renewed_lifetime": 101,
+  "reused_lifetime": 102,
+  "focus_sequence": [
+    {
+      "chord": "cmd + ctrl + alt + shift - l",
+      "target": 3
+    },
+    {
+      "chord": "cmd + ctrl + alt + shift - j",
+      "target": 4
+    },
+    {
+      "chord": "cmd + ctrl + alt + shift - h",
+      "target": 2
+    },
+    {
+      "chord": "cmd + ctrl + alt + shift - k",
+      "target": 1
+    }
+  ],
+  "observed_swap_ids": [
+    2,
+    3
+  ],
+  "observed_east_target": 2
+}

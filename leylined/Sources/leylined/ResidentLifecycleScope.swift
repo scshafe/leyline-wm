@@ -6,11 +6,11 @@ import LeylineModel
 /// Only complete, fresh lifecycle observations of ignored windows with an
 /// unchanged managed cohort preserve an interaction. Unknown evidence invalidates.
 func residentLifecycleInvalidatesInteraction(event: String, before: JSONValue, after: JSONValue) -> Bool {
-    guard ["ax_window_created", "ax_window_destroyed", "ax_window_minimized", "ax_window_restored"].contains(event),
+    guard AccessibilityFocusEventKind.isWindowLifecycle(event),
           before.at(path: "observation.ready")?.boolValue == true,
           after.at(path: "observation.ready")?.boolValue == true,
-          before.at(path: "observation.world_complete")?.boolValue == true,
-          after.at(path: "observation.world_complete")?.boolValue == true,
+          before.worldComplete == true,
+          after.worldComplete == true,
           let epoch = before.at(path: "observer_epoch")?.stringValue, !epoch.isEmpty,
           after.at(path: "observer_epoch")?.stringValue == epoch,
           after.at(path: "observation.reason")?.stringValue == event,

@@ -5,7 +5,7 @@ disabled Space B. Both displays have a 30-point top reservation. Three east
 resize actions must accumulate three 40-point changes while at most one effect
 is in flight and one desired batch is pending.
 
-`leylined self-test resident-commands` drives the actual registered socket
+`bin/leylined-tests self-test resident-commands` drives the actual registered socket
 surface, resident command controller, native planner, journal and effector.
 Only the external AX port is injected. It acknowledges setters before
 publishing independent generation/token-bound AX observations back through
@@ -33,7 +33,7 @@ tested identity, scope or completeness change before another external write.
 Restored world completeness starts a fresh reconciliation rather than replaying
 the obsolete effect.
 
-The 24 frozen scenarios include independent activation regressions. A same-value
+The 27 frozen scenarios include independent activation regressions. A same-value
 Space B OFF command cannot allocate a revision or cancel held Space A work.
 Meaningful B ON/OFF changes retain A's resize mode, interaction and captured
 window lifetime/Space scope. Removing a sparse false activation override restores

@@ -1,14 +1,12 @@
-// The timeline core core state advances ONLY through synchronous,
-// non-awaiting transitions — every async result (landed evidence, world event,
-// journal ack) re-enters as its own transition. Files under Transitions/ are
-// covered by the structural no-`await` lint in `ley test leylined`; the actor
-// that serializes calls onto this type lives in the daemon, never here.
+// The timeline's core state advances ONLY through synchronous, non-awaiting
+// transitions — every async result (landed evidence, world event, journal ack)
+// re-enters as its own transition. CoreServer serializes calls onto this type.
 public struct Timeline<State> {
     public private(set) var state: State
     public private(set) var revision: Revision
 
     /// `revision` seeds from the journal's high-water mark on recovery
-    /// A store recovered at900 continues at901.
+    /// A store recovered at revision 900 continues at 901.
     public init(state: State, revision: Revision) {
         self.state = state
         self.revision = revision

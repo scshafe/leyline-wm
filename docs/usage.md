@@ -1,8 +1,16 @@
 # Usage and shortcuts
 
 Leyline automatically tiles eligible, resizable windows in enabled visible desktop
-Spaces. New Spaces default to ON. Open **Leyline** in the macOS menu bar to see
-readiness, select a managed window, change border width or stop management.
+Spaces. New Spaces default to ON. Click the Leyline icon in the macOS menu bar to
+see readiness, select a managed window or stop management. The tiled-window icon is
+empty when management is OFF, green when ON and red when an error needs attention.
+The icon follows the focused Space automatically, including while the menu is
+open. Failed readiness shows red; an intentional global stop or OFF Space shows
+empty windows.
+
+macOS full-screen windows live in separate system Spaces, outside Leyline's
+desktop tiling. Exit full screen to manage that window. If observation remains
+unavailable after the transition, choose **Restart Leyline** from the menu.
 
 **Hyper** means Command + Control + Option + Shift. If you map Caps Lock to Hyper
 with your preferred keyboard remapper, the shortcuts below become Caps Lock + key.
@@ -27,13 +35,20 @@ window shortcuts pass through; other enabled Spaces remain managed. A global
 Enter with Hyper + R, release the modifiers, then press H / J / K / L to move a
 shared boundary by 40 points. Adjacent windows resize together. At a display wall,
 Leyline adjusts the opposite interior boundary. Known application minimum sizes
-limit movement. Escape exits; completed resize steps remain applied.
+limit movement. Escape exits; completed resize steps remain applied. F20 (for
+example, sent by a keyboard remapper) exits move or resize mode immediately.
 
 ## Move
 
 Enter with Hyper + M. The focused managed window remains the source even if
 ordinary focus changes. Windows stay still while you choose the destination;
 solid rings show the source and cursor, and dashed outlines show the planned result.
+The tinted destination and arrow badge show where the source will be inserted:
+LEFT, RIGHT, ABOVE or BELOW the selected target or span. C rotates that cue; U/I
+updates its extent with the selected scope.
+If an edge cannot fit, a red **WON'T FIT** badge appears and move mode stays
+active. Rotate with C or widen with U. Return/D cannot commit that unavailable
+edge; Escape unstages it.
 
 | Key in move mode | Action |
 |---|---|
@@ -45,7 +60,7 @@ solid rings show the source and cursor, and dashed outlines show the planned res
 | I | Restore the preceding narrower selection |
 | Return, with an edge staged | Commit the displayed insertion |
 | Escape | Unstage an edge; press again to exit |
-| Hyper + M | Exit immediately |
+| Hyper + M or F20 | Exit immediately |
 
 A successful swap or insertion exits move mode. A changed source, Space, display
 or stale preview can cancel the interaction; a replacement preview requires fresh
@@ -67,12 +82,26 @@ The terminals now share the top row and the browser spans the bottom. This
 sequence assumes the stated starting layout; use the cursor and preview to
 choose the corresponding windows when your layout differs.
 
+### Example: two windows over one, to one beside two
+
+With two windows across the top and one spanning the bottom, focus the top-left
+window, enter move mode and press J, D, U, U. Check that the preview puts the
+source on the LEFT at full height, then press Return. The other two windows stack
+on the right. To go back, focus the lower-right window and press H, D, U, U; the
+preview puts it BELOW, across the full width. The second U widens to the whole
+display.
+
 ## Menus and recovery
 
-The **Windows** submenu includes every managed window on the captured Space,
+The menu's status row shows readiness or the reason management is unavailable. The
+next row turns management off or on for the focused Space, like Hyper + A. The
+**Windows** submenu includes every managed window on the captured Space,
 including a window obscured by crowding. Selecting one reveals and focuses it.
-**Border width** changes border thickness and tile spacing together. **Use
-configured border width** restores the value in the border configuration file.
+Borders and their shared spacing are fixed at 1 point.
+
+If keyboard handling stalls, Leyline releases its shortcuts and any active mode so
+keys reach applications again. A notice ("Leyline released keyboard shortcuts…")
+appears for 3 seconds; press the shortcut again once the system recovers.
 
 **Start**, **Stop** and **Restart Leyline** control management without removing its
 launchd job. **Hard reset** quarantines the layout journal and rebuilds from fresh

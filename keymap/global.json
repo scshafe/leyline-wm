@@ -3,36 +3,27 @@
   "bindings": [
     {
       "chord": "cmd + ctrl + alt + shift - h",
-      "action_id": "nav.focus.west",
-      "precedence": "global-first"
+      "action_id": "nav.focus.west"
     },
     {
       "chord": "cmd + ctrl + alt + shift - j",
-      "action_id": "nav.focus.south",
-      "precedence": "global-first"
+      "action_id": "nav.focus.south"
     },
     {
       "chord": "cmd + ctrl + alt + shift - k",
-      "action_id": "nav.focus.north",
-      "precedence": "global-first"
+      "action_id": "nav.focus.north"
     },
     {
       "chord": "cmd + ctrl + alt + shift - l",
-      "action_id": "nav.focus.east",
-      "precedence": "global-first"
+      "action_id": "nav.focus.east"
     },
     {
       "chord": "cmd + ctrl + alt + shift - a",
-      "action_id": "space.management.toggle",
-      "precedence": "global-first"
+      "action_id": "space.management.toggle"
     },
     {
       "chord": "ctrl + alt - r",
-      "action_id": "service.restart",
-      "precedence": "global-first"
+      "action_id": "service.restart"
     }
-  ],
-  "reserved": [
-    "cmd + ctrl + alt + shift - f"
   ]
 }

@@ -31,8 +31,8 @@ resident tap. They are user-managed and are not installed into a keyboard-remapp
 profile automatically. Without such a driver, Finder remains the independent
 recovery entry point.
 
-The Recovery executable provides `--bounce --plan`, `--disable --plan`,
-`--enable --plan` and `--self-test-core` for non-actuating inspection/tests.
+The Recovery executable provides `--bounce --plan`, `--disable --plan` and
+`--enable --plan` for non-actuating inspection; the test build adds `--self-test-core`.
 `ley test recovery` checks direct routing, verified-down results, failures,
 bootstrap and planning through hermetic executors. Live crash/wedge, trust and
 grant behavior require genuine observations under [the responsiveness requirements](event-driven-responsiveness.md).

@@ -21,8 +21,8 @@ other members. See [reclaim](contracts/reclaim-policy.md).
 [BorderProjection](../leylined/Sources/LeylineModel/BorderProjection.swift) derives
 role-colored immutable plans. Source/cursor rings are solid; exact candidate ghosts
 are dashed. The selection boundary uses the candidate's canonical scope geometry.
-One configured width controls the outside stroke, full perimeter allowance and
-shared interior buffer. Width zero clears decoration and spacing.
+The fixed 1-point width controls the outside stroke, full perimeter allowance and
+shared interior buffer. OFF Spaces receive no management decoration.
 
 Ignored/OFF windows receive no border. Projection discovers no windows, authors no
 layout and issues no AX write. [BorderRenderer](../leylined/Sources/leylined/Projections/BorderRenderer.swift)

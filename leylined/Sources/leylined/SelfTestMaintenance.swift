@@ -79,7 +79,7 @@ private func maintenanceSucceeded(_ result: Result<JSONValue, MaintenanceFailure
 /// Fixture-only maintenance barrier and epoch tests. No live files, AX, event tap or AppKit.
 func runMaintenanceSelfTest() -> Int32 {
     var test = SelfTest()
-    let path = responsivenessRepositoryRoot() + "/leylined/Fixtures/maintenance/exclusive_reset.json"
+    let path = SelfTestFixtures.path("maintenance/exclusive_reset.json")
     guard let data = FileManager.default.contents(atPath: path), let fixture = try? JSONValue.parse(data),
           let milliseconds = fixture.at(path: "test_deadline_milliseconds")?.intValue,
           let resetResult = fixture.at(path: "reset_result"),
@@ -227,9 +227,9 @@ private func runJournalQuarantineScenarios(test: inout SelfTest) {
     do {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         defer { try? FileManager.default.removeItem(at: directory) }
-        let fixturePath = responsivenessRepositoryRoot() + "/leylined/Fixtures/maintenance/exclusive_reset.json"
+        let fixturePath = SelfTestFixtures.path("maintenance/exclusive_reset.json")
         let fixture = try JSONValue.parse(Data(contentsOf: URL(fileURLWithPath: fixturePath)))
-        let source = Data(fixture.at(path: "quarantine_source")!.stringValue!.utf8)
+        let source = Data(fixture.requiredString("quarantine_source").utf8)
         let path = directory.appendingPathComponent("journal.jsonl").path
         try source.write(to: URL(fileURLWithPath: path))
         guard chmod(path, mode_t(0o600)) == 0 else { throw MaintenanceFixtureIOFailure.renameFailed }

@@ -29,8 +29,10 @@ final class ResidentMaintenance: @unchecked Sendable {
     static let deadlineMilliseconds: UInt64 = 2_000
     private static let participantLimit = 32
     private static let recentRequestLimit = 64
-    private static let requestIDByteLimit = 256
+    private static let requestIDByteLimit = ResidentProtocolLimits.identifierBytes
+    #if LEYLINE_BUILD_TESTS
     private static let idleWaiterLimit = 8
+    #endif
 
     fileprivate final class PermitState: @unchecked Sendable {
         let lock = NSLock()
@@ -77,7 +79,9 @@ final class ResidentMaintenance: @unchecked Sendable {
     private var nextEpoch: UInt64 = 0
     private var active: Job?
     private var recentRequests: [String] = []
+    #if LEYLINE_BUILD_TESTS
     private var idleWaiters: [@Sendable () -> Void] = []
+    #endif
 
     /// Production uses the fixed two-second deadline; a shorter explicit budget is a hermetic test seam.
     init(deadlineMilliseconds: UInt64 = ResidentMaintenance.deadlineMilliseconds,
@@ -157,8 +161,9 @@ final class ResidentMaintenance: @unchecked Sendable {
     func isCurrentEpoch(_ epoch: UInt64) -> Bool {
         lock.lock(); defer { lock.unlock() }; return nextEpoch == epoch
     }
-    /// Bounded event subscription for IO release after a timed-out reset. Idle is an observation,
-    /// not permission to activate: Root still requires a verified reset and a fresh seed.
+    #if LEYLINE_BUILD_TESTS
+    /// Developer checks wait for IO release after a timed-out reset. The callback runs on the
+    /// outcome queue after every outcome already published, so a late outcome cannot hide.
     @discardableResult
     func whenIdle(_ callback: @escaping @Sendable () -> Void) -> Bool {
         lock.lock()
@@ -167,6 +172,7 @@ final class ResidentMaintenance: @unchecked Sendable {
         else { idleWaiters.append(callback); lock.unlock() }
         return true
     }
+    #endif
     func snapshot() -> JSONValue {
         lock.lock(); defer { lock.unlock() }
         let phase = active.map { $0.phase == .waiting ? "waiting_for_participants" : $0.published ? "resetting_after_failure" : "resetting" } ?? "idle"
@@ -244,9 +250,11 @@ final class ResidentMaintenance: @unchecked Sendable {
         outcomes.async { callback(result) }; publishIdle()
     }
     private func publishIdle() {
+        #if LEYLINE_BUILD_TESTS
         lock.lock()
         guard active == nil else { lock.unlock(); return }
         let callbacks = idleWaiters; idleWaiters.removeAll(); lock.unlock()
         for callback in callbacks { outcomes.async(execute: callback) }
+        #endif
     }
 }

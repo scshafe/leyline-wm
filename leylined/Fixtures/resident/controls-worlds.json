@@ -1,6 +1,6 @@
 {
   "space_a_on": {
-    "focused_space": {
+    "active_context": {
       "space_key": "space-A",
       "display_id": "display-A",
       "space_enabled": true
@@ -8,7 +8,7 @@
     "resident_running": true
   },
   "space_b_off": {
-    "focused_space": {
+    "active_context": {
       "space_key": "space-B",
       "display_id": "display-B",
       "space_enabled": false
@@ -27,7 +27,7 @@
   },
   "empty_space_a": {
     "focus": null,
-    "focused_space": {
+    "active_context": {
       "space_key": "space-A",
       "display_id": "display-A",
       "space_enabled": true
@@ -40,7 +40,7 @@
     "space_identity_available": false
   },
   "counter_identity": {
-    "focused_space": {
+    "active_context": {
       "space_key": 3,
       "display_id": 1,
       "space_enabled": true
@@ -56,7 +56,7 @@
     "observer_generation": 5,
     "management_enabled": true,
     "resident_running": true,
-    "focused_space": {
+    "active_context": {
       "space_key": "space-A",
       "display_id": "display-A",
       "space_enabled": true,
@@ -88,7 +88,7 @@
         "window_id": 11,
         "pid": 111,
         "window_generation": 2,
-        "app_name": "Editor",
+        "app": "Editor",
         "title": "Front",
         "eligible": true,
         "space_key": "space-A",
@@ -101,7 +101,7 @@
         "window_id": 12,
         "pid": 112,
         "window_generation": 2,
-        "app_name": "Editor",
+        "app": "Editor",
         "title": "Buried",
         "eligible": true,
         "space_key": "space-A",
@@ -114,7 +114,7 @@
         "window_id": 13,
         "pid": 113,
         "window_generation": 2,
-        "app_name": "Browser",
+        "app": "Browser",
         "title": "Nested",
         "eligible": true,
         "space_key": "space-A",
@@ -127,7 +127,7 @@
         "window_id": 14,
         "pid": 114,
         "window_generation": 2,
-        "app_name": "Ignored",
+        "app": "Ignored",
         "title": "Private",
         "eligible": false,
         "space_key": "space-A",
@@ -140,7 +140,7 @@
         "window_id": 15,
         "pid": 115,
         "window_generation": 2,
-        "app_name": "Minimized",
+        "app": "Minimized",
         "title": "Hidden",
         "eligible": true,
         "space_key": "space-A",
@@ -154,7 +154,7 @@
         "window_id": 99,
         "pid": 199,
         "window_generation": 2,
-        "app_name": "Unmanaged",
+        "app": "Unmanaged",
         "title": "Outside",
         "eligible": true,
         "space_key": "space-A",
@@ -205,7 +205,7 @@
     "observer_generation": 5,
     "management_enabled": true,
     "resident_running": true,
-    "focused_space": {
+    "active_context": {
       "space_key": "space-B",
       "display_id": "display-B",
       "space_enabled": true,
@@ -237,7 +237,7 @@
         "window_id": 11,
         "pid": 111,
         "window_generation": 2,
-        "app_name": "Editor",
+        "app": "Editor",
         "title": "Front",
         "eligible": true,
         "space_key": "space-A",
@@ -250,7 +250,7 @@
         "window_id": 12,
         "pid": 112,
         "window_generation": 2,
-        "app_name": "Editor",
+        "app": "Editor",
         "title": "Buried",
         "eligible": true,
         "space_key": "space-A",
@@ -263,7 +263,7 @@
         "window_id": 13,
         "pid": 113,
         "window_generation": 2,
-        "app_name": "Browser",
+        "app": "Browser",
         "title": "Nested",
         "eligible": true,
         "space_key": "space-A",
@@ -276,7 +276,7 @@
         "window_id": 14,
         "pid": 114,
         "window_generation": 2,
-        "app_name": "Ignored",
+        "app": "Ignored",
         "title": "Private",
         "eligible": false,
         "space_key": "space-A",
@@ -289,7 +289,7 @@
         "window_id": 15,
         "pid": 115,
         "window_generation": 2,
-        "app_name": "Minimized",
+        "app": "Minimized",
         "title": "Hidden",
         "eligible": true,
         "space_key": "space-A",
@@ -303,7 +303,7 @@
         "window_id": 99,
         "pid": 199,
         "window_generation": 2,
-        "app_name": "Unmanaged",
+        "app": "Unmanaged",
         "title": "Outside",
         "eligible": true,
         "space_key": "space-A",
@@ -354,7 +354,7 @@
     "observer_generation": 5,
     "management_enabled": true,
     "resident_running": true,
-    "focused_space": {
+    "active_context": {
       "space_key": "space-B",
       "display_id": "display-B",
       "space_enabled": true,
@@ -386,7 +386,7 @@
         "window_id": 11,
         "pid": 111,
         "window_generation": 2,
-        "app_name": "Editor",
+        "app": "Editor",
         "title": "Front",
         "eligible": true,
         "space_key": "space-A",
@@ -399,7 +399,7 @@
         "window_id": 12,
         "pid": 112,
         "window_generation": 2,
-        "app_name": "Editor",
+        "app": "Editor",
         "title": "Buried",
         "eligible": true,
         "space_key": "space-A",
@@ -412,7 +412,7 @@
         "window_id": 13,
         "pid": 113,
         "window_generation": 2,
-        "app_name": "Browser",
+        "app": "Browser",
         "title": "Nested",
         "eligible": true,
         "space_key": "space-A",
@@ -425,7 +425,7 @@
         "window_id": 14,
         "pid": 114,
         "window_generation": 2,
-        "app_name": "Ignored",
+        "app": "Ignored",
         "title": "Private",
         "eligible": false,
         "space_key": "space-A",
@@ -438,7 +438,7 @@
         "window_id": 15,
         "pid": 115,
         "window_generation": 2,
-        "app_name": "Minimized",
+        "app": "Minimized",
         "title": "Hidden",
         "eligible": true,
         "space_key": "space-A",
@@ -452,7 +452,7 @@
         "window_id": 99,
         "pid": 199,
         "window_generation": 2,
-        "app_name": "Unmanaged",
+        "app": "Unmanaged",
         "title": "Outside",
         "eligible": true,
         "space_key": "space-A",
@@ -503,7 +503,7 @@
     "observer_generation": 5,
     "management_enabled": true,
     "resident_running": true,
-    "focused_space": {
+    "active_context": {
       "space_key": "space-B",
       "display_id": "display-B",
       "space_enabled": true,
@@ -535,7 +535,7 @@
         "window_id": 11,
         "pid": 111,
         "window_generation": 2,
-        "app_name": "Editor",
+        "app": "Editor",
         "title": "Front",
         "eligible": true,
         "space_key": "space-A",
@@ -548,7 +548,7 @@
         "window_id": 12,
         "pid": 112,
         "window_generation": 3,
-        "app_name": "Editor",
+        "app": "Editor",
         "title": "Buried",
         "eligible": true,
         "space_key": "space-A",
@@ -561,7 +561,7 @@
         "window_id": 13,
         "pid": 113,
         "window_generation": 2,
-        "app_name": "Browser",
+        "app": "Browser",
         "title": "Nested",
         "eligible": true,
         "space_key": "space-A",
@@ -574,7 +574,7 @@
         "window_id": 14,
         "pid": 114,
         "window_generation": 2,
-        "app_name": "Ignored",
+        "app": "Ignored",
         "title": "Private",
         "eligible": false,
         "space_key": "space-A",
@@ -587,7 +587,7 @@
         "window_id": 15,
         "pid": 115,
         "window_generation": 2,
-        "app_name": "Minimized",
+        "app": "Minimized",
         "title": "Hidden",
         "eligible": true,
         "space_key": "space-A",
@@ -601,7 +601,7 @@
         "window_id": 99,
         "pid": 199,
         "window_generation": 2,
-        "app_name": "Unmanaged",
+        "app": "Unmanaged",
         "title": "Outside",
         "eligible": true,
         "space_key": "space-A",
@@ -652,7 +652,7 @@
     "observer_generation": 5,
     "management_enabled": true,
     "resident_running": true,
-    "focused_space": {
+    "active_context": {
       "space_key": "space-B",
       "display_id": "display-B",
       "space_enabled": true,
@@ -669,7 +669,7 @@
         "window_id": 11,
         "pid": 111,
         "window_generation": 2,
-        "app_name": "Editor",
+        "app": "Editor",
         "title": "Front",
         "eligible": true,
         "space_key": "space-A",
@@ -682,7 +682,7 @@
         "window_id": 12,
         "pid": 112,
         "window_generation": 2,
-        "app_name": "Editor",
+        "app": "Editor",
         "title": "Buried",
         "eligible": true,
         "space_key": "space-A",
@@ -695,7 +695,7 @@
         "window_id": 13,
         "pid": 113,
         "window_generation": 2,
-        "app_name": "Browser",
+        "app": "Browser",
         "title": "Nested",
         "eligible": true,
         "space_key": "space-A",
@@ -708,7 +708,7 @@
         "window_id": 14,
         "pid": 114,
         "window_generation": 2,
-        "app_name": "Ignored",
+        "app": "Ignored",
         "title": "Private",
         "eligible": false,
         "space_key": "space-A",
@@ -721,7 +721,7 @@
         "window_id": 15,
         "pid": 115,
         "window_generation": 2,
-        "app_name": "Minimized",
+        "app": "Minimized",
         "title": "Hidden",
         "eligible": true,
         "space_key": "space-A",
@@ -735,7 +735,7 @@
         "window_id": 99,
         "pid": 199,
         "window_generation": 2,
-        "app_name": "Unmanaged",
+        "app": "Unmanaged",
         "title": "Outside",
         "eligible": true,
         "space_key": "space-A",
@@ -781,5 +781,91 @@
       }
     },
     "space_identity_available": false
+  },
+  "space_a_error": {
+    "active_context": {
+      "space_key": "space-A",
+      "display_id": "display-A",
+      "space_enabled": true
+    },
+    "resident_running": true,
+    "resident_unavailable_reason": "ax_untrusted"
+  },
+  "space_a_off_with_error": {
+    "active_context": {
+      "space_key": "space-B",
+      "display_id": "display-B",
+      "space_enabled": false
+    },
+    "resident_running": true,
+    "resident_unavailable_reason": "space_disabled"
+  },
+  "requested_on_parked": {
+    "active_context": {
+      "space_key": "space-A",
+      "display_id": "display-A",
+      "space_enabled": true
+    },
+    "resident_running": false,
+    "desired_running": true,
+    "management_enabled": false,
+    "resident_status": "Recovery needed",
+    "resident_unavailable_reason": "expected_revision_mismatch"
+  },
+  "requested_on_timeout_stopped": {
+    "active_context": {
+      "space_key": "space-A",
+      "display_id": "display-A",
+      "space_enabled": true
+    },
+    "resident_running": false,
+    "desired_running": true,
+    "management_enabled": false,
+    "resident_status": "Stopped",
+    "resident_unavailable_reason": "resident_control_timeout"
+  },
+  "requested_off_with_error": {
+    "active_context": {
+      "space_key": "space-A",
+      "display_id": "display-A",
+      "space_enabled": true
+    },
+    "resident_running": false,
+    "desired_running": false,
+    "management_enabled": false,
+    "resident_status": "Stopped",
+    "resident_unavailable_reason": "expected_revision_mismatch"
+  },
+  "healthy_requested_on": {
+    "active_context": {
+      "space_key": "space-A",
+      "display_id": "display-A",
+      "space_enabled": true
+    },
+    "resident_running": true,
+    "desired_running": true,
+    "management_enabled": true,
+    "resident_status": "Running",
+    "resident_unavailable_reason": null,
+    "last_result": null,
+    "observation": {
+      "ready": true,
+      "world_complete": true,
+      "failure_code": null,
+      "world_failure_code": null
+    }
+  },
+  "off_space_requested_on": {
+    "active_context": {
+      "space_key": "space-B",
+      "display_id": "display-B",
+      "space_enabled": false
+    },
+    "resident_running": true,
+    "desired_running": true,
+    "management_enabled": true,
+    "resident_status": "Running",
+    "resident_unavailable_reason": null,
+    "last_result": null
   }
 }

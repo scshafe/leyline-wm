@@ -1,0 +1,14 @@
+{
+  "_doc": "Two windows share the top-left quadrant; 200 cannot shrink below 574 points and overlaps 100. Source 200 (x 30..604). 100 overlaps it but its far edge reaches 29 points further west, so it lies west. 100's bottom edge is only 1 point below 200's, within the 4-point reach floor, so it does not lie south.",
+  "displays": [
+    { "index": 1, "frame": { "x": 0, "y": 0, "w": 1920, "h": 1243 } }
+  ],
+  "windows": [
+    { "id": 100, "display": 1, "frame": { "x":   1, "y":  39, "w": 479, "h": 601 }, "app": "Terminal" },
+    { "id": 200, "display": 1, "frame": { "x":  30, "y":  38, "w": 574, "h": 601 }, "app": "Browser"  },
+    { "id": 300, "display": 1, "frame": { "x": 961, "y":  39, "w": 958, "h": 601 }, "app": "Editor"   },
+    { "id": 400, "display": 1, "frame": { "x":   1, "y": 641, "w": 959, "h": 601 }, "app": "Browser"  },
+    { "id": 500, "display": 1, "frame": { "x": 961, "y": 641, "w": 958, "h": 601 }, "app": "Terminal" }
+  ],
+  "source": { "window_id": 200 }
+}

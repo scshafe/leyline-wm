@@ -1,7 +1,0 @@
-{
-  "note": "tiling-resilience: the literal bug scene — NO authored tree (empty store {}), focused window unbound and non-resizable (dialog). Routes through the tree branch (no .segments), finds no leaf, hits caps_role -> error. Before the error role this falsely resolved 'focus' (tiled-green) while nothing was tiled.",
-  "store": {},
-  "window_id": 22123,
-  "observed": [{"window_id": 22123, "app": "WezTerm", "role": "AXWindow", "subrole": "AXDialog", "resizable": false, "minimized": false, "frame": {"x": 8, "y": 100, "w": 640, "h": 726}}],
-  "expect": "error"
-}

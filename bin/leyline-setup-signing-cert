@@ -38,7 +38,7 @@ if [[ "$(_count)" == "1" ]]; then
 fi
 
 # Never delete identities automatically: certificate replacement changes grants.
-if [[ "${n:-$(_count)}" -gt 0 ]]; then
+if [[ "$(_count)" -gt 0 ]]; then
   printf 'Multiple matching certificates exist; resolve the ambiguity in Keychain Access.\n' >&2
   exit 65
 fi

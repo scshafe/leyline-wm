@@ -8,7 +8,7 @@ an independent on-demand client of launchd; CLI clients use the local socket.
 ```mermaid
 flowchart LR
   Keys[Keyboard event tap] --> Input[ResidentInput]
-  AX[Workspace and AX events] --> Feed[ProjectionInputFeed]
+  AX[Workspace, AX and window-server Space events] --> Feed[ProjectionInputFeed]
   Input --> Authority[CoreServer and ResidentActionController]
   Feed --> Authority
   Settings[SettingsEvents] --> Authority
@@ -32,20 +32,26 @@ flowchart LR
 | `ResidentPlanner` / `ResidentPlannerLayout` | Deterministic lifecycle, focus, resize and move plans |
 | `ResidentSpacePartitions` | Conserved arrangements for identifiable enabled visible Spaces |
 | `ProjectionInputFeed` / `TargetedProjectionSnapshot` | Versioned Workspace/AX observation and trustworthy Space membership |
+| `AccessibilityFocusObserver` / `AccessibilityWorldObserver` | AX focus and window-lifecycle notifications feeding observation |
+| `CoreWindowSpaceNotifications` | Window-server reports of a window joining or leaving a Space, such as a Mission Control move |
 | `ResidentInput` / routing | One keyboard tap, native claims, sticky modes and independent safety release |
-| `ResidentEffector` / AX port | Bounded compound writes and identity-bound landed verification |
-| `CoreRuntimeServices` / `SettingsEvents` | Lifecycle, readiness, settings changes and maintenance |
+| `ResidentInputFault*` | Safety-release evidence and the short keyboard-release notice |
+| `ResidentEffector` / AX port | Bounded compound writes (with an app's `AXEnhancedUserInterface` suspended during them) and identity-bound landed verification |
+| `CoreRuntimeServices` / `SettingsEvents` | Lifecycle, readiness and settings/border-file changes |
+| `ResidentMaintenance` | Exclusive soft/hard reset epochs with stop acknowledgements |
+| `ResidentInstallation` | Per-user LaunchAgent install, update, removal and service control |
 | `BorderProjection` / `BorderRenderer` | Read-only role/ghost plans and pooled noninteractive panels |
-| `ResidentControls` | Mouse-reachable menu, frozen targets and typed control intents |
+| `ResidentControls` / `ResidentStatusIcon` | Mouse-reachable menu, focused-Space status icon, frozen targets and typed control intents |
 
 Only the pure model is platform independent. AX reads and AppKit presentation are
 outside the ordered authority/input callback. Async work returns original context
 and generation; stale completion cannot overwrite a later revision. Rendering
 coalesces visual snapshots without dropping input/effect transitions.
 
-Production resources are packaged beside the resident: keymap/decode, border
-metadata, version and native CLI commands. Fixtures and self-test harnesses belong
-to the developer build, not the installed production resident. See
+Production resources are packaged beside the resident: keymap/decode, version and
+native CLI commands. Border defaults are compiled into `BorderPalette`. Fixtures
+and self-test harnesses belong to the developer build, not the installed
+production resident. See
 [development](../development.md) for build boundaries.
 
 The user-data root stores durable settings and the authoritative journal separately

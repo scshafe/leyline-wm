@@ -1,9 +1,14 @@
 # Spatial-navigation algorithm
 
 [SpatialNav.swift](../../leylined/Sources/LeylineModel/SpatialNav.swift) is the pure
-ranker. Independent JQ and frozen scenes under `tests/oracles` verify its ordering.
+ranker. Independent frozen scenes under `tests/oracles` verify its ordering.
 The resident supplies identity-bound presented managed windows from enabled visible
 Spaces; ignored, minimized, hidden and OFF windows are excluded before ranking.
+Focus-only commands rank current observed frames and bind the selected target to
+its current lifetime. They do not require a reconciled layout checkpoint and
+cannot replay saved frame targets. Complete observation, trust and actual Space
+membership remain required. Recovery rebuilds a partition with no surviving
+lifetimes without reclaiming its old tiles one by one.
 
 ## Surface and phases
 
@@ -15,9 +20,10 @@ Inputs are a source window ID, candidate IDs/frames, display frames and one of
 north/east/south/west. Missing source returns `noFocus`. Remove the source from the
 candidate pool, then evaluate two phases:
 
-1. **Direct:** choose candidates beyond the source's facing edge with strictly
-   positive perpendicular overlap. Return the lexicographically best direct
-   candidate if any exists.
+1. **Direct:** choose candidates in the direction (beyond the source's facing
+   edge, or overlapping it with area past that edge) with strictly positive
+   perpendicular overlap. Return the lexicographically best direct candidate if
+   any exists.
 2. **Wrap:** otherwise choose candidates with positive rectangular intersection
    with the opposite-edge band and strictly positive perpendicular overlap. Return
    the best wrap candidate, or `noCandidate` if the pool is empty.
@@ -27,16 +33,21 @@ verifies actual focus; a pure winner is not proof that focus changed.
 
 ## Direct viability
 
-For source `s` and destination `d`, beyond the facing edge means:
+For source `s` and destination `d`, `d` lies in the direction when it is beyond
+the facing edge, or when it overlaps the source and its far edge reaches more than
+4 points past the facing edge:
 
-| Direction | Condition |
-|---|---|
-| East | `d.x >= s.x + s.w` |
-| West | `d.x + d.w <= s.x` |
-| South | `d.y >= s.y + s.h` |
-| North | `d.y + d.h <= s.y` |
+| Direction | Beyond | Reaches past |
+|---|---|---|
+| East | `d.x >= s.x + s.w` | `d.x + d.w > s.x + s.w + 4` |
+| West | `d.x + d.w <= s.x` | `d.x < s.x - 4` |
+| South | `d.y >= s.y + s.h` | `d.y + d.h > s.y + s.h + 4` |
+| North | `d.y + d.h <= s.y` | `d.y < s.y - 4` |
 
-Touching edges count as beyond. Perpendicular overlap is:
+Touching edges count as beyond. Overlap happens when an application cannot
+shrink to its tile; the neighbour it covers keeps its area past the source and
+stays reachable instead of being skipped by a wrap. The 4-point floor absorbs
+frame rounding. Perpendicular overlap is:
 
 - East/west: `max(0, min(s.y+s.h, d.y+d.h) - max(s.y, d.y))`.
 - North/south: `max(0, min(s.x+s.w, d.x+d.w) - max(s.x, d.x))`.
@@ -62,8 +73,9 @@ Both phases sort ascending by this tuple:
  perpendicular_center_distance, window_id)
 ```
 
-Direct edge distance is the nonnegative gap from the source's facing edge to the
-destination's near edge. Wrap edge distance is measured from the opposite surface
+Direct edge distance is the signed gap from the source's facing edge to the
+destination's near edge: nonnegative beyond the edge, negative for an overlapping
+destination, which therefore ranks first. Wrap edge distance is measured from the opposite surface
 edge to the destination's far edge:
 
 | Direction | Wrap edge distance |

@@ -6,7 +6,7 @@ struct ResidentSpaceTarget: Equatable, Sendable {
     let displayId: String
 
     static func focusedContext(in world: JSONValue) -> JSONValue? {
-        ["focused_space", "active_context", "focus"].compactMap { world.at(path: $0) }.first { $0.objectValue != nil }
+        ["active_context", "focus"].compactMap { world.at(path: $0) }.first { $0.objectValue != nil }
     }
 
     static func focused(in world: JSONValue) -> ResidentSpaceTarget? {
@@ -63,8 +63,7 @@ struct ResidentControlsState: Sendable {
     private(set) var menuWindows: [ResidentWindowMenuEntry] = []
     private(set) var currentWindows: [ResidentWindowMenuEntry] = []
     private(set) var globallyRunning = true
-    private(set) var globalGutterWidth: Int?
-    private(set) var effectiveGutterWidth = BorderPalette.defaultThickness
+    private(set) var desiredRunning: Bool?
     private(set) var status = "Starting"
     private(set) var unavailableReason: String?
     private var observedWindows: [ResidentWindowMenuEntry] = []
@@ -79,13 +78,10 @@ struct ResidentControlsState: Sendable {
         currentTarget = ResidentSpaceTarget.focused(in: world)
         if let target = currentTarget {
             managementEnabled = object["space_activation"]?.objectValue?[target.spaceKey]?.boolValue
-                ?? object["spaces_enabled"]?.objectValue?[target.spaceKey]?.boolValue
                 ?? context?["space_enabled"]?.boolValue ?? true
         } else { managementEnabled = nil }
         globallyRunning = object["resident_running"]?.boolValue ?? globallyRunning
-        globalGutterWidth = object["global_gutter_width"]?.intValue.map(Int.init)
-        effectiveGutterWidth = object["effective_gutter_width"]?.intValue.map(Int.init)
-            ?? globalGutterWidth ?? BorderPalette.defaultThickness
+        desiredRunning = object["desired_running"]?.boolValue
         observedWindows = Self.windowEntries(world: world)
         currentWindows = observedWindows.filter { $0.target == currentTarget }
         let result = object["last_result"]
@@ -94,12 +90,18 @@ struct ResidentControlsState: Sendable {
         let residentReason: String? = object["resident_unavailable_reason"]?.stringValue ?? fault
         let observationReason: String? = object["observation"]?.at(path: "world_failure_code")?.stringValue
             ?? object["observation"]?.at(path: "failure_code")?.stringValue
-        let spaceReason: String? = object["space_identity_reason"]?.stringValue
-            ?? context?["space_identity_reason"]?.stringValue
-            ?? (currentTarget == nil ? "space_identity_unavailable" : nil)
+        let spaceReason: String? = currentTarget == nil ? "space_identity_unavailable" : nil
         unavailableReason = residentReason ?? observationReason ?? spaceReason
         status = object["resident_status"]?.stringValue
             ?? (globallyRunning ? (currentTarget == nil ? "Space unavailable" : "Running") : "Stopped")
+    }
+
+    var iconState: ResidentStatusIconState {
+        if desiredRunning == false || managementEnabled == false { return .off }
+        if desiredRunning == nil, status == "Stopped", liveWorld.at(path: "resident_unavailable_reason")?.stringValue == nil { return .off }
+        if !globallyRunning || currentTarget == nil || unavailableReason != nil
+            || liveWorld.at(path: "management_enabled")?.boolValue == false { return .error }
+        return .on
     }
 
     mutating func menuWillOpen() {
@@ -133,20 +135,14 @@ struct ResidentControlsState: Sendable {
             target: entry.target, expectedRevision: menuTracking ? menuRevision : revision)
     }
 
-    func regutterAction() -> ResidentMenuAction? {
-        guard globallyRunning, let target = toggleTarget, targetIsEnabled(target) else { return nil }
-        return ResidentMenuAction(actionID: "layout.regutter", arguments: .object([:]), target: target,
-            expectedRevision: menuTracking ? menuRevision : revision)
-    }
-
     func targetIsEnabled(_ target: ResidentSpaceTarget) -> Bool {
-        guard liveWorld.at(path: "management_enabled")?.boolValue != false,
+        guard liveWorld.managementEnabled,
               liveWorld.at(path: "persistence_available")?.boolValue != false,
-              liveWorld.at(path: "observation.world_complete")?.boolValue != false,
+              liveWorld.worldComplete != false,
               liveWorld.at(path: "space_identity_available")?.boolValue != false else { return false }
         if liveWorld.at(path: "space_activation")?.objectValue?[target.spaceKey]?.boolValue == false { return false }
         let contexts = (liveWorld.at(path: "space_contexts")?.arrayValue ?? [])
-            + [liveWorld.at(path: "focused_space"), liveWorld.at(path: "active_context"), liveWorld.at(path: "focus")].compactMap { $0 }
+            + [liveWorld.at(path: "active_context"), liveWorld.at(path: "focus")].compactMap { $0 }
         return contexts.contains {
             $0.at(path: "space_key")?.stringValue == target.spaceKey
                 && $0.at(path: "display_id")?.stringValue == target.displayId
@@ -182,8 +178,7 @@ struct ResidentControlsState: Sendable {
                   window.at(path: "space_visible")?.boolValue == true,
                   let space = window.at(path: "space_key")?.stringValue, !space.isEmpty, !space.contains("runtime:"),
                   let display = window.at(path: "display_id")?.stringValue, !display.isEmpty else { return nil }
-            let app = window.at(path: "app_name")?.stringValue ?? window.at(path: "application")?.stringValue
-                ?? window.at(path: "bundle_id")?.stringValue
+            let app = window.at(path: "app")?.stringValue
             let title = window.at(path: "title")?.stringValue
             let label = [app, title].compactMap { $0?.isEmpty == false ? $0 : nil }.joined(separator: " — ")
             let enabled = world.at(path: "space_activation")?.objectValue?[space]?.boolValue

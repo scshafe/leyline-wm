@@ -1,6 +1,0 @@
-{
-  "fn": "rotate_side",
-  "note": "B3/C3: the Hyper+c clockwise rotation - north -> east (the full cycle n->e->s->w->n is this map applied four times; each hop fixture-locked by expect).",
-  "side": "north",
-  "expect": "east"
-}

@@ -3,6 +3,15 @@
 import Foundation
 import LeylineModel
 
+/// Action identifiers the resident treats specially, spelled once.
+enum ResidentActionIDs {
+    /// Actions that end an interaction: they invalidate in-flight effects and skip the ordered queue.
+    static let cancelling: Set<String> = ["move.cancel", "move.off", "resize.off"]
+    /// Resize adjustments repeat and commute; they are never ordered behind one another.
+    static let resizeAdjustPrefix = "resize.adjust."
+    static let worldReconcile = "world.reconcile"
+}
+
 enum ResidentInputConstants {
     static let modeIndexMask: UInt64 = 0x7fff_ffff
     static let pendingModeRelease: UInt64 = 0x8000_0000
@@ -11,11 +20,12 @@ enum ResidentInputConstants {
     static let watchdogCadenceMilliseconds = 25
     static let releaseBudgetMilliseconds = 200
     static let releaseCeilingMilliseconds = 250
-    static let releaseReasons = ["none", "callback_deadline", "tap_run_loop_deadline",
-        "authority_deadline", "action_deadline", "mailbox_contention", "mailbox_overflow",
-        "pending_action_overflow", "global_stop", "external_context_invalidated",
-        "committed_interaction_context_invalidated", "world_or_focused_space_unavailable",
-        "world_unavailable", "settings-failure", "unknown_release"]
+    /// How long tap activation may take before startup reports no tap. This
+    /// bounds activation, not keyboard delivery; it merely matches the ceiling.
+    static let tapActivationTimeoutMilliseconds = 250
+    /// After a safety release, both lanes must have progressed this recently
+    /// before the tap is re-armed.
+    static let rearmFreshnessNanoseconds: UInt64 = 100_000_000
 }
 
 enum ResidentInputPhase: String, Sendable { case keyDown = "key_down", keyUp = "key_up", cancel }
@@ -103,6 +113,14 @@ struct ResidentInputConfiguration: Sendable {
                 tables[index][key] = ResidentInputRoute(
                     actionId: "mode.cancel", predicate: .unconditionalExit,
                     enteringModeIndex: nil, exitsImmediately: true)
+            }
+        }
+        // A claimed chord whose base key has no decode row could never fire.
+        let decodable = Set(decode.table.values)
+        for chord in Set(tables.flatMap(\.keys)) {
+            let base = chord.components(separatedBy: " - ").last ?? chord
+            guard decodable.contains(base) else {
+                throw ResidentInputError(code: "INPUT.KEYMAP_INVALID", message: "Keymap chord cannot be decoded: \(chord)")
             }
         }
         self.decode = decode
@@ -259,13 +277,14 @@ final class ResidentInputRouting: @unchecked Sendable {
         }
         // Native held-key ownership consumes release edges. Only directional resize
         // needs a delivered key-up marker; mode/global/service releases have no action.
-        if phase == .keyUp, !route.actionId.hasPrefix("resize.adjust.") { return .claimed }
+        if phase == .keyUp, !route.actionId.hasPrefix(ResidentActionIDs.resizeAdjustPrefix) { return .claimed }
         guard mailboxLock.try() else {
-            release(reason: "mailbox_contention")
+            release(reason: .mailboxContention)
             return .contentionReleased
         }
-        let priority = phase == .keyUp || phase == .cancel || route.exitsImmediately
-        let cancelling = phase == .cancel || route.exitsImmediately
+        // No caller admits `.cancel`; it is only ever stamped on the delivered action below.
+        let priority = phase == .keyUp || route.exitsImmediately
+        let cancelling = route.exitsImmediately
         if cancelling {
             // A genuine cancel supersedes queued work. Key-up only ends future
             // repetition; every already admitted displacement remains FIFO.
@@ -273,14 +292,14 @@ final class ResidentInputRouting: @unchecked Sendable {
                 if case .action(let action, _, _, _) = delivery {
                     return action.actionId != ResidentInputConstants.spaceToggleActionID
                         && action.generation == previous >> 32 && action.phase == .keyDown
-                        && (action.actionId.hasPrefix("resize.adjust.") || route.exitsImmediately)
+                        && (action.actionId.hasPrefix(ResidentActionIDs.resizeAdjustPrefix) || route.exitsImmediately)
                 }
                 return false
             }
         }
         guard mailbox.count < ResidentInputConstants.maximumQueuedEvents - 1 else {
             mailboxLock.unlock()
-            release(reason: "mailbox_overflow")
+            release(reason: .mailboxOverflow)
             return .queueFull
         }
         var updated = previous
@@ -334,7 +353,7 @@ final class ResidentInputRouting: @unchecked Sendable {
 
     /// Restore default claims synchronously without waiting for any delivery.
     /// Notification is asynchronous; a stalled renderer cannot delay release.
-    func release(reason: String, preserveSpaceControls: Bool = false) {
+    func release(reason: ResidentInputReleaseReason, preserveSpaceControls: Bool = false) {
         if !preserveSpaceControls { invalidateSpaceContext() }
         // A completion can win the first CAS while the watchdog is releasing.
         // Retry the lock-free update rather than accidentally retaining mode.
@@ -350,10 +369,9 @@ final class ResidentInputRouting: @unchecked Sendable {
         }
         scheduleReleaseDelivery()
         releasedCount.wrappingAdd(1, ordering: .relaxed)
-        releaseReasonCode.store(ResidentInputConstants.releaseReasons.firstIndex(of: reason)
-            ?? (ResidentInputConstants.releaseReasons.count - 1), ordering: .releasing)
+        releaseReasonCode.store(reason.code, ordering: .releasing)
         clearPendingDeadline(preserveSpaceControls: preserveSpaceControls)
-        if let faultReason = ResidentInputFaultReason(rawValue: reason) {
+        if let faultReason = ResidentInputFaultReason(reason) {
             faultMailbox.submit(ResidentInputFaultRelease(inputEpoch: inputEpoch, reason: faultReason,
                 originalGeneration: old >> 32, releasedGeneration: (old >> 32) + 1, receiptUptimeNs: receipt))
         }
@@ -378,7 +396,7 @@ final class ResidentInputRouting: @unchecked Sendable {
          "peak_queued_events": .int(Int64(peakCount.load(ordering: .relaxed))),
          "queue_capacity": .int(Int64(ResidentInputConstants.maximumQueuedEvents)),
          "release_count": .int(Int64(releasedCount.load(ordering: .relaxed))),
-         "last_release_reason": .string(ResidentInputConstants.releaseReasons[releaseReasonCode.load(ordering: .acquiring)]),
+         "last_release_reason": .string(ResidentInputReleaseReason.allCases[releaseReasonCode.load(ordering: .acquiring)].rawValue),
          "accepting_claims": .bool(isAccepting),
          "active_action_ids": .array(Set(configuration.routes[modeIndex].keys.compactMap {
              allowedRoute(at: modeIndex, chord: $0)?.actionId
@@ -386,8 +404,7 @@ final class ResidentInputRouting: @unchecked Sendable {
          "pending_action_count": .int(Int64(pendingActionCount.load(ordering: .acquiring))),
          "fault_delivery": .object(faultMailbox.health),
          "unsupported_action_ids": .array(configuration.unsupportedActionIds.sorted().map(JSONValue.string)),
-         "pending_mode_release": .bool(packedMode.load(ordering: .acquiring) & ResidentInputConstants.pendingModeRelease != 0),
-         "normal_path_subprocesses": .int(0)]
+         "pending_mode_release": .bool(packedMode.load(ordering: .acquiring) & ResidentInputConstants.pendingModeRelease != 0)]
     }
 
     #if LEYLINE_BUILD_TESTS
@@ -426,7 +443,7 @@ final class ResidentInputRouting: @unchecked Sendable {
                 guard pendingActions.count < ResidentInputConstants.maximumQueuedEvents else {
                     pendingActionsLock.unlock()
                     setAccepting(false)
-                    release(reason: "pending_action_overflow")
+                    release(reason: .pendingActionOverflow)
                     continue
                 }
                 pendingActions[actionSequence] = PendingAction(receiptUptimeNs: action.receiptUptimeNs,

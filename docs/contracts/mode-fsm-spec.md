@@ -3,7 +3,8 @@
 `LeylineModel/ModeFSM.swift` evaluates pure transitions. The resident input router
 owns active mode and claim generation; its one keyboard event tap owns capture.
 The production modes are default, move and resize. Their declarative sources are
-`keymap/global.json`, `keymap/modes.json` and the frozen physical US decode table.
+`keymap/global.json`, `keymap/modes.json` and the fixed physical US decode table,
+which covers exactly the bound keys; the loader refuses a chord it cannot decode.
 Decode does not consult changing live layout sources; pure modifiers pass through.
 
 The `modes/v1` loader rejects malformed schema and unknown completion predicates.
@@ -38,5 +39,5 @@ See [responsiveness](event-driven-responsiveness.md) for evidence requirements.
 Native checks cover routing, claim inventory, key-up, stale completion, bounded
 queues and independent fault release. Frozen predicate and transition fixtures are
 regression inputs; verb strings inside test fixtures are not executable commands.
-`ley validate keymap` checks actual native routes against a nonempty independent
-inventory. A missing binary or fixture cannot yield a passing check.
+The claims suite checks the actual loaded routes against the independent v1 route
+contract. A missing binary or fixture cannot yield a passing check.

@@ -10,7 +10,7 @@ The recursive allocation model derives owner-local cells, nested membership,
 constraints and projected frames. Every eligible member appears exactly once,
 including overload members sharing one footprint. No-hole geometry and membership
 conservation are independent checks. Minima compose upward; frames project down
-through the same model. Spacing derives once from the configured border width;
+through the same model. Spacing derives once from the fixed 1-point border width;
 requested origins and opposite edges round together.
 
 The same model, trustworthy world and causally ordered admitted intent produce the
@@ -45,7 +45,8 @@ physical effects retain their actual outcome and committed checkpoint.
 Later observations retain original receipt, lifetime, context and generation.
 Changed authority fences stale completions and pending work. Known-floor repair
 and newly learned clamps require actual writes and the prescribed later reads;
-unchanged cached values cannot establish minima.
+one unchanged read cannot establish a minimum. A window already at its floor is
+learned only when an identical rewrite is also refused at the requested position.
 
 Model/planner/command/effect/Space/presentation tests verify geometry, conservation,
 constraints, preview equality, invalidation and publication ordering. Independent

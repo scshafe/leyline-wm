@@ -11,20 +11,18 @@ LEYLINE_HOME="${LEYLINE_HOME:-$(cd "$(dirname "$ley_source")/.." && pwd -P)}"
 LEYLINE_ROOT="${LEYLINE_ROOT:-$HOME/.config/leyline}"
 LEYLINE_RUNTIME_DIR="${LEYLINE_RUNTIME_DIR:-$LEYLINE_ROOT/runtime}"
 export LEYLINE_HOME LEYLINE_ROOT LEYLINE_RUNTIME_DIR
-ley_native="${LEYLINE_RESIDENT_CLIENT_BIN:-$LEYLINE_HOME/bin/leylined}"
+# The sole resident command client; the sourced commands read this resolved value.
+LEYLINE_RESIDENT_CLIENT_BIN="${LEYLINE_RESIDENT_CLIENT_BIN:-$LEYLINE_HOME/bin/leylined}"
 usage() {
   cat <<'HELP'
 Leyline 1 — the native macOS window manager
 Usage: ley <command> [arguments]
   install    Copy the packaged apps for this user and register the service
   act        Execute a window-management action
-  resident   Read status, health, snapshots, results, performance or traces
+  resident   Read status, health, snapshots, results or traces
   ctl        Start, stop, restart or reset management
   setup      Install, inspect or uninstall the per-user launchd service
-  doctor     Check process ownership, observation and configured shortcuts
-  validate   Validate configured shortcuts or source data
-  perf       Read native performance diagnostics
-  trace      Read bounded input/request traces
+  doctor     Check process ownership, observation and input readiness
   --version  Print the installed version
 HELP
   if [[ -f "$LEYLINE_HOME/leylined/Package.swift" ]]; then
@@ -35,18 +33,18 @@ ley_command="${1:-help}"
 [[ $# -eq 0 ]] || shift
 case "$ley_command" in
   help|-h|--help) usage; exit 0 ;;
-  version|-v|--version) exec "$ley_native" version ;;
+  version|-v|--version) exec "$LEYLINE_RESIDENT_CLIENT_BIN" version ;;
   install)
-    if [[ -f "$LEYLINE_HOME/release.json" ]]; then
-      ley_install_script="$(cd "$LEYLINE_HOME/../../../.." && pwd -P)/install.sh"
-    else
-      ley_install_script="$LEYLINE_HOME/install.sh"
+    [[ -f "$LEYLINE_HOME/release.json" ]] || { printf 'ley install requires a packaged application; see docs/installation.md.\n' >&2; exit 64; }
+    # A package directory (Homebrew prefix or extracted archive) carries both apps beside install.sh.
+    ley_package="$(cd "$LEYLINE_HOME/../../../.." && pwd -P)"
+    if [[ -f "$ley_package/install.sh" && -d "$ley_package/Leyline Recovery.app" ]]; then
+      exec /bin/bash "$ley_package/install.sh" "$@"
     fi
-    [[ -f "$ley_install_script" ]] || exec "$ley_native" install "$@"
-    exec /bin/bash "$ley_install_script" "$@" ;;
+    exec "$LEYLINE_RESIDENT_CLIENT_BIN" install "$@" ;;
   build|test|bench)
     [[ -f "$LEYLINE_HOME/leylined/Package.swift" ]] || { printf 'This command requires the source distribution.\n' >&2; exit 64; } ;;
-  act|resident|ctl|doctor|validate|setup|perf|trace) ;;
+  act|resident|ctl|doctor|setup) ;;
   *) printf 'ley: unknown command: %s\n' "$ley_command" >&2; usage >&2; exit 64 ;;
 esac
 source "$LEYLINE_HOME/lib/cli_output.sh" || exit 70

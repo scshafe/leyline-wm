@@ -1,33 +1,24 @@
 // Spatial navigation — the canonical direction-ranking algorithm
-// (docs/contracts/spatial-nav-algorithm-spec.md), ported from
-// lib/swift/FocusNavigationModel.swift so the ranked orders agree to the last
-// tie-break. One aggregate stitched surface, two phases (direct then wrap), one
+// (docs/contracts/spatial-nav-algorithm-spec.md); the ranked orders agree with
+// the retired reference model to the last tie-break, pinned by the navigation
+// oracles. One aggregate stitched surface, two phases (direct then wrap), one
 // deterministic lexicographic score tuple ending in the window id. Pure: no
-// CoreGraphics — geometry is Double-based NavRect (CGRect.union/intersects
-// semantics reproduced exactly, including edge-touching NOT intersecting).
+// CoreGraphics — geometry is the model's Double-based Frame, with CGRect's
+// union/intersects semantics reproduced exactly (edge-touching does NOT intersect).
 
-public struct NavRect: Sendable, Equatable {
-    public let x: Double
-    public let y: Double
-    public let w: Double
-    public let h: Double
+/// Navigation reads the model's frames directly; the name records the port's origin.
+public typealias NavRect = Frame
 
-    public init(x: Double, y: Double, w: Double, h: Double) {
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
-    }
+public extension Frame {
+    var right: Double { maxX }
+    var bottom: Double { maxY }
+    var midX: Double { x + w / 2 }
+    var midY: Double { y + h / 2 }
 
-    public var right: Double { x + w }
-    public var bottom: Double { y + h }
-    public var midX: Double { x + w / 2 }
-    public var midY: Double { y + h / 2 }
-
-    public func union(_ other: NavRect) -> NavRect {
+    func union(_ other: Frame) -> Frame {
         let nx = Swift.min(x, other.x)
         let ny = Swift.min(y, other.y)
-        return NavRect(
+        return Frame(
             x: nx, y: ny,
             w: Swift.max(right, other.right) - nx,
             h: Swift.max(bottom, other.bottom) - ny
@@ -36,7 +27,7 @@ public struct NavRect: Sendable, Equatable {
 
     /// CGRect.intersects semantics: an edge-touching pair (empty intersection)
     /// does NOT intersect.
-    public func intersects(_ other: NavRect) -> Bool {
+    func intersects(_ other: Frame) -> Bool {
         Swift.max(x, other.x) < Swift.min(right, other.right)
             && Swift.max(y, other.y) < Swift.min(bottom, other.bottom)
     }
@@ -170,14 +161,31 @@ public struct SpatialNav: Sendable {
         }
     }
 
+    /// An overlapping destination lies in the direction only when its far edge passes the
+    /// source's facing edge by more than this; smaller differences are frame rounding.
+    static let overlapReach = 4.0
+
+    /// How far the destination's far edge passes the source's facing edge.
+    static func reachPast(_ direction: NavDirection, _ source: NavRect, _ target: NavRect) -> Double {
+        switch direction {
+        case .east: return target.right - source.right
+        case .west: return source.x - target.x
+        case .south: return target.bottom - source.bottom
+        case .north: return source.y - target.y
+        }
+    }
+
+    /// Beyond the facing edge, or overlapping the source with area past it. An app that
+    /// cannot shrink to its tile overlaps its neighbour; that neighbour stays reachable.
     static func viableDirect(_ direction: NavDirection, _ source: NavRect, _ target: NavRect) -> Bool {
-        sideInDirection(direction, source, target)
+        (sideInDirection(direction, source, target) || reachPast(direction, source, target) > overlapReach)
             && perpendicularOverlap(direction, source, target) > 0
     }
 
     // -- Scoring ------------------------------------------------------------
     // The tuple: edge distance, -perpendicular overlap, border proportion,
-    // centerline delta, window id. `id` is always the final word.
+    // centerline delta, window id. `id` is always the final word. An overlapping
+    // destination has a negative edge distance and ranks before any beyond the edge.
 
     static func scoreDirect(_ direction: NavDirection, _ source: NavRect, _ target: NavRect, id: Int) -> [Double] {
         let po = perpendicularOverlap(direction, source, target)

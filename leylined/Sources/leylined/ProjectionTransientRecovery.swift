@@ -50,7 +50,7 @@ final class ProjectionTransientRecovery: @unchecked Sendable {
     static func isTransient(_ code: String) -> Bool {
         // Context such as an owning PID can follow the external AX error.
         let components = code.split(separator: ":")
-        return components.contains("-25204") || components.contains("cannotComplete")
+        return components.contains("-25204")
             || components.first == "ax_read_deadline_exceeded"
     }
     /// Real lifecycle/start/recovery input arms a fresh budget. An attempted recovery never calls this.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Hermetic native CLI, reset, health, claims, and installer boundary checks."""
+"""Hermetic native CLI, reset, health and installer boundary checks."""
 from __future__ import annotations
-import json, os, subprocess, tempfile, unittest
+import json, os, re, subprocess, tempfile, unittest
 from pathlib import Path
 REPO=Path(__file__).resolve().parents[2]
 class NativeCli(unittest.TestCase):
@@ -18,10 +18,6 @@ printf '%s\0' "$@" >> "$NATIVE_ARGV"
 case "$1" in
  status)
   jq -c --arg mutation "${NATIVE_MUTATION:-}" '{data:(if $mutation=="world" then .world.observation.world_complete=false elif $mutation=="input" then .health.resident.input.tap_installed=false elif $mutation=="projection" then .health.projection.last_rendered_revision=6 elif $mutation=="ownership" then .health.owner="unknown" elif $mutation=="running" then .world.resident_running=false elif $mutation=="active_ids" then .health.resident.input.active_action_ids="invalid" elif $mutation=="schema" then .health.schema=1 elif $mutation=="seed" then .health.world_seed.ready=false elif $mutation=="focus" then .health.focus_observer.ready=false elif $mutation=="shape" then .health.unexpected=true else . end),error:null,meta:{}}' "$NATIVE_STATUS" ;;
- --dump-claims)
-  mode="$2";json=0;[[ " $* " != *" --json "* ]] || json=1
-  dump="$(jq -c --arg mode "$mode" '(.expected_action_routes[$mode] // {}) as $routes | {schema:"leyline/resident-input-claims/v1",mode:$mode,claims:($routes|keys),claim_count:($routes|length),action_routes:$routes,retained_action_ids:.retained_action_ids,unsupported_action_ids:.unsupported_action_ids}' "$NATIVE_ORACLE")"
-  if (( json ));then printf '%s\n' "$dump";else printf '%s' "$dump" | jq -r '.claims[]';fi ;;
  install) cat "$NATIVE_INSTALL_PLAN" ;;
  control) printf '{"data":{"phase":"completed"},"error":null,"meta":{"completed":true}}\n' ;;
  *) printf '{"data":{"args":"native"},"error":null,"meta":{}}\n' ;;
@@ -30,24 +26,34 @@ esac
         self.client.chmod(0o755)
         self.env={**os.environ,"LEYLINE_HOME":str(REPO),"LEYLINE_ROOT":str(self.root),"LEYLINE_RESIDENT_CLIENT_BIN":str(self.client),
                   "LEYLINE_DOCTOR_JOBS_FILE":str(REPO/"tests/native-cli/fixtures/jobs.json"),"NATIVE_CALLS":str(self.calls),
-                  "NATIVE_ARGV":str(self.directory/"argv"),"NATIVE_STATUS":str(REPO/"tests/native-cli/fixtures/status.json"),"NATIVE_ORACLE":str(REPO/"leylined/Fixtures/input/v1-claims.json"),"NATIVE_INSTALL_PLAN":str(REPO/"tests/native-cli/fixtures/install-plan.json")}
-        for key in ["LEYLINE_KEYMAP_MANIFEST","LEYLINE_KEYMAP_MODES","LEYLINE_RESIDENT_CLAIM_ORACLE","LEYLINE_KEYMAP_HOME"]:self.env.pop(key,None)
+                  "NATIVE_ARGV":str(self.directory/"argv"),"NATIVE_STATUS":str(REPO/"tests/native-cli/fixtures/status.json"),"NATIVE_INSTALL_PLAN":str(REPO/"tests/native-cli/fixtures/install-plan.json")}
     def run_cli(self,*args,**extra):
         return subprocess.run(["/bin/bash",str(REPO/"bin/ley"),*args],env={**self.env,**extra},text=True,capture_output=True)
     def test_native_actions_forward_arguments(self):
         self.assertEqual(self.run_cli("act","nav.focus.east","--request-id","fixture").returncode,0)
         self.assertEqual(self.calls.read_text(),"act nav.focus.east --request-id fixture\n")
     def test_native_trace_forwards_to_resident_client(self):
-        self.assertEqual(self.run_cli("trace","--limit","10").returncode,0)
-        self.assertEqual(self.calls.read_text(),"trace --limit 10\n")
+        self.assertEqual(self.run_cli("resident","trace","--args-json",'{"limit":10}').returncode,0)
+        self.assertEqual(self.calls.read_text(),'trace --args-json {"limit":10}\n')
     def test_native_trace_client_failure_is_visible(self):
         self.assertEqual(self.run_cli("resident","trace",NATIVE_FAILURE="1").returncode,65)
     def test_command_names_reject_paths_and_removed_family(self):
-        for name in ["../act","/tmp/foo","action-run","parcel","core"]:
+        for name in ["../act","/tmp/foo","action-run","parcel","core","perf","trace","validate"]:
             with self.subTest(name=name):self.assertEqual(self.run_cli(name).returncode,64)
         self.assertFalse(self.calls.exists())
     def test_missing_client_fails_without_fallback(self):
-        self.assertEqual(self.run_cli("act","nav.focus.east",LEYLINE_RESIDENT_CLIENT_BIN=str(self.directory/"absent")).returncode,69)
+        # Every socket-backed command stops at 69 with its own message on its own stream; none falls back.
+        absent=str(self.directory/"absent")
+        envelope='{"data":null,"error":{"code":"core_client_unavailable","message":"Build the resident command client"},"meta":{"transport":"resident_socket"}}\n'
+        for args,stdout,stderr in [(("act","nav.focus.east"),envelope,""),(("resident","health"),envelope,""),
+                                   (("ctl","start"),"","error resident control client unavailable\n"),
+                                   (("ctl","reset"),"","error resident reset client unavailable\n"),
+                                   (("setup","launchd","install","--plan"),"","error native installer unavailable\n"),
+                                   (("doctor",),"","error resident client unavailable; native health unverified\n")]:
+            with self.subTest(command=" ".join(args)):
+                result=self.run_cli(*args,LEYLINE_RESIDENT_CLIENT_BIN=absent)
+                self.assertEqual((result.returncode,result.stdout,result.stderr),(69,stdout,stderr))
+        self.assertFalse(self.calls.exists())
     def test_reset_dry_run_preserves_journal_and_never_calls_owner(self):
         result=self.run_cli("ctl","reset","--dry-run");self.assertEqual(result.returncode,0)
         self.assertIn(str(self.journal),result.stdout);self.assertFalse(self.calls.exists())
@@ -60,7 +66,9 @@ esac
     def test_reset_preserves_client_error(self):self.assertEqual(self.run_cli("ctl","reset",NATIVE_FAILURE="1").returncode,65)
     def test_reset_rejects_unknown_external_scope(self):
         self.assertEqual(self.run_cli("ctl","reset","--include-external").returncode,64);self.assertFalse(self.calls.exists())
-    def test_native_health_and_claims_complete(self):
+    def test_source_checkout_refuses_package_install(self):
+        self.assertEqual(self.run_cli("install","--start").returncode,64);self.assertFalse(self.calls.exists())
+    def test_native_health_complete(self):
         result=self.run_cli("doctor");self.assertEqual(result.returncode,0,result.stdout+result.stderr)
         self.assertIn("resident diagnostics passed",result.stdout)
     def test_disabled_space_allows_only_the_control_chord(self):
@@ -128,7 +136,9 @@ esac
         command='wm_head() { :; }; wm_err() { printf "%s\\n" "$*" >&2; }; source "$SOURCE_TEST_COMMAND"; test_native'
         result=subprocess.run(["/bin/bash","-c",command],env={**self.env,"LEYLINE_HOME":str(home),"LEYLINE_CORE_BIN":"","SOURCE_TEST_COMMAND":str(REPO/"commands/test.sh")},text=True,capture_output=True)
         self.assertEqual(result.returncode,0,result.stderr)
-        calls=self.calls.read_text().splitlines();self.assertIn("self-test installation",calls);self.assertGreaterEqual(len(calls),22)
+        # Exactly the listed suites, once each, in order, on the isolated runner (source_checks pins the list against main.swift).
+        suites=re.search(r"(?m)^\s*for suite in (.+?); do",(REPO/"commands/test.sh").read_text()).group(1).split()
+        self.assertEqual(self.calls.read_text().splitlines(),[f"self-test {suite}" for suite in suites])
     def test_recovery_suite_uses_isolated_developer_runner(self):
         home=self.directory/"source home";(home/"bin").mkdir(parents=True)
         runner=home/"bin/Leyline Recovery Tests.app/Contents/MacOS/leyline-recovery"
