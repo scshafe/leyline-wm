@@ -1,5 +1,15 @@
 # Release notes
 
+## 1.0.3
+
+Changes since 1.0.2:
+
+- Fixed: Leyline could stop at "Recovery needed" during startup when an app quit
+  while startup was moving windows into place. Quitting an app reports the next
+  app's activation and the quit a few milliseconds apart; the quit cancelled the
+  startup moves, and startup treated that as a failure. It now plans again, as it
+  already did for a Space switch, while the windows and Spaces are unchanged.
+
 ## 1.0.2
 
 Changes since 1.0.1:

@@ -431,14 +431,16 @@ final class CoreRuntimeServices: @unchecked Sendable {
     }
 
     /// Contention a fresh startup plan may resolve. A Space switch publishes
-    /// `space_changed` and `app_activated` a few ms apart, in either order; the
-    /// first wakes the seed gate and the second (a) bumps the revision, (b) bumps
-    /// admission through the observer generation, or (c) cancels the startup
-    /// frame effect already issued (`invalidated_<event>`, status failed).
+    /// `space_changed` and `app_activated` a few ms apart, in either order, and
+    /// quitting an app publishes `app_activated` (its successor) and
+    /// `app_terminated` the same way. The first wakes the seed gate and the second
+    /// (a) bumps the revision, (b) bumps admission through the observer
+    /// generation, or (c) cancels the startup frame effect already issued
+    /// (`invalidated_<event>`, status failed).
     /// Identity/Space changes are excluded by the scope check, not by reason.
     static let startupReconciliationContentionReasons: Set<String> = [
         "expected_revision_mismatch", "queued_command_invalidated",
-        "invalidated_space_changed", "invalidated_app_activated"]
+        "invalidated_space_changed", "invalidated_app_activated", "invalidated_app_terminated"]
 
     /// Startup shares the controller's reconcile retry bound: a retry can itself
     /// collide with the reconcile the same Space-switch event scheduled.

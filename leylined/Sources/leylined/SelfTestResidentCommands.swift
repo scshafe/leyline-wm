@@ -2800,6 +2800,17 @@ private func runStartupAdmissionContentionScenarios(fixture: JSONValue, test: in
         var cancelled = refused.objectValue ?? [:]
         cancelled["status"] = .string("failed"); cancelled["reason"] = .string("invalidated_space_changed")
         test.check(canReplan(.object(cancelled)), "startup-admission/space-switch-cancelled-startup-effect-admits-a-fresh-plan")
+        // Live 2026-11-05: quitting System Settings (its window was on two Spaces,
+        // so startup was waiting) published app_activated, which woke the gate, and
+        // then app_terminated, which cancelled the startup frames (status failed).
+        var quit = cancelled; quit["reason"] = .string("invalidated_app_terminated")
+        test.check(canReplan(.object(quit)), "startup-admission/app-quit-cancelled-startup-effect-admits-a-fresh-plan")
+        test.check(!canReplan(.object(quit), attempt: CoreRuntimeServices.startupReconciliationRetryLimit),
+            "startup-admission/app-quit-replan-shares-the-bounded-retry-limit")
+        var moved = current.objectValue ?? [:]; moved["topology_revision"] = .int((current.at(path: "topology_revision")?.intValue ?? 0) + 1)
+        test.check(!CoreRuntimeServices.startupReconciliationCanReplan(.object(quit), baseline: baseline.world, current: .object(moved),
+            trusted: true, generation: generation, currentGeneration: generation, attempt: 0),
+            "startup-admission/app-quit-that-changed-the-startup-scope-is-not-contention")
         for reason in ["invalidated_cancel", "invalidated_resident_start_failed", "invalidated_global_stop"] {
             var stop = cancelled; stop["reason"] = .string(reason)
             test.check(!canReplan(.object(stop)), "startup-admission/\(reason)-is-not-startup-contention")

@@ -1,6 +1,6 @@
 # Core window-manager contract
 
-Leyline 1.0.2 manages eligible tiled windows, borders, move previews and controls
+Leyline 1.0.3 manages eligible tiled windows, borders, move previews and controls
 in one native `leylined` resident. On-demand CLI clients and the independent
 Finder Recovery app do not own layout authority.
 
