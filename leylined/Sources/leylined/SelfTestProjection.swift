@@ -119,6 +119,14 @@ func runProjectionSelfTest(sampleDirectory: String? = nil) -> Int32 {
           BorderPalette.thickness == 1 && BorderPalette.radius(store: nil) == 12
             && BorderPalette.radius(store: .object(["border_radius": .int(5)])) == 5)
     check("menu status icon drawing", runResidentStatusIconSelfTest(sampleDirectory: sampleDirectory))
+    // A ring joined to every Space stayed over the next Space after a switch.
+    check("decoration panels belong to one Space and stay usable beside full-screen windows",
+          !BorderPanelPresentation.collectionBehavior.contains(.canJoinAllSpaces)
+            && BorderPanelPresentation.collectionBehavior.contains(.fullScreenAuxiliary))
+    check("a hidden panel or one left on another Space is ordered in afresh; a current one is not",
+          BorderPanelPresentation.needsReshow(hidden: true, onCurrentSpace: true)
+            && BorderPanelPresentation.needsReshow(hidden: false, onCurrentSpace: false)
+            && !BorderPanelPresentation.needsReshow(hidden: false, onCurrentSpace: true))
 
     let rendererFacts = MainActor.assumeIsolated { () -> (
         CoreProjectionHealth, CoreProjectionHealth, CoreProjectionHealth,

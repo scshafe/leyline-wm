@@ -48,6 +48,11 @@ identifiers and timing. Review and redact output before sharing it. Report macOS
 version, architecture, affected applications, reproducible steps and the relevant
 error code; do not post your complete user-data directory or signing credentials.
 
+The trace returns at most 128 events per page; pass the last `sequence` you received
+as `from_sequence` (exclusive) to read the next page. Plan and outcome records carry
+`world_complete`, `world_failure_code`, `observation_failure_code` and
+`persistence_available`, so a `world_incomplete` refusal names what was missing.
+
 A failing automated test needs its exact source version, command and output.
 Model fixtures, synthetic events and compositor samples do not prove a physical
 keyboard path or scanout timing. See [privacy](privacy.md) and

@@ -233,6 +233,27 @@ func runResidentPlannerCompletionScenarios(tests: inout SelfTest) {
     tests.check(fixture.framesMatch(unequalInsert, expected: fixture.scene("unequal_depth_run").at(path: "expected_frames")),
         "planner-completion/unequal-depth-edge-run-projects-one-common-cut-to-all-known-floors")
     let resizeState = fixture.state("resize_face"), resizeWorld = fixture.world("resize_face")
+    // A committed layout whose effect was cancelled: the model already holds it, a window does not.
+    let settle = ResidentPlanner.plan(actionID: "world.reconcile", state: resizeState, world: resizeWorld)
+    let settledState = settle.status == .accepted ? settle.state : resizeState
+    var strayWorld = resizeWorld.objectValue!, strayWindows = resizeWorld.at(path: "windows")!.arrayValue!
+    var stray = strayWindows[0].objectValue!; stray["frame"] = Frame(x: 0, y: 0, w: 50, h: 50).json
+    let strayID = String(stray["window_id"]!.intValue!)
+    strayWindows[0] = .object(stray); strayWorld["windows"] = .array(strayWindows)
+    let reapplied = ResidentPlanner.plan(actionID: "world.reconcile", state: settledState, world: .object(strayWorld))
+    tests.check(reapplied.status == .accepted && reapplied.state == settledState
+        && ResidentPlanner.unappliedTargets(reapplied.targets, windows: strayWindows)?.keys.contains(strayID) == true,
+        "planner-completion/unchanged-model-re-applies-a-layout-a-window-never-reached")
+    let landedWindows = strayWindows.map { window -> JSONValue in
+        var object = window.objectValue!
+        if let id = object["window_id"]?.intValue, let target = reapplied.targets.at(path: String(id)),
+           let frame = Frame.from(target.at(path: "effect_frame") ?? target.at(path: "frame")) { object["frame"] = frame.json }
+        return .object(object)
+    }
+    var landedWorld = strayWorld; landedWorld["windows"] = .array(landedWindows)
+    let landed = ResidentPlanner.plan(actionID: "world.reconcile", state: settledState, world: .object(landedWorld))
+    tests.check(landed.status == .noop && landed.reason == "layout_unchanged" && landed.state == settledState,
+        "planner-completion/unchanged-model-with-every-window-at-target-is-settled")
     let resizeStart = ResidentPlanner.plan(actionID: "resize.start", state: resizeState, world: resizeWorld)
     let east = ResidentPlanner.plan(actionID: "resize.adjust.east", state: resizeStart.state, world: resizeWorld)
     let west = ResidentPlanner.plan(actionID: "resize.adjust.west", state: resizeStart.state, world: resizeWorld)

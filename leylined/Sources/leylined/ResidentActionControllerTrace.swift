@@ -11,9 +11,19 @@ extension ResidentActionController {
             .merging(["request_id": .string(requestID)]), timestamp: source.receipt)
     }
 
+    /// Why the world was or was not complete when a decision used it: the planner
+    /// and the effector gate on these same facts, so a `world_incomplete` refusal
+    /// names its cause. `persistence_available` also gates effect completeness.
+    static func observationTraceFields(_ world: JSONValue) -> JSONObject {
+        ["world_complete": world.at(path: "observation.world_complete") ?? .null,
+         "world_failure_code": world.at(path: "observation.world_failure_code") ?? .null,
+         "observation_failure_code": world.at(path: "observation.failure_code") ?? .null,
+         "persistence_available": world.at(path: "persistence_available") ?? .null]
+    }
+
     static func traceFields(_ snapshot: CoreCommittedSnapshot, source: CommandSource) -> JSONObject {
         let focus = snapshot.world.at(path: "focus")
-        return source.metadata.merging(["revision": .int(Int64(clamping: snapshot.revision)),
+        return source.metadata.merging(observationTraceFields(snapshot.world)).merging(["revision": .int(Int64(clamping: snapshot.revision)),
             "observer_generation": snapshot.world.at(path: "observer_generation") ?? .null,
             "observer_epoch": snapshot.world.at(path: "observer_epoch") ?? .null,
             "topology_revision": snapshot.world.at(path: "topology_revision") ?? .null,

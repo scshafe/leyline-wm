@@ -304,7 +304,8 @@ private final class ResidentCommandsRig: @unchecked Sendable {
 
     init(fixture: JSONValue, complete: Bool = true, failJournal: Bool = false,
          initialRevision: UInt64 = 0, checkpoint: JSONValue? = nil, normalizeBootstrap: Bool = true, outerGap: Int? = 0,
-         stateOnlyAppend: @escaping @Sendable (JSONValue, ResidentEffectorFileJournal) throws -> Void = { try $1.append($0) }) throws {
+         stateOnlyAppend: @escaping @Sendable (JSONValue, ResidentEffectorFileJournal) throws -> Void = { try $1.append($0) },
+         effectAppend: (@Sendable (JSONValue, ResidentEffectorFileJournal) throws -> Void)? = nil) throws {
         directory = FileManager.default.temporaryDirectory.appendingPathComponent("ley-command-" + UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         socketPath = "/tmp/leyline-tests-\(getpid())/lcmd-\(UUID().uuidString.prefix(12)).sock"
@@ -324,7 +325,8 @@ private final class ResidentCommandsRig: @unchecked Sendable {
             spaces: ResidentCommandsUnusedSpaces())
         controller = ResidentActionController(server: server, snapshots: snapshots,
             observationQueue: DispatchQueue(label: "leylined.test.resident.commands.observation"),
-            journal: journal, gap: fixture.requiredInt("gap"), outerGap: outerGap, effectPort: port, stateOnlyAppend: stateOnlyAppend)
+            journal: journal, gap: fixture.requiredInt("gap"), outerGap: outerGap, effectPort: port, stateOnlyAppend: stateOnlyAppend,
+            effectAppend: effectAppend)
         port.server = server
         port.health = { [weak controller] in controller?.health ?? .object([:]) }
         port.mayIssue = { [weak controller] request in controller?.mayIssueEffect(request) == true }
@@ -412,6 +414,7 @@ func runResidentCommandsSelfTest() -> Int32 {
     runInfeasibleInsertionKeyboardScenarios(test: &test)
     runFocusNavigationRecoveryScenarios(test: &test)
     runStaleCheckpointRepairScenarios(test: &test)
+    runLostReconcileScenarios(fixture: fixture, test: &test)
     runResidentFrameContinuityScenarios(fixture: fixture, test: &test)
     runResidentLifecycleDeadlineScenarios(fixture: fixture, test: &test)
     runResidentOwnFocusHandoffScenarios(fixture: fixture, test: &test)
@@ -2593,6 +2596,131 @@ private func runFocusNavigationRecoveryScenarios(test: inout SelfTest) {
         test.check(ids == expected && current.at(path: "space_partitions") != stale.at(path: "space_partitions"),
             "focus-recovery/reconciliation-replaces-old-lifetime-checkpoint-without-dropping-members")
     } catch { test.check(false, "focus-recovery/fixture-error: \(error)") }
+}
+
+/// Holds one reconcile's durable effect intent, so a second commit can land while
+/// it is written: the race the effector reports as `revision_changed_during_journal`.
+private final class ResidentCommandsEffectJournalGate: @unchecked Sendable {
+    let entered = DispatchSemaphore(value: 0)
+    let permit = DispatchSemaphore(value: 0)
+    private let lock = NSLock()
+    private var active = false
+    private var heldID: String?
+    func arm() { lock.lock(); active = true; lock.unlock() }
+    var requestID: String? { lock.lock(); defer { lock.unlock() }; return heldID }
+    func append(_ record: JSONValue, journal: ResidentEffectorFileJournal) throws {
+        try journal.append(record)
+        lock.lock()
+        let hold = active && record.at(path: "type")?.stringValue == "effect_intent"
+            && record.at(path: "action_id")?.stringValue == "world.reconcile"
+        if hold { heldID = record.at(path: "request_id")?.stringValue; active = false }
+        lock.unlock()
+        if hold { entered.signal(); _ = permit.wait(timeout: .now() + .seconds(3)) }
+    }
+}
+
+/// Live 2026-11-05: one close published two `ax_window_destroyed` notifications. The
+/// second's admission committed while the first reconcile wrote its intent, so the
+/// effector aborted the first, and the second planned against that unsaved proposal
+/// and found nothing to do (the planner half is covered in planner-completion). Separately, an app launch's recovery fence cancelled an issued reconcile after
+/// its layout committed, so later reconciles judged the unreached layout settled.
+/// Both now replan, and a window that never reached its target is moved there.
+private func runLostReconcileScenarios(fixture: JSONValue, test: inout SelfTest) {
+    /// Every retained trace record for one request, paging with the exclusive cursor.
+    func traced(_ id: String) -> [JSONValue] {
+        var from: UInt64 = 0, records: [JSONValue] = []
+        while true {
+            let events = ResidentPerformanceTrace.shared.snapshot(from: from).at(path: "events")?.arrayValue ?? []
+            records += events.filter { $0.at(path: "request_id") == .string(id) }
+            guard let last = events.last?.at(path: "sequence")?.intValue else { return records }
+            from = UInt64(last)
+        }
+    }
+    /// Once no effect is in flight or pending, a reconcile against the settled world is a noop.
+    func probeSettled(_ rig: ResidentCommandsRig, _ id: String) -> Bool {
+        let idle = selfTestWaitUntil(seconds: 3) {
+            let health = rig.controller.health
+            return health.at(path: "in_flight") == .null && health.at(path: "pending_count")?.intValue == 0
+        }
+        guard idle, rig.waitForIOQuiescent() else { print("\(id) diagnostic: effect lane not idle"); return false }
+        rig.controller.reconcile(requestID: id)
+        let probe = rig.result(id)
+        let settled = probe?.at(path: "status") == .string("noop") && probe?.at(path: "reason") == .string("layout_unchanged")
+        if !settled {
+            for event in traced(id) { print("\(id) trace: " + event.canonical()) }
+            print("\(id) diagnostic: probe=" + (probe ?? .null).canonical() + " windows="
+                + (rig.server.worldState.at(path: "windows") ?? .null).canonical() + " arrangement="
+                + (rig.server.worldState.at(path: "model_state.arrangement") ?? .null).canonical())
+        }
+        return settled
+    }
+    do {
+        let gate = ResidentCommandsEffectJournalGate()
+        let rig = try ResidentCommandsRig(fixture: fixture, effectAppend: { try gate.append($0, journal: $1) })
+        defer { gate.permit.signal() }
+        let windows = rig.server.worldState.at(path: "windows")!.arrayValue!
+        let remaining = windows.filter { $0.at(path: "window_id")?.intValue != 2 }
+        let notification: JSONObject = ["event": .string("ax_window_destroyed"), "windows": .array(remaining),
+            "focus": remaining[0], "notification_window_id": .int(2)]
+        gate.arm()
+        _ = rig.server.applyWorldDelta(notification)
+        guard gate.entered.wait(timeout: .now() + .seconds(2)) == .success, let heldID = gate.requestID else {
+            test.check(false, "lost-reconcile/first-close-reconcile-held-at-effect-intent"); return
+        }
+        // Live, the second notification's admission was this commit; a neutral delta
+        // advances the revision the same way without also fencing the first effect.
+        let concurrent = rig.server.applyWorldDelta(["event": .string("fixture_neutral_telemetry"), "fixture_marker": .string("close")])
+        let processed = rig.waitForProcessed(concurrent.revision.value)
+        gate.permit.signal()
+        let lost = rig.result(heldID)
+        if lost?.at(path: "reason") != .string("revision_changed_during_journal") {
+            print("lost-reconcile diagnostic: processed=\(processed) lost=" + (lost ?? .null).canonical())
+        }
+        test.check(processed && lost?.at(path: "status") == .string("refused")
+            && lost?.at(path: "reason") == .string("revision_changed_during_journal"),
+            "lost-reconcile/a-commit-during-the-close-reconcile-journal-aborts-it-uncommitted")
+        let pruned = selfTestWaitUntil(seconds: 3) {
+            Arrangement.memberWindows(rig.server.worldState.at(path: "model_state.arrangement") ?? .null)
+                .allSatisfy { $0.at(path: "window_id")?.intValue != 2 }
+        }
+        if !pruned { print("lost-reconcile diagnostic: not pruned arrangement=" + (rig.server.worldState.at(path: "model_state.arrangement") ?? .null).canonical()) }
+        test.check(pruned && probeSettled(rig, "lost-reconcile-probe"),
+            "lost-reconcile/aborted-close-reconcile-replans-and-applies-the-survivor-layout")
+    } catch { test.check(false, "lost-reconcile/close-fixture-error: \(error)") }
+    do {
+        let rig = try ResidentCommandsRig(fixture: fixture)
+        let world = rig.server.worldState, windows = world.at(path: "windows")!.arrayValue!
+        var newcomer = windows[0].objectValue!
+        newcomer["window_id"] = .int(9); newcomer["pid"] = .int(509); newcomer["window_generation"] = .int(1)
+        newcomer["frame"] = Frame(x: 300, y: 200, w: 800, h: 600).json
+        rig.port.hold(true)
+        let issuedBefore = rig.port.issued.count
+        _ = rig.server.applyWorldDelta(["event": .string("explicit_recovery"), "windows": .array(windows + [.object(newcomer)])])
+        guard rig.port.waitForIssues(issuedBefore + 1), let held = rig.port.issued.last, let target = held.frameTargets["9"] else {
+            test.check(false, "lost-reconcile/newcomer-reconcile-issued"); return
+        }
+        let generation = (world.at(path: "observer_generation")?.intValue ?? 0) + 1
+        _ = rig.server.applyWorldDelta(["event": .string("application_launch_recovery"), "observer_generation": .int(generation)])
+        let cancelled = rig.result(held.requestID)
+        test.check(cancelled?.at(path: "status") == .string("failed")
+            && cancelled?.at(path: "reason") == .string("invalidated_application_launch_recovery")
+            && cancelled?.at(path: "desired_state_committed_revision")?.intValue != nil,
+            "lost-reconcile/launch-recovery-cancels-a-committed-reconcile-before-any-window-moves")
+        let observationKeys = ["world_complete", "world_failure_code", "observation_failure_code", "persistence_available"]
+        let records = ["intent_resolved", "completion"].map { kind in
+            traced(held.requestID).first { $0.at(path: "kind") == .string(kind) } }
+        test.check(records.allSatisfy { record in
+            record?.at(path: "world_complete") == .bool(true) && observationKeys.allSatisfy { record?.at(path: $0) != nil } },
+            "lost-reconcile/plan-and-effect-trace-records-name-world-completeness-and-failure-codes")
+        rig.port.hold(false)
+        let landed = selfTestWaitUntil(seconds: 3) {
+            for request in rig.port.issued where request.requestID != held.requestID { rig.port.release(request.requestID) }
+            return (rig.server.worldState.at(path: "windows")?.arrayValue ?? []).first {
+                $0.at(path: "window_id")?.intValue == 9 }.flatMap { Frame.from($0.at(path: "frame")) } == target
+        }
+        test.check(landed && probeSettled(rig, "launch-recovery-probe"),
+            "lost-reconcile/cancelled-committed-reconcile-replans-and-tiles-the-newcomer")
+    } catch { test.check(false, "lost-reconcile/launch-fixture-error: \(error)") }
 }
 
 /// An app quit re-mints every window lifetime, and only a reconcile re-records them.

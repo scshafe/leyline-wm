@@ -84,13 +84,84 @@ private final class BorderInsertionPreviewView: NSView {
     }
 }
 
+/// A decoration panel is drawn again from scratch, and ordered in afresh, when it
+/// is hidden or was left on a Space its display no longer shows. Ordering in places
+/// it on the display's current Space; a fresh layer means a partly drawn image held
+/// across a hide (seen after wake) can never come back on screen.
+enum BorderPanelPresentation {
+    static func needsReshow(hidden: Bool, onCurrentSpace: Bool) -> Bool { hidden || !onCurrentSpace }
+
+    /// Belongs to one Space at a time, so a Space switch carries the ring away with
+    /// its window instead of leaving it over the next Space until the next render.
+    /// Full-screen auxiliary keeps rings available beside full-screen windows.
+    static let collectionBehavior: NSWindow.CollectionBehavior = [.fullScreenAuxiliary]
+}
+
+/// Whether a panel sits on the current Space of the display it is on, read with the
+/// same SkyLight calls as `IndependentProjectionSpaceObserver`. Without them the
+/// public `isOnActiveSpace` answers.
+private final class BorderPanelSpaces {
+    private typealias MainConnection = @convention(c) () -> Int32
+    private typealias CopyWindowSpaces = @convention(c) (Int32, Int32, CFArray) -> Unmanaged<CFArray>?
+    private typealias CopyWindowDisplay = @convention(c) (Int32, UInt32) -> Unmanaged<CFString>?
+    private typealias CurrentDisplaySpace = @convention(c) (Int32, CFString) -> UInt64
+    private static let allSpacesMask: Int32 = 0x7
+    private let handle: UnsafeMutableRawPointer?
+    private let connection: MainConnection?
+    private let windows: CopyWindowSpaces?
+    private let windowDisplay: CopyWindowDisplay?
+    private let currentSpace: CurrentDisplaySpace?
+
+    init() {
+        let handle = dlopen("/System/Library/PrivateFrameworks/SkyLight.framework/SkyLight", RTLD_LAZY | RTLD_LOCAL)
+        self.handle = handle
+        func symbol<T>(_ name: String, as type: T.Type) -> T? {
+            guard let handle, let pointer = dlsym(handle, name) else { return nil }
+            return unsafeBitCast(pointer, to: type)
+        }
+        connection = symbol("SLSMainConnectionID", as: MainConnection.self)
+        windows = symbol("SLSCopySpacesForWindows", as: CopyWindowSpaces.self)
+        windowDisplay = symbol("SLSCopyManagedDisplayForWindow", as: CopyWindowDisplay.self)
+        currentSpace = symbol("SLSManagedDisplayGetCurrentSpace", as: CurrentDisplaySpace.self)
+    }
+
+    deinit { if let handle { dlclose(handle) } }
+
+    @MainActor
+    func isOnCurrentSpace(_ panel: NSWindow) -> Bool {
+        let id = panel.windowNumber
+        guard id > 0, let connection, let windows, let windowDisplay, let currentSpace else { return panel.isOnActiveSpace }
+        let cid = connection()
+        guard let raw = windows(cid, Self.allSpacesMask, [NSNumber(value: id)] as CFArray)?.takeRetainedValue(),
+              let memberships = raw as? [NSNumber], memberships.count == 1,
+              let display = windowDisplay(cid, UInt32(id))?.takeRetainedValue() else { return false }
+        let current = currentSpace(cid, display)
+        return current > 0 && current == memberships[0].uint64Value
+    }
+}
+
 @MainActor
 private final class AppKitBorderRenderSurface: BorderRenderSurface {
     private var panels: [NSPanel] = []
     private let screenHeightProvider: () -> CGFloat?
+    private let spaces = BorderPanelSpaces()
 
     init(screenHeightProvider: @escaping () -> CGFloat?) {
         self.screenHeightProvider = screenHeightProvider
+    }
+
+    /// Take a panel that must be shown afresh off screen before it is moved and
+    /// drawn; `show` orders it back in on the current Space.
+    private func beginPresentation(_ panel: NSPanel) -> Bool {
+        let reshow = BorderPanelPresentation.needsReshow(hidden: panel.alphaValue == 0 || !panel.isVisible,
+            onCurrentSpace: spaces.isOnCurrentSpace(panel))
+        if reshow { panel.orderOut(nil) }
+        return reshow
+    }
+
+    private func show(_ panel: NSPanel, reshow: Bool) {
+        if reshow { panel.orderFrontRegardless() }
+        panel.alphaValue = 1
     }
 
     func replace(
@@ -111,6 +182,7 @@ private final class AppKitBorderRenderSurface: BorderRenderSurface {
 
         for (index, ring) in plan.rings.enumerated() {
             let panel = panels[index]
+            let reshow = beginPresentation(panel)
             // The ring sits just OUTSIDE the window: outset by the stroke so
             // its INNER edge lands on the window's outer edge.
             let envelope = ring.envelope(thickness: Double(thickness))
@@ -122,7 +194,7 @@ private final class AppKitBorderRenderSurface: BorderRenderSurface {
                 width: outset.width,
                 height: outset.height)
             if panel.frame != appkit { panel.setFrame(appkit, display: true) }
-            let layer = Self.shapeLayer(for: panel)
+            let layer = Self.shapeLayer(for: panel, fresh: reshow)
             let stroke = panel.contentView!.bounds.insetBy(dx: thickness / 2, dy: thickness / 2)
             layer.path = CGPath(roundedRect: stroke, cornerWidth: radius, cornerHeight: radius, transform: nil)
             layer.strokeColor = Self.nsColor(hex: BorderPalette.color(ring.role, store: store)).cgColor
@@ -130,11 +202,11 @@ private final class AppKitBorderRenderSurface: BorderRenderSurface {
             layer.lineWidth = thickness
             layer.lineDashPattern = ring.stroke == .dashed ? [6, 4] : nil
             layer.lineCap = .butt
-            if panel.alphaValue == 0 { panel.orderFrontRegardless() }
-            panel.alphaValue = 1
+            show(panel, reshow: reshow)
         }
         for (index, line) in plan.selectionLines.enumerated() {
             let panel = panels[plan.rings.count + index]
+            let reshow = beginPresentation(panel)
             let horizontal = line.axis == "h"
             let cg = CGRect(x: (horizontal ? line.lower : line.coordinate) - Double(thickness),
                 y: (horizontal ? line.coordinate : line.lower) - Double(thickness),
@@ -142,7 +214,7 @@ private final class AppKitBorderRenderSurface: BorderRenderSurface {
                 height: horizontal ? Double(thickness) * 2 : line.upper - line.lower + Double(thickness) * 2)
             let frame = NSRect(x: cg.minX, y: screenHeight - cg.minY - cg.height, width: cg.width, height: cg.height)
             if panel.frame != frame { panel.setFrame(frame, display: true) }
-            let layer = Self.shapeLayer(for: panel)
+            let layer = Self.shapeLayer(for: panel, fresh: reshow)
             let path = CGMutablePath()
             path.move(to: CGPoint(x: thickness, y: thickness))
             path.addLine(to: horizontal
@@ -154,11 +226,11 @@ private final class AppKitBorderRenderSurface: BorderRenderSurface {
             layer.lineWidth = thickness
             layer.lineDashPattern = nil
             layer.lineCap = .round
-            if panel.alphaValue == 0 { panel.orderFrontRegardless() }
-            panel.alphaValue = 1
+            show(panel, reshow: reshow)
         }
         if let preview = plan.insertionPreview {
             let panel = panels[plan.rings.count + plan.selectionLines.count]
+            _ = beginPresentation(panel)
             let frame = NSRect(x: preview.frame.x, y: screenHeight - preview.frame.y - preview.frame.h,
                 width: preview.frame.w, height: preview.frame.h)
             if panel.frame != frame { panel.setFrame(frame, display: true) }
@@ -174,8 +246,8 @@ private final class AppKitBorderRenderSurface: BorderRenderSurface {
             view.color = preview.isAvailable ? Self.nsColor(hex: BorderPalette.color(.moved, store: store)) : .systemRed
             view.cornerRadius = radius
             view.needsDisplay = true
-            panel.orderFrontRegardless()
-            panel.alphaValue = 1
+            // The preview view redraws itself; it is raised on every render.
+            show(panel, reshow: true)
         }
         for index in decorationCount..<panels.count
             where panels[index].alphaValue != 0 {
@@ -205,7 +277,7 @@ private final class AppKitBorderRenderSurface: BorderRenderSurface {
         panel.hasShadow = false
         panel.level = .floating
         panel.isFloatingPanel = true
-        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        panel.collectionBehavior = BorderPanelPresentation.collectionBehavior
         panel.ignoresMouseEvents = true
         panel.setAccessibilityElement(false)
         panel.alphaValue = 0
@@ -215,8 +287,10 @@ private final class AppKitBorderRenderSurface: BorderRenderSurface {
 
     /// Panel indices change as a scope adds/removes affected windows. Replacing
     /// the content kind prevents a previous badge surviving as a border panel.
-    private static func shapeLayer(for panel: NSPanel) -> CAShapeLayer {
-        if panel.contentView is BorderInsertionPreviewView || !(panel.contentView?.layer is CAShapeLayer) {
+    /// `fresh` replaces the view even when it is already a shape view, so nothing
+    /// the old layer last drew can be shown again.
+    private static func shapeLayer(for panel: NSPanel, fresh: Bool = false) -> CAShapeLayer {
+        if fresh || panel.contentView is BorderInsertionPreviewView || !(panel.contentView?.layer is CAShapeLayer) {
             panel.contentView = makeShapeView(frame: NSRect(origin: .zero, size: panel.frame.size))
         }
         return panel.contentView!.layer as! CAShapeLayer

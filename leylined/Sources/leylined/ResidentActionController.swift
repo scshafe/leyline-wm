@@ -161,8 +161,11 @@ final class ResidentActionController: @unchecked Sendable {
     }
     private var pendingReconciliationAttempt = 0
     private var reconciliationBatches: [String: ReconciliationBatch] = [:]
+    /// `revision_changed_during_journal`: another commit landed while this plan's
+    /// effect intent was being made durable, so the effector aborted it uncommitted.
     static let reconciliationRaceReasons: Set<String> = [
-        "expected_revision_mismatch", "queued_command_invalidated", "effect_identity_or_context_changed"]
+        "expected_revision_mismatch", "queued_command_invalidated", "effect_identity_or_context_changed",
+        "revision_changed_during_journal"]
     static let reconciliationRetryLimit = 3
     /// Snapshot admission and the planning queue share the feed's input bound.
     private static let observationQueueBound = ProjectionInputFeed.maximumPendingInputs
@@ -180,14 +183,18 @@ final class ResidentActionController: @unchecked Sendable {
     init(server: CoreServer, snapshots: TargetedProjectionSnapshot,
          observationQueue: DispatchQueue, journal: ResidentEffectorFileJournal, gap: Int, outerGap: Int? = nil,
          effectPort: (any ResidentEffectorPort)? = nil,
-         stateOnlyAppend: @escaping @Sendable (JSONValue, ResidentEffectorFileJournal) throws -> Void = { try $1.append($0) }) {
+         stateOnlyAppend: @escaping @Sendable (JSONValue, ResidentEffectorFileJournal) throws -> Void = { try $1.append($0) },
+         effectAppend: (@Sendable (JSONValue, ResidentEffectorFileJournal) throws -> Void)? = nil) {
         self.server = server; self.gap = gap; self.outerGap = outerGap; self.journal = journal
         self.stateOnlyAppend = stateOnlyAppend
         latest = server.committedSnapshot
         desired = latest.world.at(path: "model_state") ?? .object([:])
         persistenceAvailable = latest.world.at(path: "persistence_available")?.boolValue != false
         axPort = ResidentAXPort(snapshots: snapshots, observationQueue: observationQueue)
-        effector = ResidentEffector(context: Self.context(latest, persistenceAvailable: persistenceAvailable),             journal: journal, port: effectPort ?? axPort, commitJournaledPlan: { [weak self] request, _, expected in
+        let effectJournal: any ResidentEffectorJournal = effectAppend.map {
+            ResidentEffectorAppendJournal(journal: journal, appendRecord: $0) } ?? journal
+        effector = ResidentEffector(context: Self.context(latest, persistenceAvailable: persistenceAvailable),
+            journal: effectJournal, port: effectPort ?? axPort, commitJournaledPlan: { [weak self] request, _, expected in
                 guard let self, self.authorized(request) else { return nil }
                 self.lock.lock(); let source = self.commandSources[request.requestID]; self.lock.unlock()
                 guard let source else { return nil }
@@ -402,6 +409,9 @@ final class ResidentActionController: @unchecked Sendable {
     }
 
     private func runPendingReconciliation() {
+        // With no effect in flight or pending there is no proposal to build on: plan
+        // against the committed model, never a refused proposal not yet rolled back.
+        if commandLaneIdle { desired = server.worldState.at(path: "model_state") ?? .object([:]) }
         lock.lock()
         let events = pendingReconciliationEvents, overflow = reconciliationEventOverflow
         let attempt = pendingReconciliationAttempt
@@ -1061,17 +1071,9 @@ final class ResidentActionController: @unchecked Sendable {
         }
         plan = ResidentPlan(status: plan.status, reason: plan.reason, state: boundState,
             targets: plan.targets, focusTarget: plan.focusTarget)
-        var targets: [String: Frame] = [:]
-        for (id, value) in plan.targets.objectValue ?? [:] {
-            let physicalFrame = value.at(path: "effect_frame") ?? value.at(path: "frame")
-            if value.at(path: "presented")?.boolValue == false, physicalFrame == nil || physicalFrame == .null { continue }
-            guard let frame = Frame.from(physicalFrame) else {
-                finish(requestID: requestID, status: .refused, reason: "overload_representation_unavailable"); return
-            }
-            let observed = snapshot.world.at(path: "windows")?.arrayValue?.first {
-                $0.at(path: "window_id")?.intValue.map(String.init) == id
-            }.flatMap { Frame.from($0.at(path: "frame")) }
-            if observed.map({ !Geometry.frameEq($0, frame, tol: ResidentEffector.unchangedTolerance) }) ?? true { targets[id] = frame }
+        guard let targets = ResidentPlanner.unappliedTargets(plan.targets,
+                windows: snapshot.world.at(path: "windows")?.arrayValue ?? []) else {
+            finish(requestID: requestID, status: .refused, reason: "overload_representation_unavailable"); return
         }
         if targets.isEmpty && plan.focusTarget == nil {
             let persistentChanged = plan.state.at(path: "arrangement") != desired.at(path: "arrangement")
@@ -1353,7 +1355,8 @@ final class ResidentActionController: @unchecked Sendable {
             "observer_epoch": completedSnapshot.world.at(path: "observer_epoch") ?? .null,
             "topology_revision": completedSnapshot.world.at(path: "topology_revision") ?? .null])
         if let effect {
-            trace = trace.merging(["window_id": .string(effect.windowID), "space_key": .string(effect.activeSpaceKey),
+            trace = trace.merging(Self.observationTraceFields(completedSnapshot.world)).merging([
+                "window_id": .string(effect.windowID), "space_key": .string(effect.activeSpaceKey),
                 "window_pids": .object(JSONObject(unordered: effect.windowPids.mapValues(JSONValue.int))),
                 "window_generations": .object(JSONObject(unordered: effect.windowGenerations.mapValues { .int(Int64(clamping: $0)) })),
                 "window_space_keys": .object(JSONObject(unordered: effect.windowSpaceKeys.mapValues(JSONValue.string))),
@@ -1377,12 +1380,29 @@ final class ResidentActionController: @unchecked Sendable {
             || (action?.hasPrefix("move.") == true && value.at(path: "reason")?.stringValue == "minimum_constraint")
         callback?(retainedMoveSelection || replacementPreview ? 3 : status == .accepted ? 0 : status == .noop ? 1 : 4)
         if let reconciled { queue.async { [self] in reconciled(reconciliationProof(value)) } }
-        // A reconcile that lost an authority race never applied, so the lifecycle
-        // facts it carried are still owed. Replan them, bounded, on the newer world.
-        if let batch, status == .refused, batch.attempt < Self.reconciliationRetryLimit,
-           Self.reconciliationRaceReasons.contains(value.at(path: "reason")?.stringValue ?? "") {
+        // A reconcile that lost an authority race never applied, and one whose effect a
+        // world fence cancelled may have committed a layout no window reached. Either
+        // way the facts it carried are still owed. Replan them, bounded, on the newer world.
+        if let batch, batch.attempt < Self.reconciliationRetryLimit,
+           Self.reconciliationOwesReplan(status: status, reason: value.at(path: "reason")?.stringValue ?? "") {
             scheduleReconciliation(batch.events, overflow: batch.overflow, attempt: batch.attempt + 1)
         }
     }
 
+    static func reconciliationOwesReplan(status: WmStatus, reason: String) -> Bool {
+        (status == .refused && reconciliationRaceReasons.contains(reason))
+            || ((status == .refused || status == .failed) && reason.hasPrefix("invalidated_"))
+    }
+
+}
+
+/// The effector's durable records through an injected append; production passes
+/// none and the effector writes the file journal directly.
+private final class ResidentEffectorAppendJournal: ResidentEffectorJournal, @unchecked Sendable {
+    let journal: ResidentEffectorFileJournal
+    let appendRecord: @Sendable (JSONValue, ResidentEffectorFileJournal) throws -> Void
+    init(journal: ResidentEffectorFileJournal, appendRecord: @escaping @Sendable (JSONValue, ResidentEffectorFileJournal) throws -> Void) {
+        self.journal = journal; self.appendRecord = appendRecord
+    }
+    func append(_ record: JSONValue) throws { try appendRecord(record, journal) }
 }

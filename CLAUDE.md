@@ -1,6 +1,6 @@
 # Leyline development context
 
-Leyline 1.0.3 is a native macOS window manager. Begin with [README.md](README.md),
+Leyline 1.0.4 is a native macOS window manager. Begin with [README.md](README.md),
 [the development guide](docs/development.md) and [the runtime map](docs/architecture/leylined-core.md).
 
 One `leylined` resident owns input, observation, planning, journaled effects,

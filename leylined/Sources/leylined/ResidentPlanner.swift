@@ -27,6 +27,22 @@ enum ResidentPlanner {
         }
         return .object(result)
     }
+    /// @canonical planner_unapplied_targets -- the targets whose physical rectangle
+    /// differs from the observed window, keyed by window ID. A hidden target without a
+    /// physical frame never moves. Nil when a target has no representable frame.
+    /// Effect issue and the reconcile noop proof share this one comparison.
+    static func unappliedTargets(_ targets: JSONValue, windows: [JSONValue]) -> [String: Frame]? {
+        var result: [String: Frame] = [:]
+        for (id, value) in targets.objectValue ?? [:] {
+            let physical = value.at(path: "effect_frame") ?? value.at(path: "frame")
+            if value.at(path: "presented")?.boolValue == false, physical == nil || physical == .null { continue }
+            guard let frame = Frame.from(physical) else { return nil }
+            let observed = windows.first { $0.at(path: "window_id")?.intValue.map(String.init) == id }
+                .flatMap { Frame.from($0.at(path: "frame")) }
+            if observed.map({ !Geometry.frameEq($0, frame, tol: ResidentEffector.unchangedTolerance) }) ?? true { result[id] = frame }
+        }
+        return result
+    }
     /// `fixed_aspect_apps`: learned application keys whose windows refuse a tile's
     /// shape. Their windows stay untiled; a malformed set refuses, never empties.
     static func validFixedAspectStore(_ store: JSONValue) -> Bool {
@@ -252,7 +268,10 @@ enum ResidentPlanner {
                 reconciled["interaction"] = interaction
             } else { reconciled.removeValue(forKey: "interaction") }
             let retainedState = JSONValue.object(reconciled)
-            return retainedState == state && result.focusTarget == nil ? noop("layout_unchanged") : ResidentPlan(status: .accepted, reason: nil,
+            // An unchanged model is settled only while every window stands at its
+            // target. A committed layout whose effect was cancelled re-applies here.
+            let applied = ResidentPlanner.unappliedTargets(result.targets, windows: windows)?.isEmpty ?? true
+            return retainedState == state && result.focusTarget == nil && applied ? noop("layout_unchanged") : ResidentPlan(status: .accepted, reason: nil,
                 state: retainedState, targets: result.targets, focusTarget: result.focusTarget)
         }
 

@@ -1,5 +1,22 @@
 # Release notes
 
+## 1.0.4
+
+Changes since 1.0.3:
+
+- Fixed: closing a window could leave the remaining windows at their old sizes,
+  and a newly opened window could stay untiled. The layout was saved, but the
+  moves that applied it were cancelled when another window change arrived at the
+  same moment, and Leyline treated the saved layout as already applied. It now
+  checks the actual window frames and applies the layout again.
+- Fixed: after switching Spaces, the previous Space's focus border could flash
+  over the new Space for a moment. Each border now stays on its window's Space.
+- Fixed: after the Mac woke from sleep, a border could be drawn only part way
+  around its window until the next mode change. A border that is shown again is
+  now redrawn in full.
+- `ley resident trace` records whether the window list was complete and why not,
+  so a refused layout names the missing information.
+
 ## 1.0.3
 
 Changes since 1.0.2:
