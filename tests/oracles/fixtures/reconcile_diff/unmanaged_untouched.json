@@ -1,0 +1,50 @@
+{
+  "note": "an observed window with no target (unmanaged: floating / tiling-owned / another reconciler's) appears in NO bucket — Parcel reconciles only managed windows and must never move what it doesn't own (§8). Here 500 is placed (noop); 999 is left strictly alone. 999 uses array-frame form to exercise as_frame coercion.",
+  "targets": {
+    "500": {
+      "window_id": 500,
+      "presented": true,
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 600,
+        "h": 400
+      }
+    }
+  },
+  "observed": [
+    {
+      "window_id": 500,
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 600,
+        "h": 400
+      },
+      "minimized": false
+    },
+    {
+      "window_id": 999,
+      "frame": [
+        10,
+        10,
+        300,
+        300
+      ],
+      "minimized": false
+    }
+  ],
+  "expect": {
+    "diff": {
+      "hide": [],
+      "noop": [
+        {
+          "window_id": 500
+        }
+      ],
+      "reframe": [],
+      "show": []
+    },
+    "stable": true
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "sample": {
+    "sample_id": "mutation-fixture-1", "request_id": "fixture-request-1",
+    "scenario_id": "move_resize", "origin": "hid", "window_count": 6,
+    "binary_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "synthetic": false, "status": "accepted", "correctness": true,
+    "admission": {"revision": 41, "observer_generation": 12, "input_generation": 9,
+      "observer_epoch": "fixture-epoch", "space_key": "fixture-space", "topology_revision": 3,
+      "window_id": 700, "pid": 123, "lifetime": 4},
+    "stamps": {
+      "receipt": {"nanos": 1000000000, "provenance": "resident_input_callback"},
+      "intent_resolved": {"nanos": 1001000000, "provenance": "resident_input_resolution"},
+      "effect_issued": {"nanos": 1002000000, "provenance": "resident_ax_issue"},
+      "verified": {"nanos": 1010000000, "provenance": "resident_scoped_ax_readback"},
+      "physically_visible": {"nanos": 1020000000, "provenance": "independent_windowserver_composition", "frame_id": 1}
+    },
+    "baseline_frame_id": 0,
+    "visual_expectation": {"roi_px": [0, 0, 2, 2], "probes": [
+      {"x": 0, "y": 0, "rgba": [0, 0, 0, 255]},
+      {"x": 1, "y": 0, "rgba": [0, 0, 0, 255]},
+      {"x": 0, "y": 1, "rgba": [0, 0, 0, 255]},
+      {"x": 1, "y": 1, "rgba": [0, 0, 0, 255]}
+    ]},
+    "counters": {"maximum_pending_desired": 1, "ax_writes": 2}
+  }
+}

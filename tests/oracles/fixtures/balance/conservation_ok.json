@@ -1,0 +1,88 @@
+{
+  "note": "8.3 conservation OK: the bottom-up scene → valve stacks sub; the hidden leaf (c or d) is under a valve stack → explained. ok:true, unexplained:[]. F1-green is because-STACKED.",
+  "fn": "conservation",
+  "focused_leaf": null,
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "row",
+        "children": [
+          "A",
+          "sub"
+        ]
+      },
+      "sub": {
+        "id": "sub",
+        "mode": "row",
+        "children": [
+          "c",
+          "d"
+        ]
+      },
+      "A": {
+        "id": "A",
+        "window_id": 1,
+        "min_size": {
+          "w": 300,
+          "h": 100
+        }
+      },
+      "c": {
+        "id": "c",
+        "window_id": 2,
+        "min_size": {
+          "w": 600,
+          "h": 100
+        }
+      },
+      "d": {
+        "id": "d",
+        "window_id": 3,
+        "min_size": {
+          "w": 600,
+          "h": 100
+        }
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ],
+        "usable": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "config": {},
+  "expect": {
+    "ok": true,
+    "managed": [
+      "A",
+      "c",
+      "d"
+    ],
+    "presented": [
+      "A",
+      "c"
+    ],
+    "hidden": [
+      "d"
+    ],
+    "unexplained": [],
+    "overflowing": []
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "note": "S8 place reject: window 5 is ALREADY tiled (leaf w:5 present) → idempotent reject, no double-binding. Guards the tiling insert from re-inserting a window that never left the tree.",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": { "id": "r", "mode": "row", "children": ["a", "w:5"] },
+      "a": { "id": "a", "window_id": 1 },
+      "w:5": { "id": "w:5", "window_id": 5 }
+    }
+  },
+  "op": "place_leaf",
+  "args": { "target": "a", "window_id": 5, "orientation": "row", "side": "after" },
+  "expect": { "ok": false, "reason": "window already tiled: 5 (leaf w:5)" }
+}

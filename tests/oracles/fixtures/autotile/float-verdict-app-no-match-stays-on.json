@@ -1,0 +1,17 @@
+{
+  "note": "float_verdict negative: the app-anchored rule (^Calculator$ → off) does NOT match 'Calculator Plus' (anchored regex, no substring). No rule fires ⇒ default verdict 'on'. Proves the ^...$ anchors are honoured and a near-miss app name stays managed.",
+  "fn": "float_verdict",
+  "window": {
+    "window_id": 43,
+    "app": "Calculator Plus",
+    "title": ""
+  },
+  "rules": [
+    {
+      "id": "calculator",
+      "app": "^Calculator$",
+      "manage": "off"
+    }
+  ],
+  "expect": "on"
+}

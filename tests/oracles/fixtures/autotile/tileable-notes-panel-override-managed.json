@@ -1,0 +1,29 @@
+{
+  "note": "tileable through the last-match-wins override: a fully-standard, resizable WezTerm notes-panel window. The re-manage rule (surface_notes_panel → on) wins over surface_transient (→ off), so float_verdict == on AND caps pass ⇒ tileable true. Confirms the override propagates all the way through tileable, not just float_verdict.",
+  "fn": "tileable",
+  "window": {
+    "window_id": 48,
+    "app": "WezTerm",
+    "title": "wm.surface.notes-panel",
+    "role": "AXWindow",
+    "subrole": "AXStandardWindow",
+    "resizable": true
+  },
+  "rules": {
+    "rules": [
+      {
+        "id": "surface_transient",
+        "app": "^WezTerm$",
+        "title": "wm\\.surface\\..*",
+        "manage": "off"
+      },
+      {
+        "id": "surface_notes_panel",
+        "app": "^WezTerm$",
+        "title": "wm\\.surface\\.notes-panel",
+        "manage": "on"
+      }
+    ]
+  },
+  "expect": true
+}

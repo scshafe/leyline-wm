@@ -1,0 +1,127 @@
+{
+  "note": "root region over two pinned mount points on the REAL 2026-05-25 L-shaped topology. Each window fills its display's USABLE rect — note the main display's menu-bar floor (y=57). No contention, no dead-zone. Ties the engine to the observed substrate.",
+  "tree": {
+    "root_id": "space",
+    "nodes": {
+      "space": {
+        "id": "space",
+        "mode": "region",
+        "children": [
+          "m1",
+          "m3"
+        ]
+      },
+      "m1": {
+        "id": "m1",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "mode": "fill",
+        "children": [
+          "w1"
+        ]
+      },
+      "m3": {
+        "id": "m3",
+        "frame_source": "pinned",
+        "display_id": 3,
+        "mode": "fill",
+        "children": [
+          "w3"
+        ]
+      },
+      "w1": {
+        "id": "w1",
+        "window_id": 101,
+        "binding": {
+          "app": "Laptop"
+        }
+      },
+      "w3": {
+        "id": "w3",
+        "window_id": 103,
+        "binding": {
+          "app": "External"
+        }
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          2880,
+          1864
+        ],
+        "usable": [
+          0,
+          57,
+          2880,
+          1807
+        ]
+      },
+      {
+        "id": 3,
+        "frame": [
+          1930,
+          -1440,
+          3440,
+          1440
+        ],
+        "usable": [
+          1930,
+          -1440,
+          3440,
+          1440
+        ]
+      }
+    ],
+    "dead_zones": [
+      [
+        0,
+        -1440,
+        1930,
+        1440
+      ],
+      [
+        2880,
+        0,
+        2490,
+        1864
+      ]
+    ]
+  },
+  "expect": {
+    "contention": [],
+    "dead_zone_hits": [],
+    "leaves": {
+      "w1": {
+        "conformance": "conforming",
+        "desired_frame": {
+          "h": 1807,
+          "w": 2880,
+          "x": 0,
+          "y": 57
+        },
+        "overflow": false,
+        "presented": true,
+        "vacant": false
+      },
+      "w3": {
+        "conformance": "conforming",
+        "desired_frame": {
+          "h": 1440,
+          "w": 3440,
+          "x": 1930,
+          "y": -1440
+        },
+        "overflow": false,
+        "presented": true,
+        "vacant": false
+      }
+    },
+    "vacant": []
+  }
+}

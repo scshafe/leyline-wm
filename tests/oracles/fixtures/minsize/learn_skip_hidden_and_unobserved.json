@@ -1,0 +1,11 @@
+{
+  "note": "A not-presented (hidden) target and a presented target whose window isn't in the observed set both contribute nothing — we only learn from windows we actually placed and re-observed.",
+  "fn": "learn",
+  "targets": {
+    "10": { "window_id": 10, "presented": false, "frame": null },
+    "20": { "window_id": 20, "presented": true, "frame": { "x": 0, "y": 0, "w": 300, "h": 300 } }
+  },
+  "observed": [],
+  "store": {},
+  "expect": {}
+}

@@ -1,0 +1,21 @@
+{
+  "fn": "insert_line",
+  "note": "S18-span THE EMPTY-BLOCK TOOTH (closure-by-rejection): coord on an EXISTING gridline (h@500 == the slicing base's full-width divider) crosses NO cell strictly (no cell's y-extent strictly contains 500 — {0,0,*,500} max_y is 500, {0,500,1000,500} min_y is 500), so _span_block is empty → reject. Same structural class as S14a's _target_cell-null reject. The bare insert_line arm emits {ok:false,reason} with NO arr — proving the store is left intact (jq purity, no candidate formed). The teeth fire BEFORE any union-find.",
+  "topology": { "displays": [ { "id": 1, "frame": [0, 0, 1000, 1000] } ], "gap": 0 },
+  "arr": {
+    "segments": [
+      { "axis": "v", "coord": 333, "lo": 0, "hi": 500, "id": 1 },
+      { "axis": "v", "coord": 667, "lo": 0, "hi": 500, "id": 2 },
+      { "axis": "h", "coord": 500, "lo": 0, "hi": 1000, "id": 3 }
+    ],
+    "bindings": {},
+    "off_top": []
+  },
+  "axis": "h",
+  "coord": 500,
+  "span": { "lo": 0, "hi": 667 },
+  "expect": {
+    "ok": false,
+    "reason": "insert_line: coord 500 lands on a face / no cell crossed within span on axis h"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "schema": "leyline/ax-read-budget-fixture/v1",
+  "scenarios": [
+    {
+      "name": "fresh-read",
+      "started": 1000000000,
+      "now": 1000000000,
+      "allowed": true
+    },
+    {
+      "name": "last-whole-message-reservation",
+      "started": 1000000000,
+      "now": 1100000000,
+      "allowed": true
+    },
+    {
+      "name": "insufficient-reserve-by-one-nanosecond",
+      "started": 1000000000,
+      "now": 1100000001,
+      "allowed": false
+    },
+    {
+      "name": "exhausted-total-budget",
+      "started": 1000000000,
+      "now": 1200000000,
+      "allowed": false
+    },
+    {
+      "name": "monotonic-clock-regression",
+      "started": 1000000000,
+      "now": 999999999,
+      "allowed": false
+    }
+  ]
+}

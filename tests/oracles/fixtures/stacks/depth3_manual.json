@@ -1,0 +1,57 @@
+{
+  "note": "8.6: a 3-member manual stack reports depth 3 (the cycle count), nesting 0 (top-level), source manual, top the first. The machine-checkable 'this tile is a stack of N' query.",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "mode": "row",
+        "children": [
+          "a",
+          "s"
+        ]
+      },
+      "s": {
+        "id": "s",
+        "mode": "stack",
+        "stack_source": "manual",
+        "top": "y",
+        "children": [
+          "x",
+          "y",
+          "z"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1
+      },
+      "x": {
+        "id": "x",
+        "window_id": 2
+      },
+      "y": {
+        "id": "y",
+        "window_id": 3
+      },
+      "z": {
+        "id": "z",
+        "window_id": 4
+      }
+    }
+  },
+  "expect": [
+    {
+      "depth": 3,
+      "members": [
+        "x",
+        "y",
+        "z"
+      ],
+      "nesting": 0,
+      "node": "s",
+      "source": "manual",
+      "top": "y"
+    }
+  ]
+}

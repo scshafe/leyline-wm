@@ -1,0 +1,10 @@
+{
+  "note": "assign_display: a window straddling two side-by-side displays homes to the one it overlaps MORE. win x[700,1500]: D1 share 300px, D2 share 500px -> D2.",
+  "fn": "assign_display",
+  "win": {"x": 700, "y": 0, "w": 800, "h": 1000},
+  "displays": [
+    {"id": 1, "frame": {"x": 0, "y": 0, "w": 1000, "h": 1000}, "usable": {"x": 0, "y": 0, "w": 1000, "h": 1000}},
+    {"id": 2, "frame": {"x": 1000, "y": 0, "w": 1000, "h": 1000}, "usable": {"x": 1000, "y": 0, "w": 1000, "h": 1000}}
+  ],
+  "expect": 2
+}

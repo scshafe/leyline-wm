@@ -1,0 +1,10 @@
+{
+  "note": "assign_display: an exact 50/50 straddle (equal overlap area) breaks the tie to the LOWEST display id -> D1.",
+  "fn": "assign_display",
+  "win": {"x": 500, "y": 0, "w": 1000, "h": 1000},
+  "displays": [
+    {"id": 1, "frame": {"x": 0, "y": 0, "w": 1000, "h": 1000}, "usable": {"x": 0, "y": 0, "w": 1000, "h": 1000}},
+    {"id": 2, "frame": {"x": 1000, "y": 0, "w": 1000, "h": 1000}, "usable": {"x": 1000, "y": 0, "w": 1000, "h": 1000}}
+  ],
+  "expect": 1
+}

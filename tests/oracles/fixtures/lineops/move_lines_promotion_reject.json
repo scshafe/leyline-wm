@@ -1,0 +1,43 @@
+{
+  "fn": "move_lines_check",
+  "note": "J1 (junction drag) — F7 over BOTH lines, pure-side: the v@500 is the promoted right-column region's WEST face (coord_map.x == 500); moving it would drift the coord_map off its cells and derive_nested would DROP the region on read (the confirmed A2 corruption class). The compound op rejects BEFORE composing — store intact (no arr), reason names F7 — even though the OTHER line (h@500 inside the left, unpromoted half... it spans the canvas, but rejection is any-line-touches). The shell resolver never needs a second F7 dialect.",
+  "topology": {
+    "displays": [
+      {"id": 1, "frame": [0, 0, 1000, 1000]}
+    ],
+    "gap": 0
+  },
+  "moves": [
+    {"line_id": 1, "delta": 50},
+    {"line_id": 2, "delta": 50}
+  ],
+  "arr": {
+    "segments": [
+      {"axis": "v", "coord": 500, "lo": 0, "hi": 1000, "id": 1},
+      {"axis": "h", "coord": 500, "lo": 0, "hi": 1000, "id": 2}
+    ],
+    "bindings": {
+      "1:0:0": {"window_id": 10, "presented": true, "frame": {"x": 0, "y": 0, "w": 500, "h": 500}},
+      "1:1:0": {"window_id": 11, "presented": true, "frame": {"x": 500, "y": 0, "w": 500, "h": 500}},
+      "1:0:1": {"window_id": 12, "presented": true, "frame": {"x": 0, "y": 500, "w": 500, "h": 500}},
+      "1:1:1": {"window_id": 13, "presented": true, "frame": {"x": 500, "y": 500, "w": 500, "h": 500}}
+    },
+    "off_top": [],
+    "promotions": [
+      {"id": 1, "region": ["1:1:0", "1:1:1"], "line_set": [{"axis": "h", "coord": 500, "lo": 500, "hi": 1000}], "coord_map": {"x": 500, "y": 0, "w": 500, "h": 1000}}
+    ]
+  },
+  "expect": {
+    "ok": false,
+    "reason": "move_lines: a line is inside/bounding a promoted region (a move would drift its coord_map; demote first) [F7]",
+    "applied": null,
+    "coords_after": null,
+    "order_independent": true,
+    "valid": null,
+    "ncells_before": 4,
+    "ncells_after": null,
+    "bindings_byte_eq": null,
+    "store_intact_on_reject": true,
+    "ride_endpoints": null
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "note": "The realistic Stage-4 shape: a pinned MOUNT (frame_source:\"pinned\", display_id, mode row, ratio_source computed) is INCLUDED by the probe (only ratio_source:\"pinned\" is skipped, I4 — frame_source:pinned is not). Crowded: 600+600 > mount span 1000 → candidate node:\"d:1\". root region is skipped (not row/col). Pins the frame_source-pinned-INCLUDED vs ratio_source-pinned-SKIPPED distinction.",
+  "fn": "probe",
+  "tree": { "root_id": "root", "nodes": {
+    "root": {"id":"root","mode":"region","children":["d:1"]},
+    "d:1": {"id":"d:1","mode":"row","frame_source":"pinned","display_id":1,"children":["a","b"]},
+    "a": {"id":"a","window_id":1,"min_size":{"w":600,"h":100}},
+    "b": {"id":"b","window_id":2,"min_size":{"w":600,"h":100}} } },
+  "topology": { "displays": [{"id":1,"frame":[0,0,1000,1000],"usable":[0,0,1000,1000]}], "gap":0 },
+  "expect": [
+    {"kind":"stack","phase":"candidate","node":"d:1","axis":"row","required":1200,"span":1000,"surplus":["b"]}
+  ]
+}

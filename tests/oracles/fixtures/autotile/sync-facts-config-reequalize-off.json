@@ -1,0 +1,24 @@
+{
+  "note": "Stage 2 Step 6 (config knob, fact stream): the SAME steady-state scene as sync-config-reequalize-off.json, asserting the .facts arm. With reequalize_policy:\"off\" no re-equalize happens, so NO reproportion fact is emitted (and no prune/adopt/seed either) — the stream is empty. Paired with sync-facts-config-reequalize-always.json (which emits the reproportion fact on the identical scene) to pin that a config value changes the EMITTED FACTS, not just the tree.",
+  "fn": "sync_facts",
+  "config": { "reequalize_policy": "off" },
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": { "id": "root", "mode": "region", "children": ["d:1"] },
+      "d:1": { "id": "d:1", "mode": "row", "frame_source": "pinned", "display_id": 1, "children": ["w:601", "sub"] },
+      "sub": { "id": "sub", "mode": "col", "ratios": [0.6, 0.4], "children": ["w:602", "w:603"] },
+      "w:601": { "id": "w:601", "window_id": 601 },
+      "w:602": { "id": "w:602", "window_id": 602 },
+      "w:603": { "id": "w:603", "window_id": 603 }
+    }
+  },
+  "observed": [
+    { "window_id": 601, "app": "A", "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true, "minimized": false, "frame": [0, 0, 960, 1080] },
+    { "window_id": 602, "app": "B", "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true, "minimized": false, "frame": [960, 0, 960, 540] },
+    { "window_id": 603, "app": "C", "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true, "minimized": false, "frame": [960, 540, 960, 540] }
+  ],
+  "focused_leaf": null,
+  "topology": { "displays": [{ "id": 1, "frame": [0, 0, 1920, 1080] }], "dead_zones": [] },
+  "expect": []
+}

@@ -1,0 +1,36 @@
+{
+  "schema": "leyline/resident-space-partition-fixture/v1",
+  "observer_epoch": "fixture-windowserver-epoch-1",
+  "topology": {
+    "displays": [
+      {"id": 1, "frame": {"x": 0, "y": 0, "w": 1200, "h": 800}, "usable": {"x": 0, "y": 30, "w": 1200, "h": 770}},
+      {"id": 2, "frame": {"x": 1200, "y": 0, "w": 1200, "h": 800}, "usable": {"x": 1200, "y": 30, "w": 1200, "h": 770}}
+    ],
+    "gap": 8,
+    "outer_gap": 0
+  },
+  "spaces": {
+    "A1": {"display_id": 1, "space_uuid": "11111111-1111-4111-8111-111111111111", "window_ids": [11, 12]},
+    "A2": {"display_id": 1, "space_uuid": "22222222-2222-4222-8222-222222222222", "window_ids": [21, 22]},
+    "B1": {"display_id": 2, "space_uuid": "33333333-3333-4333-8333-333333333333", "window_ids": [31, 32]},
+    "B2": {"display_id": 2, "space_uuid": "44444444-4444-4444-8444-444444444444", "window_ids": [41, 42]},
+    "Aempty": {"display_id": 1, "space_uuid": "55555555-5555-4555-8555-555555555555", "window_ids": []}
+  },
+  "expected": {"resize_step": 40, "initial_A1_divider": 600, "modified_A1_divider": 640, "modified_B1_divider": 1840},
+  "scenarios": [
+    "two_visible_display_spaces_seed_independently",
+    "A1_A2_switch_preserves_B1_and_returns_manual_geometry",
+    "B1_B2_switch_preserves_A1_and_returns_manual_geometry",
+    "A_ON_B_OFF_independent_in_both_focus_orders",
+    "A_OFF_B_ON_independent_in_both_focus_orders",
+    "identified_empty_space_preserves_departed_partition",
+    "incomplete_or_ambiguous_observation_refuses_without_prune",
+    "membership_removal_prunes_only_returned_partition",
+    "reused_window_lifetime_refuses_commands_and_reenters_as_newcomer",
+    "observer_epoch_change_rebuilds_without_stale_geometry",
+    "visible_display_swap_updates_both_partition_caches",
+    "visible_display_insert_updates_both_partition_caches",
+    "inactive_or_OFF_destination_refuses_without_mutation",
+    "automatic_overload_and_malformed_nested_refusal_preserve_managed_checkpoint"
+  ]
+}

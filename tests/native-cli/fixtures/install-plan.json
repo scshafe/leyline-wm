@@ -1,0 +1,20 @@
+{
+  "data": {
+    "operation": "install",
+    "label": "org.leyline.leylined",
+    "applied": false,
+    "plan": true,
+    "registration_checked": false,
+    "user_data_preserved": true,
+    "plist": {
+      "Label": "org.leyline.leylined",
+      "ProgramArguments": ["/Applications/Leyline.app/Contents/MacOS/leylined", "core"],
+      "KeepAlive": true,
+      "RunAtLoad": true,
+      "ThrottleInterval": 1,
+      "Umask": 63
+    }
+  },
+  "error": null,
+  "meta": {"transport": "native_installation", "version": "1.0.0", "completed": true}
+}

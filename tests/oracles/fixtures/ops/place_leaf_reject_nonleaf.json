@@ -1,0 +1,14 @@
+{
+  "note": "S8 place reject: target r is an internal (split) node, not a leaf → can't split-place beside it. The anchor must be a concrete window leaf.",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": { "id": "r", "mode": "row", "children": ["a", "b"] },
+      "a": { "id": "a", "window_id": 1 },
+      "b": { "id": "b", "window_id": 2 }
+    }
+  },
+  "op": "place_leaf",
+  "args": { "target": "r", "window_id": 3, "orientation": "row", "side": "after" },
+  "expect": { "ok": false, "reason": "not a leaf: r" }
+}

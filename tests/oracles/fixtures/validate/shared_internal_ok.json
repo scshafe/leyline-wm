@@ -1,0 +1,44 @@
+{
+  "note": "a multi-parent INTERNAL node (referenced by two contexts) is valid — I2 only restricts leaves. This is the true-reference shape (§6). ok:true.",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "children": [
+          "A",
+          "B"
+        ]
+      },
+      "A": {
+        "id": "A",
+        "mode": "stack",
+        "children": [
+          "sh"
+        ]
+      },
+      "B": {
+        "id": "B",
+        "mode": "stack",
+        "children": [
+          "sh"
+        ]
+      },
+      "sh": {
+        "id": "sh",
+        "mode": "row",
+        "children": [
+          "p"
+        ]
+      },
+      "p": {
+        "id": "p",
+        "window_id": 1
+      }
+    }
+  },
+  "expect": {
+    "ok": true,
+    "violations": []
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "note": "ADVERSARIAL (Fork A carry-gate re-key, 2026-06-14): THE 4-WAY CASE. The operator's offset-2x2 with seg37 moved WEST to x=915, making it COLLINEAR with the top-row vertical seg36@915 — a true + (4-way) junction at (915,759.5) over the full-width h-divider y=759.5 (the two collinear h segs 1[8,954]/2[954,2040]). The atom grid compresses to xs=[8,461.5,915,954,2040] ys=[49,759.5,1318]; the x=954 column (seg37's OLD home) collapses to a hairline atom that union-finds into its neighbour, so the partition recovers 5 clean rectangular cells: top row TL(1:0:0)/TM(1:1:0)/TR(1:2:0 spanning x915..2040), bottom row BL(1:0:1 x8..915)/BR(1:2:1 x915..2040). GROUND TRUTH (reasoned before running): the 4-way is BENIGN — all 5 windows must carry. The bottom-right binding is stored at the FRAGMENTED-grid anchor 1:4:1, but at x=915 the recovered cell re-keys to 1:2:1, so the EXACT anchor lookup orphans window 22123. The re-key-tolerant geometric fallback resolves 1:2:1 -> 22123 by max-overlap (cell {915,759.5,1125,558.5} vs frame {1005,763.5,1035,554.5}, iw=1035 ih=554.5 both positive). Verified: ONLY cell 1:2:1 went geometric (single cell, single unclaimed window -> NO double-assign), valid_rec.ok=true (no gap/overlap, no collapsed/near-zero cell), deterministic across runs, and the geometric arm is byte-inert when 1:4:1 is re-keyed to the matching 1:2:1 (ADDITIVE). carryable == the bound window set -> the drag carry-gate PERMITS the stretch. No pinwheel under-travel artifact. GREEN against the landed fix.",
+  "fn": "carryable",
+  "arr": {
+    "segments": [
+      {"axis": "h", "coord": 759.5, "lo": 8,     "hi": 954,  "id": 1,  "relation": "pinned"},
+      {"axis": "h", "coord": 759.5, "lo": 954,   "hi": 2040, "id": 2,  "relation": "pinned"},
+      {"axis": "v", "coord": 915,   "lo": 759.5, "hi": 1318, "id": 37, "relation": "pinned"},
+      {"axis": "v", "coord": 915,   "lo": 49,    "hi": 759.5,"id": 36, "relation": "pinned"},
+      {"axis": "v", "coord": 461.5, "lo": 49,    "hi": 759.5,"id": 35, "relation": "pinned"}
+    ],
+    "bindings": {
+      "1:0:0": {"window_id": 25965, "presented": true, "frame": {"x": 8,     "y": 49,    "w": 574,  "h": 706.5}},
+      "1:1:0": {"window_id": 25990, "presented": true, "frame": {"x": 465.5, "y": 49,    "w": 800,  "h": 706.5}},
+      "1:2:0": {"window_id": 26437, "presented": true, "frame": {"x": 919,   "y": 49,    "w": 1121, "h": 706.5}},
+      "1:0:1": {"window_id": 24187, "presented": true, "frame": {"x": 8,     "y": 763.5, "w": 989,  "h": 554.5}},
+      "1:4:1": {"window_id": 22123, "presented": true, "frame": {"x": 1005,  "y": 763.5, "w": 1035, "h": 554.5}}
+    },
+    "off_top": [],
+    "promotions": []
+  },
+  "topology": {"displays": [{"id": 1, "frame": {"x": 0, "y": 0, "w": 2048, "h": 1326}, "usable": {"x": 0, "y": 41, "w": 2048, "h": 1285}}], "dead_zones": [], "gap": 8},
+  "expect": {"carried": [22123, 24187, 25965, 25990, 26437], "flat": true}
+}

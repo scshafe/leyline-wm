@@ -1,0 +1,76 @@
+{
+  "note": "DEEPER subtree, parent SURVIVES: root r=[left, right] where right=[c,d,e] (3 leaves) and left='a' is a leaf. Removing 'd' from the deep subtree leaves right=[c,e] (2 children) — right survives, no collapse, and the top-level r=[left,right] is untouched. Asserts remove operates on the correct parent deep in the tree and leaves unrelated branches alone.",
+  "fn": "remove",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "mode": "row",
+        "children": [
+          "a",
+          "right"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1
+      },
+      "right": {
+        "id": "right",
+        "mode": "col",
+        "children": [
+          "c",
+          "d",
+          "e"
+        ]
+      },
+      "c": {
+        "id": "c",
+        "window_id": 3
+      },
+      "d": {
+        "id": "d",
+        "window_id": 4
+      },
+      "e": {
+        "id": "e",
+        "window_id": 5
+      }
+    }
+  },
+  "leaf": "d",
+  "expect": {
+    "nodes": {
+      "a": {
+        "id": "a",
+        "window_id": 1
+      },
+      "c": {
+        "id": "c",
+        "window_id": 3
+      },
+      "e": {
+        "id": "e",
+        "window_id": 5
+      },
+      "r": {
+        "children": [
+          "a",
+          "right"
+        ],
+        "id": "r",
+        "mode": "row"
+      },
+      "right": {
+        "children": [
+          "c",
+          "e"
+        ],
+        "id": "right",
+        "mode": "col"
+      }
+    },
+    "root_id": "r"
+  }
+}

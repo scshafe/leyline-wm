@@ -1,0 +1,76 @@
+{
+  "captured_at": "2026-05-21T00:00:00Z",
+  "providers": {
+    "appkit": [
+      {
+        "display": 1,
+        "provider_keys": {
+          "appkit_screen_index": 1,
+          "cg_display_id": 101,
+          "ns_screen_number": 101
+        },
+        "frame": {"x": 0, "y": 0, "w": 1512, "h": 982},
+        "visibleFrame": {"x": 0, "y": 0, "w": 1512, "h": 908},
+        "safeAreaTop": 74,
+        "visibleFrameDelta": 74,
+        "height": 74,
+        "pixels": {"w": 3024, "h": 1964},
+        "scale": 2,
+        "notch": {
+          "present": true,
+          "left_edge_x": 660,
+          "right_edge_x": 850,
+          "width": 190,
+          "safe_left_w": 660,
+          "safe_right_w": 662
+        },
+        "auxLeft": {"x": 0, "y": 908, "w": 660, "h": 74},
+        "auxRight": {"x": 850, "y": 908, "w": 662, "h": 74}
+      },
+      {
+        "display": 2,
+        "provider_keys": {
+          "appkit_screen_index": 2,
+          "cg_display_id": 202,
+          "ns_screen_number": 202
+        },
+        "frame": {"x": 1512, "y": 0, "w": 2560, "h": 1440},
+        "visibleFrame": {"x": 1512, "y": 0, "w": 2560, "h": 1410},
+        "safeAreaTop": 0,
+        "visibleFrameDelta": 30,
+        "height": 30,
+        "pixels": {"w": 2560, "h": 1440},
+        "scale": 1,
+        "notch": {"present": true},
+        "auxLeft": {"x": 1512, "y": 1410, "w": 0, "h": 0},
+        "auxRight": {"x": 4072, "y": 1410, "w": 0, "h": 0}
+      }
+    ],
+    "provider_displays": [
+      {
+        "id": 101,
+        "uuid": "INTERNAL-UUID",
+        "index": 1,
+        "frame": {"x": 0, "y": 0, "w": 1512, "h": 982},
+        "spaces": [1, 2],
+        "space": 1,
+        "has-focus": true
+      },
+      {
+        "id": 202,
+        "uuid": "EXTERNAL-UUID",
+        "index": 2,
+        "frame": {"x": 1512, "y": 0, "w": 2560, "h": 1440},
+        "spaces": [3, 4],
+        "space": 3,
+        "has-focus": false
+      }
+    ],
+    "provider_spaces": [
+      {"index": 1, "display": 1, "has-focus": true},
+      {"index": 2, "display": 1, "has-focus": false},
+      {"index": 3, "display": 2, "has-focus": false},
+      {"index": 4, "display": 2, "has-focus": false}
+    ]
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "note": "A pinned row node survives an auto_proportion pass UNCHANGED — hand-set ratios [3,1] are read, never re-snapped (I4 for splits). ratio_source:pinned preserved.",
+  "fn": "auto_proportion",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "mode": "row",
+        "children": [
+          "a",
+          "b"
+        ],
+        "ratios": [
+          3,
+          1
+        ],
+        "ratio_source": "pinned"
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1
+      },
+      "b": {
+        "id": "b",
+        "window_id": 2
+      }
+    }
+  },
+  "expect": {
+    "nodes": {
+      "a": {
+        "id": "a",
+        "window_id": 1
+      },
+      "b": {
+        "id": "b",
+        "window_id": 2
+      },
+      "r": {
+        "children": [
+          "a",
+          "b"
+        ],
+        "id": "r",
+        "mode": "row",
+        "ratio_source": "pinned",
+        "ratios": [
+          3,
+          1
+        ]
+      }
+    },
+    "root_id": "r"
+  }
+}

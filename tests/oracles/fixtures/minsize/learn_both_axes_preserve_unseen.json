@@ -1,0 +1,12 @@
+{
+  "note": "Refusal on BOTH axes learns w+h for Chrome; an app present in the store but NOT tiled this cycle (com.foo.Bar) is preserved untouched (the fold only visits live targets).",
+  "fn": "learn",
+  "targets": {
+    "6389": { "window_id": 6389, "presented": true, "frame": { "x": 0, "y": 0, "w": 300, "h": 200 } }
+  },
+  "observed": [
+    { "window_id": 6389, "bundle_id": "com.google.Chrome", "frame": { "x": 0, "y": 0, "w": 500, "h": 450 } }
+  ],
+  "store": { "com.foo.Bar": { "w": 100 } },
+  "expect": { "com.foo.Bar": { "w": 100 }, "com.google.Chrome": { "w": 500, "h": 450 } }
+}

@@ -1,0 +1,28 @@
+{
+  "note": "S4 step 3 (R5): cells_md derives cells PER display bag then unions, each cell tagged display_id. FLUSH 2-display topology with an EMPTY segment bag (one window per display, no interior gridlines) → one cell filling each display's inset rect: {8,8,984,984}@d1, {1008,8,984,984}@d2 — byte-equal to floorplan/cells_multi_display's per-display cell frames (and to project's gap_multi_display frames). NO cell straddles the x=1000 seam: because each bag's atom grid is built over ONE display's inset rect, no atom spans the inter-display band, so no union-find component can cross the seam BY CONSTRUCTION (structural, not a coordinate band filter). The atom-box fields (i0..j1, atoms, filled) are S0's cell shape, carried verbatim per bag.",
+  "fn": "cells_md",
+  "arr": [],
+  "topology": {
+    "displays": [
+      { "id": 1, "frame": [0, 0, 1000, 1000] },
+      { "id": 2, "frame": [1000, 0, 1000, 1000] }
+    ],
+    "gap": 8
+  },
+  "expect": [
+    {
+      "atoms": [[0, 0]],
+      "i0": 0, "i1": 0, "j0": 0, "j1": 0,
+      "filled": true,
+      "frame": { "x": 8, "y": 8, "w": 984, "h": 984 },
+      "display_id": 1
+    },
+    {
+      "atoms": [[0, 0]],
+      "i0": 0, "i1": 0, "j0": 0, "j1": 0,
+      "filled": true,
+      "frame": { "x": 1008, "y": 8, "w": 984, "h": 984 },
+      "display_id": 2
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "note": "Flagged edge: a system-level modal reports subrole AXSystemDialog. Like AXDialog, it is not AXStandardWindow ⇒ not standard ⇒ NOT tileable. Confirms the predicate gates on the exact AXStandardWindow string, not a fuzzy 'dialog-ish' match.",
+  "fn": "tileable",
+  "window": {
+    "window_id": 21,
+    "app": "loginwindow",
+    "title": "Authentication Required",
+    "role": "AXWindow",
+    "subrole": "AXSystemDialog",
+    "resizable": true
+  },
+  "rules": [],
+  "expect": false
+}

@@ -1,0 +1,9 @@
+{ "fn": "line_at",
+  "note": "mouse-line-drag M0 / F7: a segment face-coincident with a promotion coord_map never resolves (un-grabbable — A::seg_touches_promotion, the same predicate the drag gate uses). The h line stays grabbable.",
+  "arr": { "segments": [ { "axis": "h", "coord": 540, "lo": 0, "hi": 1920 },
+                         { "axis": "v", "coord": 960, "lo": 0, "hi": 1080 } ],
+           "bindings": {},
+           "promotions": [ { "id": 1, "coord_map": { "x": 960, "y": 0, "w": 960, "h": 1080 } } ] },
+  "x": 963, "y": 545, "tol": 12,
+  "expect": { "kind": "segment",
+              "hits": [ { "axis": "h", "coord": 540, "lo": 0, "hi": 1920 } ] } }

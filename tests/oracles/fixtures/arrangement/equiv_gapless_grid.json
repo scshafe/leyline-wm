@@ -1,0 +1,97 @@
+{
+  "note": "SET-EQUALITY proof (gap=0 BRACKET): the same 2x2 with NO gap. At gap=0 the gutter inset is the IDENTITY (centreline IS the cell face) -> arrangement cells match floorplan RAW (no bridge needed). Paired with equiv_grid_2x2 (gap=8) this BRACKETS the covered-vs-centreline tolerance: both green under one consistent rule (inset interior faces by gap/2) proves the rule, not a per-fixture fudge. SET equality, no leaf_id.",
+  "fn": "equiv",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "c1",
+          "c2"
+        ]
+      },
+      "c1": {
+        "id": "c1",
+        "mode": "col",
+        "children": [
+          "w:1",
+          "w:3"
+        ]
+      },
+      "c2": {
+        "id": "c2",
+        "mode": "col",
+        "children": [
+          "w:2",
+          "w:4"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:3": {
+        "id": "w:3",
+        "window_id": 3
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      },
+      "w:4": {
+        "id": "w:4",
+        "window_id": 4
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ]
+  },
+  "expect": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 500,
+      "h": 500
+    },
+    {
+      "x": 0,
+      "y": 500,
+      "w": 500,
+      "h": 500
+    },
+    {
+      "x": 500,
+      "y": 0,
+      "w": 500,
+      "h": 500
+    },
+    {
+      "x": 500,
+      "y": 500,
+      "w": 500,
+      "h": 500
+    }
+  ]
+}

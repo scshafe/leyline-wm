@@ -1,0 +1,14 @@
+{
+  "note": "Named gate (non-resizable): a real standard window (role AXWindow, subrole AXStandardWindow) that is fixed-size — resizable:false (a fixed-size utility / About box that still reports as standard). is_resizable gate fails ⇒ NOT tileable. Tiling must not try to resize a fixed window.",
+  "fn": "tileable",
+  "window": {
+    "window_id": 27,
+    "app": "SomeApp",
+    "title": "About SomeApp",
+    "role": "AXWindow",
+    "subrole": "AXStandardWindow",
+    "resizable": false
+  },
+  "rules": [],
+  "expect": false
+}

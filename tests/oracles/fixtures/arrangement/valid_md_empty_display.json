@@ -1,0 +1,21 @@
+{
+  "note": "S4 step 5 (R5): an EMPTY display is VACUOUSLY valid — NOT a whole-canvas-gap violation. FLUSH 2-display topology. Display 1 holds a real interior gridline (v@500, homed to d1) splitting it into TWO filled cells (a valid partition); display 2 has NO segment → ONE full cell. Every bag fully covers its OWN display rect → per_display[*].ok=true → ok:true. This is the bug S4 avoids: S1's single-bag valid() run over the UNION rect {8,8,1984,984} would see the inter-display band (x 992..1008, no cell) as an unclaimed atom → a false 'gap' violation; AND d1's v@500 alone over the union rect would leave d2's whole half unclaimed → a second false gap. Per-bag validity makes the band + the empty display outside every other bag's rect, so neither is a region to be filled. Contrast valid_md_isolation (a real gap on d1 reddens ONLY d1).",
+  "fn": "valid_md",
+  "arr": [
+    { "axis": "v", "coord": 500, "lo": 8, "hi": 992 }
+  ],
+  "topology": {
+    "displays": [
+      { "id": 1, "frame": [0, 0, 1000, 1000] },
+      { "id": 2, "frame": [1000, 0, 1000, 1000] }
+    ],
+    "gap": 8
+  },
+  "expect": {
+    "ok": true,
+    "per_display": [
+      { "display_id": 1, "ok": true, "violations": [] },
+      { "display_id": 2, "ok": true, "violations": [] }
+    ]
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "note": "S16.2 (R2) — the OCC/INV SEPARATION proof (spec §3.4). Two ORTHOGONAL oracles on the same rebind sequence (attach -> detach -> unbind-to-reserved): INV = A::valid_rec (GEOMETRY, reads .segments/.nested ONLY — invariant under rebind by construction) is BYTE-IDENTICAL throughout (inv_byte_stable) WHILE OCC = the store-side conservation buckets (bound/presented/stacked/reserved) track every change (occ_attach/occ_detach/occ_unbind). The reserved-slot cell is INV-VALID (one cell tiles its rect) AND OCC-DISTINCT (no bound window, an EXPLICIT reserved slot, not a silent drop). Different failure modes (a gap reds INV; a vanished window reds OCC; a reserved slot reds NEITHER), different repair owners (the line algebra fixes geometry; rebind fixes occupancy) — NO folding OCC into valid_rec, NO geometry logic in conservation. attach: bound [101,102] / presented [102] / stacked [101]; detach: bound [101] / presented [101]; unbind: bound [] / reserved [1:0:0] — every window accounted for at every step.",
+  "fn": "rebind_occ_inv",
+  "cell_key": "1:0:0",
+  "descriptor": {
+    "window_id": 102,
+    "presented": true,
+    "frame": {
+      "x": 0,
+      "y": 0,
+      "w": 1000,
+      "h": 800
+    }
+  },
+  "arr": {
+    "segments": [],
+    "bindings": {
+      "1:0:0": {
+        "window_id": 101,
+        "presented": true,
+        "frame": {
+          "x": 0,
+          "y": 0,
+          "w": 1000,
+          "h": 800
+        },
+        "contents": [
+          {
+            "window_id": 101,
+            "presented": true,
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "w": 1000,
+              "h": 800
+            }
+          }
+        ]
+      }
+    },
+    "off_top": [],
+    "promotions": []
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          800
+        ],
+        "usable": [
+          0,
+          0,
+          1000,
+          800
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "expect": {
+    "inv_byte_stable": true,
+    "inv_ok": true,
+    "occ_all_ok": true,
+    "occ_attach": {
+      "bound": [
+        101,
+        102
+      ],
+      "ok": true,
+      "presented": [
+        102
+      ],
+      "reserved": [],
+      "stacked": [
+        101
+      ]
+    },
+    "occ_detach": {
+      "bound": [
+        101
+      ],
+      "ok": true,
+      "presented": [
+        101
+      ],
+      "reserved": [],
+      "stacked": []
+    },
+    "occ_unbind": {
+      "bound": [],
+      "ok": true,
+      "presented": [],
+      "reserved": [
+        "1:0:0"
+      ],
+      "stacked": []
+    }
+  }
+}

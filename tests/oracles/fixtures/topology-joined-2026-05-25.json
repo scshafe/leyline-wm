@@ -1,0 +1,27 @@
+{
+  "captured_at": "2026-05-25T02:30:45Z",
+  "spans_displays_off": true,
+  "capture_method": "CoreGraphics CGGetActiveDisplayList + CGDisplayBounds (yabai-free; yabai aborts under separate-Spaces OFF)",
+  "coordinate_space": "CGDisplayBounds (top-left origin, main@0,0; == AX kAXPosition space)",
+  "displays": [
+    {"id": 1, "main": true, "builtin": true, "frame": [0, 0, 2880, 1864], "pixels": [2880, 1864]},
+    {"id": 3, "main": false, "builtin": false, "frame": [1930, -1440, 3440, 1440], "pixels": [3440, 1440]}
+  ],
+  "bounding_box": [0, -1440, 5370, 3304],
+  "dead_zones": [
+    [0, -1440, 1930, 1440],
+    [2880, 0, 2490, 1864]
+  ],
+  "dead_zone_count": 2,
+  "dead_fraction_of_bbox": 0.4182369093835811,
+  "usable_rects": [
+    {"id": 1, "rect": [0, 57, 2880, 1807], "note": "main: menu-bar floor y=57 measured via AX clamp; Dock reservation untested"},
+    {"id": 3, "rect": [1930, -1440, 3440, 1440], "note": "external: no menu bar, full rect usable; Dock untested"}
+  ],
+  "notes": [
+    "L-shaped/stepped canvas. Displays do not overlap in area; they touch only along the y=0 seam over x in [1930, 2880) -- a 950px-wide bridge, the only dead-zone-free crossing between displays.",
+    "A naive bounding-box layout would drop ~42% of frames into dead zones. Geometry must reason over the display-rect set + this dead-zone mask, never the bounding box (design 2, I5).",
+    "AX reframe battery (parcel/tools/ax-reframe probe, 2026-05-25, target=Messages): cross-display reframe is PIXEL-EXACT on both displays incl external negative-y. WindowServer clamps dead-zone frames OUT (window won't rest invisible) but unpredictably -- nearest display in the same x-column, to the menu-bar floor, sometimes a sliver. So the engine MUST enforce I5 itself; the clamp is an erratic jump, not a safety net. App min-size is real (Messages min width ~660).",
+    "Topology capture script: /tmp/parcel_topology.swift. Reframe/probe harness (the AX-backend seed): parcel/tools/ax-reframe.swift."
+  ]
+}

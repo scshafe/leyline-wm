@@ -1,0 +1,73 @@
+{
+  "note": "SET-EQUALITY proof (T-junction): root row [L, Rcol] — the v-edge spans the full height [8,992] but the h-edge spans only the RIGHT [504,992] (a partial-span line). from_floorplan hands both; the arrangement's covered predicate leaves the LEFT column un-cut -> one full-height cell {8,8,488,984} + two right cells, matching floorplan's 3 cells. The non-slicing-SHAPED scene the tree still derives; cells handles the T with NO special case. SET equality, no leaf_id.",
+  "fn": "equiv",
+  "tree": {
+    "root_id": "d",
+    "nodes": {
+      "d": {
+        "id": "d",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "L",
+          "Rcol"
+        ]
+      },
+      "Rcol": {
+        "id": "Rcol",
+        "mode": "col",
+        "children": [
+          "Rt",
+          "Rb"
+        ]
+      },
+      "L": {
+        "id": "L",
+        "window_id": 1
+      },
+      "Rt": {
+        "id": "Rt",
+        "window_id": 2
+      },
+      "Rb": {
+        "id": "Rb",
+        "window_id": 3
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 8
+  },
+  "expect": [
+    {
+      "x": 8,
+      "y": 8,
+      "w": 488,
+      "h": 984
+    },
+    {
+      "x": 504,
+      "y": 8,
+      "w": 488,
+      "h": 488
+    },
+    {
+      "x": 504,
+      "y": 504,
+      "w": 488,
+      "h": 488
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d1"
+        ]
+      },
+      "d1": {
+        "id": "d1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "a",
+          "b"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 101,
+        "binding": {
+          "app": "A"
+        }
+      },
+      "b": {
+        "id": "b",
+        "window_id": 102,
+        "binding": {
+          "app": "B"
+        }
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          800
+        ]
+      }
+    ]
+  },
+  "observed": [
+    {
+      "window_id": 101,
+      "frame": [
+        20,
+        0,
+        480,
+        800
+      ],
+      "minimized": false
+    },
+    {
+      "window_id": 102,
+      "frame": [
+        490,
+        0,
+        510,
+        800
+      ],
+      "minimized": false
+    }
+  ],
+  "note": "S3 R4 (the canonical two-presented-window row): both 101/102 presented+bound, a single vertical divider at x=500. Each window's lo-corner matches a distinct cell; arrangement_targets emits project's desired_frame per window. Confirms the presented-cell join is byte-equal on the basic slicing scene (the targets are frame-only here — reconcile_targets, NOT the reframe diff). expect == reconcile_targets. All-corpus proof: parcel/arrangement-bridge.sh.",
+  "expect": {
+    "101": {
+      "window_id": 101,
+      "presented": true,
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 800
+      }
+    },
+    "102": {
+      "window_id": 102,
+      "presented": true,
+      "frame": {
+        "x": 500,
+        "y": 0,
+        "w": 500,
+        "h": 800
+      }
+    }
+  }
+}

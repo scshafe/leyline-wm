@@ -1,0 +1,29 @@
+{
+  "note": "RESOLVES S0's deferred equiv_multi_display (the per-display SET-EQUALITY oracle, the multi-display analogue of equiv_grid_2x2). FLUSH 2-display topology (display 2 at x=1000, zero physical inter-frame gap). Tree: d:1(pinned, ROW)→[w:1,w:2] splits display 1 into two columns (gridline v@500 spanning y[8,992], homed to d1); d:2(pinned, COL)→[w:3,w:4] splits display 2 into two rows (gridline h@500 spanning x[1008,1992], homed to d2). from_floorplan yields exactly those two segments — NEITHER crosses the x=1000 seam (the v spans y only within d1, the h spans x only within d2). bridge_md_equiv homes them per display, derives cells_md, and re-applies the per-display gutter inset → 4 cells (2 per display), BYTE-IDENTICAL (jq -S) to floorplan's own cell rect set. This is the equivalence proof S0 deferred to S4: arrangement ≡ tree on the slicing subset WITH per-display pinned mounts, on flush displays.",
+  "fn": "bridge",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": { "id": "root", "mode": "region", "children": ["d:1", "d:2"] },
+      "d:1": { "id": "d:1", "mode": "row", "frame_source": "pinned", "display_id": 1, "children": ["w:1", "w:2"] },
+      "d:2": { "id": "d:2", "mode": "col", "frame_source": "pinned", "display_id": 2, "children": ["w:3", "w:4"] },
+      "w:1": { "id": "w:1", "window_id": 1 },
+      "w:2": { "id": "w:2", "window_id": 2 },
+      "w:3": { "id": "w:3", "window_id": 3 },
+      "w:4": { "id": "w:4", "window_id": 4 }
+    }
+  },
+  "topology": {
+    "displays": [
+      { "id": 1, "frame": [0, 0, 1000, 1000] },
+      { "id": 2, "frame": [1000, 0, 1000, 1000] }
+    ],
+    "gap": 8
+  },
+  "expect": [
+    { "x": 8, "y": 8, "w": 488, "h": 984 },
+    { "x": 504, "y": 8, "w": 488, "h": 984 },
+    { "x": 1008, "y": 8, "w": 984, "h": 488 },
+    { "x": 1008, "y": 504, "w": 984, "h": 488 }
+  ]
+}

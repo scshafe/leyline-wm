@@ -1,0 +1,13 @@
+{
+  "_doc": "Three east candidates at the same edge_distance (20). They differ on perpendicular overlap (400, 300, 200). Locks the -perpendicular_overlap second sort key. The third (border_proportion) is exercised by window 400, whose overlap covers half its height.",
+  "displays": [
+    { "index": 1, "frame": { "x": 0, "y": 0, "w": 1512, "h": 982 } }
+  ],
+  "windows": [
+    { "id": 100, "display": 1, "frame": { "x": 100, "y": 200, "w": 400, "h": 400 }, "app": "Source"         },
+    { "id": 200, "display": 1, "frame": { "x": 520, "y": 200, "w": 200, "h": 400 }, "app": "FullOverlap"    },
+    { "id": 300, "display": 1, "frame": { "x": 520, "y": 250, "w": 200, "h": 300 }, "app": "PartialOverlap" },
+    { "id": 400, "display": 1, "frame": { "x": 520, "y": 400, "w": 200, "h": 400 }, "app": "BottomOverlap"  }
+  ],
+  "source": { "window_id": 100 }
+}

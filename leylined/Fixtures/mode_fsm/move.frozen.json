@@ -1,0 +1,134 @@
+[
+  {
+    "mode": "move",
+    "chord": "0x24",
+    "verb": "ley parcel movemode execute auto",
+    "exit_predicate": "exit_unless_rc_in_1_3"
+  },
+  {
+    "mode": "move",
+    "chord": "0x35",
+    "verb": "ley parcel movemode cancel",
+    "exit_predicate": "exit_on_rc0"
+  },
+  {
+    "mode": "move",
+    "chord": "0x5A",
+    "transition": "default"
+  },
+  {
+    "mode": "move",
+    "chord": "c",
+    "verb": "ley parcel movemode rotate",
+    "exit_predicate": "exit_on_any_nonzero"
+  },
+  {
+    "mode": "move",
+    "chord": "cmd + ctrl + alt + shift - c",
+    "verb": "ley parcel movemode rotate",
+    "exit_predicate": "exit_on_any_nonzero"
+  },
+  {
+    "mode": "move",
+    "chord": "cmd + ctrl + alt + shift - d",
+    "verb": "ley parcel movemode drop",
+    "exit_predicate": "exit_unless_rc_in_1_3"
+  },
+  {
+    "mode": "move",
+    "chord": "cmd + ctrl + alt + shift - h",
+    "verb": "ley parcel movecursor west",
+    "exit_predicate": "exit_on_any_nonzero"
+  },
+  {
+    "mode": "move",
+    "chord": "cmd + ctrl + alt + shift - j",
+    "verb": "ley parcel movecursor south",
+    "exit_predicate": "exit_on_any_nonzero"
+  },
+  {
+    "mode": "move",
+    "chord": "cmd + ctrl + alt + shift - k",
+    "verb": "ley parcel movecursor north",
+    "exit_predicate": "exit_on_any_nonzero"
+  },
+  {
+    "mode": "move",
+    "chord": "cmd + ctrl + alt + shift - l",
+    "verb": "ley parcel movecursor east",
+    "exit_predicate": "exit_on_any_nonzero"
+  },
+  {
+    "mode": "move",
+    "chord": "cmd + ctrl + alt + shift - m",
+    "verb": "ley parcel movemode off",
+    "exit_predicate": "unconditional_exit"
+  },
+  {
+    "mode": "move",
+    "chord": "cmd + ctrl + alt + shift - m",
+    "verb": "ley parcel movemode on",
+    "exit_predicate": "exit_on_any_nonzero",
+    "is_enter": true
+  },
+  {
+    "mode": "move",
+    "chord": "cmd + ctrl + alt + shift - s",
+    "verb": "ley parcel movemode execute swap",
+    "exit_predicate": "exit_unless_rc_in_1_3"
+  },
+  {
+    "mode": "move",
+    "chord": "d",
+    "verb": "ley parcel movemode drop",
+    "exit_predicate": "exit_unless_rc_in_1_3"
+  },
+  {
+    "mode": "move",
+    "chord": "h",
+    "verb": "ley parcel movecursor west",
+    "exit_predicate": "exit_on_any_nonzero"
+  },
+  {
+    "mode": "move",
+    "chord": "i",
+    "verb": "ley parcel movemode level down",
+    "exit_predicate": "exit_unless_rc_in_1_3"
+  },
+  {
+    "mode": "move",
+    "chord": "j",
+    "verb": "ley parcel movecursor south",
+    "exit_predicate": "exit_on_any_nonzero"
+  },
+  {
+    "mode": "move",
+    "chord": "k",
+    "verb": "ley parcel movecursor north",
+    "exit_predicate": "exit_on_any_nonzero"
+  },
+  {
+    "mode": "move",
+    "chord": "l",
+    "verb": "ley parcel movecursor east",
+    "exit_predicate": "exit_on_any_nonzero"
+  },
+  {
+    "mode": "move",
+    "chord": "s",
+    "verb": "ley parcel movemode execute swap",
+    "exit_predicate": "exit_unless_rc_in_1_3"
+  },
+  {
+    "mode": "move",
+    "chord": "t",
+    "verb": "ley parcel movemode execute top",
+    "exit_predicate": "exit_unless_rc_in_1_3"
+  },
+  {
+    "mode": "move",
+    "chord": "u",
+    "verb": "ley parcel movemode level up",
+    "exit_predicate": "exit_unless_rc_in_1_3"
+  }
+]

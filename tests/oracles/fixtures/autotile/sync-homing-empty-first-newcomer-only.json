@@ -1,0 +1,50 @@
+{
+  "note": "HOMING KNOB — config:{homing:\"empty_first\"} INCREMENTAL (the live case). A PRIOR tree already binds w1 on D1's mount; a NEW window w2 arrives whose observed frame geometrically lands on D1 (it would pile under \"focus\"). With empty_first, ONLY the newcomer w2 is re-homed onto the empty D2 — the EXISTING w1 keeps its geometric home (a settled layout never reshuffles; _rehome_to_empty reassigns only the not-yet-bound newcomers, and D1 counts as OCCUPIED because w1 is already bound there). Final: root -> [d:1 -> w:1, d:2 -> w:2]. This is the property that makes empty_first safe to leave on live: adding windows fills empty screens without churning what is already placed.",
+  "fn": "sync",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": { "id": "root", "mode": "region", "children": ["d:1"] },
+      "d:1": { "id": "d:1", "mode": "row", "frame_source": "pinned", "display_id": 1, "children": ["w:1"] },
+      "w:1": { "id": "w:1", "window_id": 1 }
+    }
+  },
+  "observed": [
+    {
+      "window_id": 1,
+      "app": "A",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [100, 100, 800, 600]
+    },
+    {
+      "window_id": 2,
+      "app": "B",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [300, 300, 800, 600]
+    }
+  ],
+  "focused_leaf": null,
+  "topology": {
+    "displays": [
+      { "id": 1, "frame": [0, 0, 1440, 900], "usable": [0, 25, 1440, 875] },
+      { "id": 2, "frame": [1440, 0, 1440, 900], "usable": [1440, 25, 1440, 875] }
+    ]
+  },
+  "config": {
+    "homing": "empty_first"
+  },
+  "expect": {
+    "root_id": "root",
+    "nodes": {
+      "root": { "id": "root", "mode": "region", "children": ["d:1", "d:2"] },
+      "d:1": { "id": "d:1", "mode": "row", "frame_source": "pinned", "display_id": 1, "children": ["w:1"] },
+      "d:2": { "id": "d:2", "mode": "row", "frame_source": "pinned", "display_id": 2, "children": ["w:2"] },
+      "w:1": { "id": "w:1", "window_id": 1 },
+      "w:2": { "id": "w:2", "window_id": 2 }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "note": "W=1 -> a single full cell (no-hole, score 0).",
+  "w": 1,
+  "expect": {
+    "cols": 1,
+    "orient": "rows",
+    "parts": [
+      1
+    ],
+    "rows": 1,
+    "score": 0
+  }
+}

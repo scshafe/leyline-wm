@@ -1,0 +1,101 @@
+{
+  "note": "edges: a 2-window row (gap 8) → ONE vertical gridline at the gutter centerline x=600, band {596,604}, dividers=[d:1] (the row mount's single split). No h-edge, no corner. Reuses project/gap_row_shared_gutter.",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "w:1",
+          "w:2"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1200,
+          800
+        ]
+      }
+    ],
+    "gap": 8
+  },
+  "expect": {
+    "cells": [
+      {
+        "display_id": 1,
+        "frame": {
+          "h": 784,
+          "w": 588,
+          "x": 8,
+          "y": 8
+        },
+        "leaf_id": "w:1"
+      },
+      {
+        "display_id": 1,
+        "frame": {
+          "h": 784,
+          "w": 588,
+          "x": 604,
+          "y": 8
+        },
+        "leaf_id": "w:2"
+      }
+    ],
+    "corners": [],
+    "edges": [
+      {
+        "axis": "v",
+        "band": {
+          "hi": 604,
+          "lo": 596
+        },
+        "coord": 600,
+        "dividers": [
+          "d:1"
+        ],
+        "high_cells": [
+          "w:2"
+        ],
+        "low_cells": [
+          "w:1"
+        ],
+        "span": {
+          "hi": 792,
+          "lo": 8
+        }
+      }
+    ],
+    "root": {
+      "h": 784,
+      "w": 1184,
+      "x": 8,
+      "y": 8
+    }
+  }
+}

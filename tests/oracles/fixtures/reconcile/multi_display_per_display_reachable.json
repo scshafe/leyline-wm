@@ -1,0 +1,130 @@
+{
+  "note": "THRASH-KILL PROOF, tree-anchored (D's correctness oracle, end-to-end). The per-display mount tree sync authors — root(region) → [d:1(pinned mount, display 1) → i:w:2(row)=[w:1,w:2], d:3(pinned mount, display 3) → w:3] — reconciled (project → per-display targets → diff) over the L-shaped topology against observed frames that ALREADY match the per-display targets (w1 {0,57,1440,1807}, w2 {1440,57,1440,1807} inside D1's usable rect; w3 {1930,-1440,3440,1440} = all of D3). Result: ALL-NOOP (empty show/reframe/hide). Because the diff is driven by project's frames off the actual engine-authored tree (not hand-picked targets), an all-noop diff proves the per-display tree's projected frames are REACHED — every window sits inside its own display, none straddling the inter-display gap, so reconcile asks for no moves. The sibling reconcile_diff/multi_display_per_display_settles carries the explicit stable:true fixpoint AND the convergence-from-drift proof.",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1",
+          "d:3"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "i:w:2"
+        ]
+      },
+      "i:w:2": {
+        "id": "i:w:2",
+        "mode": "row",
+        "children": [
+          "w:1",
+          "w:2"
+        ]
+      },
+      "d:3": {
+        "id": "d:3",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 3,
+        "children": [
+          "w:3"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      },
+      "w:3": {
+        "id": "w:3",
+        "window_id": 3
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          2880,
+          1864
+        ],
+        "usable": [
+          0,
+          57,
+          2880,
+          1807
+        ]
+      },
+      {
+        "id": 3,
+        "frame": [
+          1930,
+          -1440,
+          3440,
+          1440
+        ]
+      }
+    ]
+  },
+  "observed": [
+    {
+      "window_id": 1,
+      "frame": [
+        0,
+        57,
+        1440,
+        1807
+      ],
+      "minimized": false
+    },
+    {
+      "window_id": 2,
+      "frame": [
+        1440,
+        57,
+        1440,
+        1807
+      ],
+      "minimized": false
+    },
+    {
+      "window_id": 3,
+      "frame": [
+        1930,
+        -1440,
+        3440,
+        1440
+      ],
+      "minimized": false
+    }
+  ],
+  "expect": {
+    "hide": [],
+    "noop": [
+      {
+        "window_id": 1
+      },
+      {
+        "window_id": 2
+      },
+      {
+        "window_id": 3
+      }
+    ],
+    "reframe": [],
+    "show": []
+  }
+}

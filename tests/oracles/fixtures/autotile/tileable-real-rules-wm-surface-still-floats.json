@@ -1,0 +1,14 @@
+{
+  "note": "KEPT-RULE PROOF (Phase B, real shipped float-rules.json via rules_path): wm's OWN transient surface — a WezTerm window titled 'wm.surface.scratch'. Even though it is resizable+standard (passes the structural gate), the surviving broad surface_transient rule (^WezTerm$ + wm\\.surface\\..* → off) still fires ⇒ float_verdict 'off' ⇒ tileable FALSE. The wm.surface.* pair is STRUCTURAL (wm's own surface system), NOT a preference float — it MUST survive the aggressive narrowing. If the surface_transient rule is ever dropped from the real file, this scratch surface flips to tiled and this goes red.",
+  "fn": "tileable",
+  "rules_path": "float-rules.json",
+  "window": {
+    "window_id": 73,
+    "app": "WezTerm",
+    "title": "wm.surface.scratch",
+    "role": "AXWindow",
+    "subrole": "AXStandardWindow",
+    "resizable": true
+  },
+  "expect": false
+}

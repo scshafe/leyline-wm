@@ -1,0 +1,11 @@
+{
+  "_doc": "A minimized source is not a valid diagnostic focus source, even when a visible candidate exists.",
+  "displays": [
+    { "index": 1, "frame": { "x": 0, "y": 0, "w": 1512, "h": 982 } }
+  ],
+  "windows": [
+    { "id": 100, "display": 1, "frame": { "x": 100, "y": 100, "w": 600, "h": 400 }, "app": "Source", "is_minimized": true },
+    { "id": 200, "display": 1, "frame": { "x": 800, "y": 100, "w": 600, "h": 400 }, "app": "Target" }
+  ],
+  "source": { "window_id": 100 }
+}

@@ -1,0 +1,169 @@
+{
+  "schema": "leyline/space-shortcut-fixture/v1",
+  "chord": "cmd + ctrl + alt + shift - a",
+  "blocked_chords": [
+    "cmd + ctrl + alt + shift - h",
+    "cmd + ctrl + alt + shift - m",
+    "cmd + ctrl + alt + shift - r",
+    "ctrl + alt - r",
+    "h"
+  ],
+  "world": {
+    "management_enabled": true,
+    "observation": {
+      "world_complete": true
+    },
+    "active_context": {
+      "space_key": "space-A",
+      "display_id": "display-A",
+      "space_identity_available": true,
+      "space_visible": true,
+      "space_enabled": true
+    },
+    "focus": {
+      "eligible": true,
+      "space_visible": true,
+      "space_enabled": true
+    }
+  },
+  "policy_cases": [
+    {
+      "name": "enabled-space",
+      "delta": {},
+      "trusted": true,
+      "normal": true,
+      "control": true
+    },
+    {
+      "name": "disabled-space-control-only",
+      "delta": {
+        "focus": {
+          "eligible": true,
+          "space_visible": true,
+          "space_enabled": false
+        }
+      },
+      "trusted": true,
+      "normal": false,
+      "control": true
+    },
+    {
+      "name": "empty-space-control-only",
+      "delta": {
+        "focus": null
+      },
+      "trusted": true,
+      "normal": false,
+      "control": true
+    },
+    {
+      "name": "ignored-window-control-only",
+      "delta": {
+        "focus": {
+          "eligible": false,
+          "space_visible": true,
+          "space_enabled": true
+        }
+      },
+      "trusted": true,
+      "normal": false,
+      "control": true
+    },
+    {
+      "name": "global-off-claims-nothing",
+      "delta": {
+        "management_enabled": false
+      },
+      "trusted": true,
+      "normal": false,
+      "control": false
+    },
+    {
+      "name": "untrusted-claims-nothing",
+      "delta": {},
+      "trusted": false,
+      "normal": false,
+      "control": false
+    },
+    {
+      "name": "unknown-identity-no-toggle",
+      "delta": {
+        "space_identity_available": false
+      },
+      "trusted": true,
+      "normal": true,
+      "control": false
+    },
+    {
+      "name": "incomplete-world-claims-nothing",
+      "delta": {
+        "observation": {
+          "world_complete": false
+        }
+      },
+      "trusted": true,
+      "normal": false,
+      "control": false
+    },
+    {
+      "name": "persistence-failure-claims-nothing",
+      "delta": {
+        "persistence_available": false
+      },
+      "trusted": true,
+      "normal": false,
+      "control": false
+    },
+    {
+      "name": "geometry-failure-claims-nothing",
+      "delta": {
+        "geometry_available": false
+      },
+      "trusted": true,
+      "normal": false,
+      "control": false
+    },
+    {
+      "name": "inactive-target-no-toggle",
+      "delta": {
+        "active_context": {
+          "space_key": "space-A",
+          "display_id": "display-A",
+          "space_identity_available": true,
+          "space_visible": false
+        }
+      },
+      "trusted": true,
+      "normal": true,
+      "control": false
+    },
+    {
+      "name": "absent-visibility-no-toggle",
+      "delta": {
+        "active_context": {
+          "space_key": "space-A",
+          "display_id": "display-A",
+          "space_identity_available": true
+        }
+      },
+      "trusted": true,
+      "normal": true,
+      "control": false
+    },
+    {
+      "name": "null-focus-projection-keeps-active-space",
+      "delta": {
+        "focused_space": null
+      },
+      "trusted": true,
+      "normal": true,
+      "control": true
+    }
+  ],
+  "stalled_action_clock": {
+    "receipt_ns": 1000000000,
+    "now_ns": 1300000000,
+    "progress_ns": 1290000000
+  },
+  "mode_entry_chord": "cmd + ctrl + alt + shift - m"
+}

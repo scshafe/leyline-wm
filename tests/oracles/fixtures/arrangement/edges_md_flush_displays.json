@@ -1,0 +1,16 @@
+{
+  "note": "ANTI-THRASH REGRESSION-LOCK (S4 step 6 / R5 — PERMANENT). The flush 2-display geometry reused from floorplan/cells_multi_display (display 2 at x=1000, ZERO physical inter-frame gap — the case a geometric band filter gets WRONG). One window per display → from_floorplan yields an EMPTY segment bag (floorplan's structural cross-display edge exclusion: separate display mounts have a region LCA → no edge). edges_md == [] AND corners_md == [], matching floorplan/cells_multi_display's own edges:[] / corners:[]. This fixture is the named, permanent lock on the precondition that would have to break for the prior multi-display thrash to return: NO derived cross-gap edge, ever. Structural (per-display partitioning of the atom grid), not a coordinate band test — it SURVIVES flush displays at any gap.",
+  "fn": "edges_md",
+  "arr": [],
+  "topology": {
+    "displays": [
+      { "id": 1, "frame": [0, 0, 1000, 1000] },
+      { "id": 2, "frame": [1000, 0, 1000, 1000] }
+    ],
+    "gap": 8
+  },
+  "expect": {
+    "edges": [],
+    "corners": []
+  }
+}

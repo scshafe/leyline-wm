@@ -1,0 +1,44 @@
+{
+  "note": "Guard: revealing a node id absent from the tree is rejected (ok:false), leaving authoring callers to surface the error rather than silently no-op.",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "s1"
+        ]
+      },
+      "s1": {
+        "id": "s1",
+        "mode": "stack",
+        "top": "a",
+        "children": [
+          "a",
+          "b"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "binding": {
+          "bundle_id": "com.test.A"
+        }
+      },
+      "b": {
+        "id": "b",
+        "binding": {
+          "bundle_id": "com.test.B"
+        }
+      }
+    }
+  },
+  "op": "reveal_leaf",
+  "args": {
+    "leaf": "ghost"
+  },
+  "expect": {
+    "ok": false,
+    "reason": "no such node: ghost"
+  }
+}

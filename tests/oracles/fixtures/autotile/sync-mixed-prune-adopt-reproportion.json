@@ -1,0 +1,125 @@
+{
+  "note": "INTERACTION: prune + adopt + reproportion all fire in one call (mount-shape). root(region) → d:1(pinned mount) → g, where g is a COMPUTED col (ratio_source:'computed', ratios:[3,1], children [w:1,w:2]); focus = w:1. Observed drops window 2 (closed) and adds window 9. PRUNE removes w:2 → col g is single-childed and collapses (a computed col is collapse-eligible), w:1 inherits g's slot under the mount (g and its [3,1] ratios disappear with the collapse). ADOPT then splits w:1 (now the mount's sole leaf, filling the full 1200x800 usable rect → WIDE → row) with w:9: i:w:9(row)=[w:1,w:9]. auto_proportion leaves the fresh computed row ratio-free. End-to-end churn — a managed window leaving and a newcomer arriving in the same settle — lands a clean equalized tree with no orphaned ratios, inside the display mount.",
+  "fn": "sync",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "g"
+        ]
+      },
+      "g": {
+        "id": "g",
+        "mode": "col",
+        "ratio_source": "computed",
+        "ratios": [
+          3,
+          1
+        ],
+        "children": [
+          "w:1",
+          "w:2"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      }
+    }
+  },
+  "observed": [
+    {
+      "window_id": 1,
+      "app": "A",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        0,
+        0,
+        1200,
+        400
+      ]
+    },
+    {
+      "window_id": 9,
+      "app": "Z",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        0,
+        0,
+        1200,
+        800
+      ]
+    }
+  ],
+  "focused_leaf": "w:1",
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1200,
+          800
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "nodes": {
+      "d:1": {
+        "children": [
+          "i:w:9"
+        ],
+        "display_id": 1,
+        "frame_source": "pinned",
+        "id": "d:1",
+        "mode": "row"
+      },
+      "i:w:9": {
+        "children": [
+          "w:1",
+          "w:9"
+        ],
+        "id": "i:w:9",
+        "mode": "row"
+      },
+      "root": {
+        "children": [
+          "d:1"
+        ],
+        "id": "root",
+        "mode": "region"
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:9": {
+        "id": "w:9",
+        "window_id": 9
+      }
+    },
+    "root_id": "root"
+  }
+}

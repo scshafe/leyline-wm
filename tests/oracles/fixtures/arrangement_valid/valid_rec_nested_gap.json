@@ -1,0 +1,44 @@
+{
+  "note": "S12 (O1 — recursive validity): valid_rec validates INTO nested bindings — a gap inside ONE nested cell reds valid_rec even though the TOP partition is valid. HAND-COMPUTED, NEVER regenerated (a broken recursive arm cannot self-certify ok:true). Single display 1 {0,0,1000,1000} gap 0. Top segment v@600 (full height) → two FILLED top cells LEFT {0,0,600,1000} (anchor 1:0:0) + RIGHT {600,0,400,1000} (anchor 1:1:0): the top partition claims every atom → per_display[0].ok=TRUE (the outer partition is clean). The LEFT cell's binding is INTERIOR — its .nested is a child RING over the LEFT cell.frame: v@150 (y200-800), v@450 (y200-800), h@200 (x150-450), h@800 (x150-450). Over the LEFT frame the atom grid is xs={0,150,450,600} ys={0,200,800,1000} = 3x3=9 atoms; the ring covers the 8 outer atoms (non_rectangular: atoms 8, box 9) leaving the center atom enclosed → the 8 ring atoms are UNCLAIMED by any filled cell (the center single atom is filled but the ring is not) → gap missing_area = 600000 - 180000(center 300x600) = 420000, bbox the full LEFT frame {0,0,600,1000}. So valid(child; LEFT.frame) reds with BOTH kinds (the gap<->non_rectangular duality at depth, mirroring shipped hole_center). valid_rec ANDs the nested ok into the top ok → ok:FALSE, located by path [[0,0]] (the parcel path of the offending nested cell), even though per_display[0].ok is TRUE. THE O1 RETIREMENT: a nested defect cannot hide behind a clean outer partition. The path is on the nested RECORD that OWNS the violations (record-level locator; not duplicated per violation).",
+  "fn": "valid_rec",
+  "arr": {
+    "segments": [
+      { "axis": "v", "coord": 600, "lo": 0, "hi": 1000 }
+    ],
+    "bindings": {
+      "1:0:0": {
+        "nested": {
+          "segments": [
+            { "axis": "v", "coord": 150, "lo": 200, "hi": 800 },
+            { "axis": "v", "coord": 450, "lo": 200, "hi": 800 },
+            { "axis": "h", "coord": 200, "lo": 150, "hi": 450 },
+            { "axis": "h", "coord": 800, "lo": 150, "hi": 450 }
+          ],
+          "bindings": {},
+          "off_top": []
+        }
+      }
+    },
+    "off_top": []
+  },
+  "topology": {
+    "displays": [ { "id": 1, "frame": [0, 0, 1000, 1000] } ],
+    "gap": 0
+  },
+  "expect": {
+    "ok": false,
+    "per_display": [
+      { "display_id": 1, "ok": true, "violations": [] }
+    ],
+    "nested": [
+      {
+        "path": [ [0, 0] ],
+        "ok": false,
+        "violations": [
+          { "kind": "non_rectangular", "frame": { "x": 0, "y": 0, "w": 600, "h": 1000 }, "atoms": 8, "box": 9 },
+          { "kind": "gap", "missing_area": 420000, "frame": { "x": 0, "y": 0, "w": 600, "h": 1000 } }
+        ]
+      }
+    ]
+  }
+}

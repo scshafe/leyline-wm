@@ -1,0 +1,98 @@
+{
+  "note": "P-SWAP same-cell reject — swap(a; a) is a no-op reject ('swap: same cell <a> (nothing to trade)') and leaves the store INTACT (arr==null). The 2-cell scene; cell_a == cell_b == '1:0:0'. Nothing to exchange.",
+  "fn": "swap_check",
+  "cell_a": "1:0:0",
+  "cell_b": "1:0:0",
+  "arr": {
+    "segments": [
+      {
+        "axis": "v",
+        "coord": 500,
+        "lo": 0,
+        "hi": 800
+      }
+    ],
+    "bindings": {
+      "1:0:0": {
+        "window_id": 201,
+        "presented": true,
+        "frame": {
+          "x": 0,
+          "y": 0,
+          "w": 500,
+          "h": 800
+        },
+        "contents": [
+          {
+            "window_id": 201,
+            "presented": true,
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "w": 500,
+              "h": 800
+            }
+          }
+        ]
+      },
+      "1:1:0": {
+        "window_id": 202,
+        "presented": true,
+        "frame": {
+          "x": 500,
+          "y": 0,
+          "w": 500,
+          "h": 800
+        },
+        "contents": [
+          {
+            "window_id": 202,
+            "presented": true,
+            "frame": {
+              "x": 500,
+              "y": 0,
+              "w": 500,
+              "h": 800
+            }
+          }
+        ]
+      }
+    },
+    "off_top": [],
+    "promotions": []
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          800
+        ],
+        "usable": [
+          0,
+          0,
+          1000,
+          800
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "expect": {
+    "c_a_after": null,
+    "c_b_after": null,
+    "cell_consistent": null,
+    "ok": false,
+    "promotions_byte_eq": null,
+    "reason": "swap: same cell 1:0:0 (nothing to trade)",
+    "segments_byte_eq": null,
+    "store_intact_on_reject": true,
+    "valid_rec_eq_before": null,
+    "valid_rec_ok": null,
+    "w_a_after": null,
+    "w_b_after": null
+  }
+}

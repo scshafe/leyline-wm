@@ -1,0 +1,15 @@
+{
+  "note": "Stage 1 Step 2 (facts): empty tree + 2 newcomers (id-sorted) on a wide display -> seed 601 into the empty mount, then adopt 602 anchored at 601; wide anchor frame -> row, axis_reason aspect:w>=h. Asserts .facts via the sync_facts arm.",
+  "fn": "sync_facts",
+  "tree": { "root_id": null, "nodes": {} },
+  "observed": [
+    { "window_id": 601, "frame": [0, 0, 1440, 900], "minimized": false, "app": "Terminal", "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true },
+    { "window_id": 602, "frame": [100, 100, 800, 600], "minimized": false, "app": "Safari", "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true }
+  ],
+  "focused_leaf": null,
+  "topology": { "displays": [{ "id": 1, "frame": [0, 0, 1440, 900], "usable": [0, 0, 1440, 900] }], "gap": 8 },
+  "expect": [
+    { "kind": "seed", "window_id": 601, "leaf": "w:601", "mount": "d:1", "display_id": 1 },
+    { "kind": "adopt", "window_id": 602, "leaf": "w:602", "anchor_leaf": "w:601", "mount": "d:1", "axis": "row", "axis_reason": "aspect:w>=h", "side": "after" }
+  ]
+}

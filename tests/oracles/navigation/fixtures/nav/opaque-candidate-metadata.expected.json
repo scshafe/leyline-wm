@@ -1,0 +1,9 @@
+{
+  "_doc": "East: 200 wins (edge distance 100 before candidate 300 at 150); west wraps to 200. This fixture protects policy-opaque geometry ranking, not live candidate eligibility.",
+  "results": {
+    "north": { "outcome": "noCandidate", "winner": null },
+    "east":  { "outcome": "direct",      "winner": 200, "ranked": [200, 300] },
+    "south": { "outcome": "noCandidate", "winner": null },
+    "west":  { "outcome": "wrap",        "winner": 200, "ranked": [200, 300] }
+  }
+}

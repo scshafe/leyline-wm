@@ -1,0 +1,14 @@
+{
+  "note": "Flagged edge: a system floating palette reports subrole AXSystemFloatingWindow (e.g. a system color/character picker). Not AXStandardWindow ⇒ NOT tileable. Sibling to the AXFloatingWindow case at the system layer.",
+  "fn": "tileable",
+  "window": {
+    "window_id": 24,
+    "app": "Finder",
+    "title": "Colors",
+    "role": "AXWindow",
+    "subrole": "AXSystemFloatingWindow",
+    "resizable": true
+  },
+  "rules": [],
+  "expect": false
+}

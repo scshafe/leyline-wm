@@ -1,0 +1,13 @@
+{
+  "note": "GREEN baseline for the arrangement_valid surface. Two full crossing lines (one full-height v@1440, one full-width h@900) tile the 2880x1800 canvas into a clean 2x2 of four filled rectangles — a valid planar subdivision: no non_rectangular component AND no gap (every compressed-grid atom is claimed by exactly one filled cell, claimed_atoms == nx*ny == 4). valid() MUST report ok:true, no violations. The PASS sibling of hole_center: it proves the no-gap clause does not false-positive on a gapless layout.",
+  "fn": "valid",
+  "arrangement": [
+    {"axis": "v", "coord": 1440, "lo": 0, "hi": 1800},
+    {"axis": "h", "coord": 900, "lo": 0, "hi": 2880}
+  ],
+  "canvas": {"x": 0, "y": 0, "w": 2880, "h": 1800},
+  "expect": {
+    "ok": true,
+    "violations": []
+  }
+}

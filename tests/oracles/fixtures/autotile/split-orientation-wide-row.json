@@ -1,0 +1,11 @@
+{
+  "note": "split_orientation: a wide slot (w>h) splits into a row (side-by-side).",
+  "fn": "split_orientation",
+  "frame": {
+    "x": 0,
+    "y": 0,
+    "w": 1600,
+    "h": 900
+  },
+  "expect": "row"
+}

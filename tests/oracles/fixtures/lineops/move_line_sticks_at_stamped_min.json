@@ -1,0 +1,91 @@
+{
+  "fn": "move_sticks",
+  "note": "A2 (reachable authoring, 2026-06-10) — the clamp against the EXACT A1-stamped shape. A1's stamp_min_sizes_arr (M2-native) writes the learned floor onto BOTH binding.min_size AND contents[0].min_size, single-axis (no zero-fill: {h:300}, no w key). A 2-cell stacked scene (h@500 over 1000x1000); the TOP cell (1:0:0, h=500) carries the stamped floor h=300. Drag h@500 by delta=-300 (coord would go 500->200, leaving the top cell h=200 < the 300 floor). _cell_min reads contents[0].min_size first (the // chain), P::leaf_fit_min defaults the absent w axis to 0: room = 500-300 = 200, cd = max(-300,-200) = -200, L sticks at coord 300 — the stamped window settles flush at its floor, never below. ASSERTS the exact stick coord (the teeth), bindings byte-identical (move_line is partition-only), valve untouched.",
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "line_id": 1,
+  "delta": -300,
+  "arr": {
+    "segments": [
+      {
+        "axis": "h",
+        "coord": 500,
+        "lo": 0,
+        "hi": 1000,
+        "id": 1
+      }
+    ],
+    "bindings": {
+      "1:0:0": {
+        "window_id": 10,
+        "presented": true,
+        "frame": {
+          "x": 0,
+          "y": 0,
+          "w": 1000,
+          "h": 500
+        },
+        "min_size": {
+          "h": 300
+        },
+        "contents": [
+          {
+            "window_id": 10,
+            "presented": true,
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "w": 1000,
+              "h": 500
+            },
+            "min_size": {
+              "h": 300
+            }
+          }
+        ]
+      },
+      "1:0:1": {
+        "window_id": 11,
+        "presented": true,
+        "frame": {
+          "x": 0,
+          "y": 500,
+          "w": 1000,
+          "h": 500
+        },
+        "contents": [
+          {
+            "window_id": 11,
+            "presented": true,
+            "frame": {
+              "x": 0,
+              "y": 500,
+              "w": 1000,
+              "h": 500
+            }
+          }
+        ]
+      }
+    },
+    "off_top": []
+  },
+  "expect": {
+    "bindings_byte_eq": true,
+    "coord_after": 300,
+    "ok": true,
+    "valid": true,
+    "valve_untouched": true
+  }
+}

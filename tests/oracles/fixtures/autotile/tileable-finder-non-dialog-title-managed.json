@@ -1,0 +1,21 @@
+{
+  "note": "Title-facet negative (complements the title-allowlist case): a standard, resizable Finder browser window titled 'Downloads' does NOT match the finder_dialogs title regex, so no rule fires ⇒ float_verdict default 'on' ⇒ tileable. Proves the title facet narrows the rule to dialog titles only and a normal Finder window is still managed.",
+  "fn": "tileable",
+  "window": {
+    "window_id": 31,
+    "app": "Finder",
+    "title": "Downloads",
+    "role": "AXWindow",
+    "subrole": "AXStandardWindow",
+    "resizable": true
+  },
+  "rules": [
+    {
+      "id": "finder_dialogs",
+      "app": "^Finder$",
+      "title": "(Copy|Bin|Move|Info|Preferences)",
+      "manage": "off"
+    }
+  ],
+  "expect": true
+}

@@ -1,0 +1,10 @@
+{
+  "note": "I4: a ratio_source:\"pinned\" row is SKIPPED even when infeasible (600+600>1000) — the user's hand-set split wins, falls to the bump like bsp. → no candidate. F1 may be RED here (the one documented exemption).",
+  "fn": "probe",
+  "tree": { "root_id": "r", "nodes": {
+    "r": {"id":"r","mode":"row","ratio_source":"pinned","ratios":[1,1],"children":["a","b"]},
+    "a": {"id":"a","window_id":1,"min_size":{"w":600,"h":100}},
+    "b": {"id":"b","window_id":2,"min_size":{"w":600,"h":100}} } },
+  "topology": { "displays": [{"id":1,"frame":[0,0,1000,1000],"usable":[0,0,1000,1000]}], "gap":0 },
+  "expect": []
+}

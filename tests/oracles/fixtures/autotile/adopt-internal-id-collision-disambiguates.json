@@ -1,0 +1,69 @@
+{
+  "note": "COLLISION-SAFE internal id: the tree already has a node literally named 'i:w5' (a leaf bound to window 99). Adopting a window whose leaf id is 'w5' would mint base id 'i:w5' — which collides. adopt disambiguates to 'i:w5.1' rather than clobbering the existing node, so window 99 survives and no window is silently lost (validate is blind to such an overwrite, so this guard is the only thing preventing it). Splits focused leaf 'a'; r becomes [i:w5.1, i:w5].",
+  "fn": "adopt",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "mode": "row",
+        "children": [
+          "a",
+          "i:w5"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1
+      },
+      "i:w5": {
+        "id": "i:w5",
+        "window_id": 99
+      }
+    }
+  },
+  "window_leaf": {
+    "id": "w5",
+    "window_id": 5
+  },
+  "focused_leaf": "a",
+  "focused_frame": {
+    "x": 0,
+    "y": 0,
+    "w": 1600,
+    "h": 900
+  },
+  "expect": {
+    "nodes": {
+      "a": {
+        "id": "a",
+        "window_id": 1
+      },
+      "i:w5": {
+        "id": "i:w5",
+        "window_id": 99
+      },
+      "i:w5.1": {
+        "children": [
+          "a",
+          "w5"
+        ],
+        "id": "i:w5.1",
+        "mode": "row"
+      },
+      "r": {
+        "children": [
+          "i:w5.1",
+          "i:w5"
+        ],
+        "id": "r",
+        "mode": "row"
+      },
+      "w5": {
+        "id": "w5",
+        "window_id": 5
+      }
+    },
+    "root_id": "r"
+  }
+}

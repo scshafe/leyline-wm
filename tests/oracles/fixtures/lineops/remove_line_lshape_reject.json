@@ -1,0 +1,19 @@
+{
+  "fn": "remove_line",
+  "note": "S14a.2 THE closure-breaker fixture: an L-fuse bag — h@500 (id:1) full-span, top split at v@400 [0,500], bottom split at v@600 [500,1000]. Removing h@500 would fuse sides of UNEQUAL extent into an L. VERIFIED that WITHOUT the guard dropping h@500 silently collapses to ONE coarser-but-VALID cell (valid_rec:true) — so valid_rec CANNOT catch it; the rectangle precondition must. incident(h@500)==4, so the |incident|!=2 COUNT guard fires here. Asserts {ok:false} with the guard's reason, store left intact (no candidate formed).",
+  "topology": { "displays": [ { "id": 1, "frame": [0, 0, 1000, 1000] } ], "gap": 0 },
+  "arr": {
+    "segments": [
+      { "axis": "h", "coord": 500, "lo": 0, "hi": 1000, "id": 1 },
+      { "axis": "v", "coord": 400, "lo": 0, "hi": 500 },
+      { "axis": "v", "coord": 600, "lo": 500, "hi": 1000 }
+    ],
+    "bindings": {},
+    "off_top": []
+  },
+  "line_id": 1,
+  "expect": {
+    "ok": false,
+    "reason": "remove_line: L-fusing removal rejected (incident=4, unequal perpendicular extent → non-rectangle)"
+  }
+}

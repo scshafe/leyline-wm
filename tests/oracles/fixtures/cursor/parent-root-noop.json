@@ -1,0 +1,14 @@
+{
+  "note": "cursor_parent at the root is a no-op — ascend-at-root stays at root.",
+  "fn": "parent",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": { "id": "r", "mode": "region", "children": ["a", "b"] },
+      "a": { "id": "a", "binding": { "app": "A" } },
+      "b": { "id": "b", "binding": { "app": "B" } }
+    }
+  },
+  "node": "r",
+  "expect": "r"
+}

@@ -1,0 +1,16 @@
+{
+  "note": "FAIL fixture (HAND-AUTHORED valid:false — never regenerated). A deliberately NON-SLICING L-shaped bag the BSP tree could never author: a vertical segment v@1440 over the TOP-left [0,900] plus a horizontal h@900 over the LEFT [0,1440]. This isolates the top-left atom (a FILLED 1x1 cell at (0,0,1440,900)) and unions the other three into one L-shaped (3-atom) component whose index box is 2x2=4 -> non_rectangular (atoms:3, box:4). As of S1 step 3 valid() ALSO runs the no-gap clause: the 3 unclaimed atoms (no FILLED cell covers them) form a gap whose bbox is the whole canvas (missing_area 3*1440*900 = 3888000). gap and non_rectangular CO-OCCUR here — that is honest, not a bug: in this atom-grid model a gap always coincides with a non_rectangular component (the courtyard a ring fails to fill is exactly the ring's missing atoms; gap merely adds the WHERE locator the nonrect half lacks). Both kinds hand-authored (cross-checked in arrangement.py) so a BROKEN valid() (e.g. one that always returns ok:true, or one that drops the gap clause) cannot self-certify. This is the negative half of the partition invariant the full RED-GREEN pinwheel proof (S1) builds on.",
+  "fn": "valid",
+  "arr": [
+    {"axis": "v", "coord": 1440, "lo": 0, "hi": 900},
+    {"axis": "h", "coord": 900, "lo": 0, "hi": 1440}
+  ],
+  "canvas": {"x": 0, "y": 0, "w": 2880, "h": 1800},
+  "expect": {
+    "ok": false,
+    "violations": [
+      {"kind": "non_rectangular", "frame": {"x": 0, "y": 0, "w": 2880, "h": 1800}, "atoms": 3, "box": 4},
+      {"kind": "gap", "missing_area": 3888000, "frame": {"x": 0, "y": 0, "w": 2880, "h": 1800}}
+    ]
+  }
+}

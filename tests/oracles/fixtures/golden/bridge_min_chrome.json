@@ -1,0 +1,66 @@
+{
+  "expect_targets": {
+    "1": {
+      "frame": {
+        "h": 1080,
+        "w": 1200,
+        "x": 0,
+        "y": 0
+      },
+      "presented": true,
+      "window_id": 1
+    },
+    "2": {
+      "frame": {
+        "h": 1080,
+        "w": 720,
+        "x": 1200,
+        "y": 0
+      },
+      "presented": true,
+      "window_id": 2
+    }
+  },
+  "kind": "engine_bridge",
+  "name": "bridge_min_chrome",
+  "note": "A1 engine-bridge golden: the min-bound Chrome scene (w:1 min 1200, project's min-fit clamps it → 1200/720). reconcile_targets frozen. golden-equiv asserts arrangement_targets(bridge_arrangement) byte-equal — the ANTI-FORK tripwire (a second clamp dialect would diverge HERE).",
+  "topology": {
+    "displays": [
+      {
+        "frame": [
+          0,
+          0,
+          1920,
+          1080
+        ],
+        "id": 1
+      }
+    ]
+  },
+  "tree": {
+    "nodes": {
+      "d:1": {
+        "children": [
+          "w:1",
+          "w:2"
+        ],
+        "display_id": 1,
+        "frame_source": "pinned",
+        "id": "d:1",
+        "mode": "row"
+      },
+      "w:1": {
+        "id": "w:1",
+        "min_size": {
+          "w": 1200
+        },
+        "window_id": 1
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      }
+    },
+    "root_id": "d:1"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "note": "S10 O0 store_roundtrip_byte_lock — the PLAIN FLAT baseline for the two-settle byte-lock harness (parcel/store-roundtrip.sh). A flat slicing scene (no hand-set ratio → no sticky → the structure-preserving prior-read is INERT, falls through to _prior_tree) settled twice from the STORED arrangement must be byte-identical (settle-2 stored == settle-1 stored, jq -S). Proves the free baseline round-trips: the system-of-record flip is a fixpoint even on the depth-0 base case, via the always-present flat fallback. The sticky scene is roundtrip/store_sticky_roundtrip.json; this is its free twin. No prior seed needed — the first settle adopts the observed windows fresh.",
+  "observed": [
+    {
+      "window_id": 401,
+      "frame": [
+        0,
+        0,
+        500,
+        800
+      ],
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 402,
+      "frame": [
+        500,
+        0,
+        500,
+        800
+      ],
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    }
+  ],
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": {
+          "x": 0,
+          "y": 0,
+          "w": 1000,
+          "h": 800
+        },
+        "usable": {
+          "x": 0,
+          "y": 0,
+          "w": 1000,
+          "h": 800
+        }
+      }
+    ],
+    "dead_zones": [],
+    "gap": 0
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "note": "MULTI-DISPLAY HOMING CONTRACT (Phase B3 documentation-as-fixture). Two displays D1 {0,0,1440,900} + D2 {1440,0,1440,900}; an empty tree; TWO tileable newcomers whose observed frames BOTH physically land on D1 (w1 [100,100,800,600], w2 [300,300,800,600]). G::assign_display homes each by MAX frame/usable overlap, so both home to D1's mount — and ensure_scaffold only creates a mount per OCCUPIED display, so D2 (empty) gets NO mount. Final: root → [d:1 → i:w:2[w:1,w:2]]; d:2 ABSENT. This PINS the homing policy: a new window homes GEOMETRICALLY (to the display its frame overlaps most), NOT by an empty-display-preference. The operator's 'fill BOTH screens' would require a DIFFERENT policy (prefer an empty display when one exists) — surfaced as an open decision in the Phase-B report, NOT changed here. The cross-display populate-both case (windows whose frames DO land on separate displays each get their own mount) is sync-bootstrap-multi-display.",
+  "fn": "sync",
+  "tree": {
+    "root_id": null,
+    "nodes": {}
+  },
+  "observed": [
+    {
+      "window_id": 1,
+      "app": "A",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [100, 100, 800, 600]
+    },
+    {
+      "window_id": 2,
+      "app": "B",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [300, 300, 800, 600]
+    }
+  ],
+  "focused_leaf": null,
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [0, 0, 1440, 900],
+        "usable": [0, 25, 1440, 875]
+      },
+      {
+        "id": 2,
+        "frame": [1440, 0, 1440, 900],
+        "usable": [1440, 25, 1440, 875]
+      }
+    ]
+  },
+  "expect": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": ["d:1"]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": ["i:w:2"]
+      },
+      "i:w:2": {
+        "id": "i:w:2",
+        "mode": "row",
+        "children": ["w:1", "w:2"]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      }
+    }
+  }
+}

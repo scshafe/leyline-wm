@@ -1,0 +1,61 @@
+{
+  "note": "COMPUTED re-proportion: a row r=[a,b,c] carrying computed equal ratios [1,1,1] (ratio_source absent/computed). Removing middle 'b' drops the aligned ratios[1] → children [a,c], ratios [1,1]. Survivors stay equal — the computed case where dropping the aligned entry IS re-equalization (no weight was special). Contrast with the pinned fixtures where the surviving weights were non-equal.",
+  "fn": "remove",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "mode": "row",
+        "children": [
+          "a",
+          "b",
+          "c"
+        ],
+        "ratios": [
+          1,
+          1,
+          1
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1
+      },
+      "b": {
+        "id": "b",
+        "window_id": 2
+      },
+      "c": {
+        "id": "c",
+        "window_id": 3
+      }
+    }
+  },
+  "leaf": "b",
+  "expect": {
+    "nodes": {
+      "a": {
+        "id": "a",
+        "window_id": 1
+      },
+      "c": {
+        "id": "c",
+        "window_id": 3
+      },
+      "r": {
+        "children": [
+          "a",
+          "c"
+        ],
+        "id": "r",
+        "mode": "row",
+        "ratios": [
+          1,
+          1
+        ]
+      }
+    },
+    "root_id": "r"
+  }
+}

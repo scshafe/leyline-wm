@@ -1,0 +1,83 @@
+{
+  "note": "row of two bound leaves on one pinned display → exact 500/500 split, both presented (§3 row).",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d1"
+        ]
+      },
+      "d1": {
+        "id": "d1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "a",
+          "b"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 101,
+        "binding": {
+          "app": "A"
+        }
+      },
+      "b": {
+        "id": "b",
+        "window_id": 102,
+        "binding": {
+          "app": "B"
+        }
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          800
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "contention": [],
+    "dead_zone_hits": [],
+    "leaves": {
+      "a": {
+        "conformance": "conforming",
+        "desired_frame": {
+          "h": 800,
+          "w": 500,
+          "x": 0,
+          "y": 0
+        },
+        "overflow": false,
+        "presented": true,
+        "vacant": false
+      },
+      "b": {
+        "conformance": "conforming",
+        "desired_frame": {
+          "h": 800,
+          "w": 500,
+          "x": 500,
+          "y": 0
+        },
+        "overflow": false,
+        "presented": true,
+        "vacant": false
+      }
+    },
+    "vacant": []
+  }
+}

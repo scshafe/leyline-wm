@@ -1,0 +1,68 @@
+{
+  "note": "Experimental D15 acceptance; raw area and top/left/key ties remain proposed.",
+  "displays": [
+    {
+      "id": 1,
+      "frame": [
+        0,
+        0,
+        1600,
+        900
+      ]
+    }
+  ],
+  "seed": [
+    [
+      1,
+      0,
+      0,
+      400,
+      900
+    ],
+    [
+      2,
+      400,
+      0,
+      1200,
+      900
+    ]
+  ],
+  "steps": [
+    {
+      "newcomers": [
+        3
+      ],
+      "expect": [
+        [
+          1,
+          0,
+          0,
+          400,
+          900
+        ],
+        [
+          2,
+          400,
+          0,
+          600,
+          900
+        ],
+        [
+          3,
+          1000,
+          0,
+          600,
+          900
+        ]
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "axis": "v",
+      "coord": 400,
+      "lo": 0,
+      "hi": 900
+    }
+  ]
+}

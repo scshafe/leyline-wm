@@ -1,0 +1,30 @@
+{
+  "fn": "remove_line_promotion_cases",
+  "note": "S14b.4 SIGN-OFF #3 (spec §10.6): a remove_line that touches a promoted region is REJECTED (reject-by-default; demote first). Scene: [v@500 full, h@500[0,500] id:2, h@500[500,1000] id:3] with the LEFT column {0,0,500,1000} promoted (its interior line-set is h@500[0,500] id:2). TWO cases in one fixture: (REJECT) remove_line(id:2) — id:2 is INTERIOR to the left promotion's coord_map → {ok:false} with the sign-off #3 promotion-aware reason, store INTACT (no arr surfaced, jq purity). (ALLOW) remove_line(id:3) — id:3 is the RIGHT column's interior, EXTERIOR to the left promotion → falls through the guard and proceeds through S14a (incident=2, sides form a rectangle) → {ok:true}. The guard is STRUCTURAL (interior-to/on-face-of coord_map), NOT valid_rec-delegated: an un-rectangling removal silently re-merges to a coarser-but-VALID cell (valid_rec:true) and a residual dangling line union-finds to ONE valid cell, so neither valid_rec nor a re-run-valid check is reliable teeth — the geometric structural rule is. NOTE (constructibility correction to the locked design prose): the design framed the unique teeth as interior removals S14a ALLOWS (incident==2) that un-rectangle a promotion; that exact case is NOT constructible (orphaning another line requires a T-junction ⇒ incident≥3 ⇒ S14a's _sides_form_rectangle already rejects). So the guard is spliced BEFORE _sides_form_rectangle and rejects any promotion-touching removal with the promotion-aware reason. Builds on S14a's remove_line_lshape_reject — same guard machinery, now promotion-aware.",
+  "topology": { "displays": [ { "id": 1, "frame": [0, 0, 1000, 1000] } ], "gap": 0 },
+  "arr": {
+    "segments": [
+      { "axis": "v", "coord": 500, "lo": 0, "hi": 1000 },
+      { "axis": "h", "coord": 500, "lo": 0, "hi": 500, "id": 2 },
+      { "axis": "h", "coord": 500, "lo": 500, "hi": 1000, "id": 3 }
+    ],
+    "bindings": {},
+    "off_top": [],
+    "promotions": [
+      {
+        "id": 1,
+        "region": ["1:0:0", "1:0:1"],
+        "line_set": [ { "axis": "h", "coord": 500, "lo": 0, "hi": 500 } ],
+        "coord_map": { "x": 0, "y": 0, "w": 500, "h": 1000 }
+      }
+    ]
+  },
+  "reject_line_id": 2,
+  "allow_line_id": 3,
+  "expect": {
+    "reject_ok": false,
+    "reject_reason": "remove_line: rejected — line is inside/bounding a promoted region (would un-rectangle its line-set; demote first to dissolve) [sign-off #3]",
+    "reject_store_intact": true,
+    "allow_ok": true
+  }
+}

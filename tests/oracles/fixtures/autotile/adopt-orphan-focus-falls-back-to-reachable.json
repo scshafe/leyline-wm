@@ -1,0 +1,53 @@
+{
+  "note": "adopt where the focused leaf is present but UNREACHABLE from the root (an orphan — only a malformed recipe / GIGO op makes one): the reachability screen falls back to the lex-first REACHABLE leaf ('r') and BSP-splits it, never crashing on the missing parent path. The orphan node stays detached and untouched.",
+  "fn": "adopt",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "window_id": 1
+      },
+      "orphan": {
+        "id": "orphan",
+        "window_id": 99
+      }
+    }
+  },
+  "window_leaf": {
+    "id": "w:5",
+    "window_id": 5
+  },
+  "focused_leaf": "orphan",
+  "focused_frame": {
+    "x": 0,
+    "y": 0,
+    "w": 1600,
+    "h": 900
+  },
+  "expect": {
+    "nodes": {
+      "i:w:5": {
+        "children": [
+          "r",
+          "w:5"
+        ],
+        "id": "i:w:5",
+        "mode": "row"
+      },
+      "orphan": {
+        "id": "orphan",
+        "window_id": 99
+      },
+      "r": {
+        "id": "r",
+        "window_id": 1
+      },
+      "w:5": {
+        "id": "w:5",
+        "window_id": 5
+      }
+    },
+    "root_id": "i:w:5"
+  }
+}

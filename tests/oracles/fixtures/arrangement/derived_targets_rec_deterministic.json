@@ -1,0 +1,33 @@
+{
+  "fn": "targets_rec_derived_twice",
+  "note": "S14b.5 the O2 carried-frame DISCHARGE (confirms, not re-proves): arrangement_targets_rec(derive_nested(promoted_store); topo) is byte-identical across two invocations. The S14b analogue of S13's targets_rec_deterministic over the AUTHORED (promotion-derived) path. A FLAT store [v@600, h@500[0,600]] + a promotion of the LEFT column, with the RIGHT cell 1:1:0 bound to window 42. derive_nested relocates the interior h@500 into the LEFT child (LEFT becomes interior, its child leaves unbound → emit nothing); the RIGHT leaf stays bound → window 42 emitted, carrying its frame VERBATIM (cells() a locator, zero min math). twice_eq:true is the determinism witness — same derived input → byte-identical output (jq purity over the integer atom grid). Because derive_nested carries frames verbatim, S13's O2 (determinism + the boundary fixpoint) holds UNCHANGED — no two-pass solver, no derived-frame re-proof (deferred to the live boundary-fixpoint wiring). The genuine derived-frame re-proof is needed only when promote is composed into the live settle.",
+  "topology": { "displays": [ { "id": 1, "frame": [0, 0, 1000, 1000] } ], "gap": 0 },
+  "arr": {
+    "segments": [
+      { "axis": "v", "coord": 600, "lo": 0, "hi": 1000 },
+      { "axis": "h", "coord": 500, "lo": 0, "hi": 600 }
+    ],
+    "bindings": {
+      "1:1:0": { "window_id": 42, "presented": true, "frame": { "x": 600, "y": 0, "w": 400, "h": 1000 } }
+    },
+    "off_top": [],
+    "promotions": [
+      {
+        "id": 1,
+        "region": ["1:0:0", "1:0:1"],
+        "line_set": [ { "axis": "h", "coord": 500, "lo": 0, "hi": 600 } ],
+        "coord_map": { "x": 0, "y": 0, "w": 600, "h": 1000 }
+      }
+    ]
+  },
+  "expect": {
+    "once": {
+      "42": {
+        "frame": { "h": 1000, "w": 400, "x": 600, "y": 0 },
+        "presented": true,
+        "window_id": 42
+      }
+    },
+    "twice_eq": true
+  }
+}

@@ -1,0 +1,1372 @@
+{
+  "schema": "leyline/responsiveness-inventory/v1",
+  "synthetic": true,
+  "live_certification": false,
+  "source_inventory_counts": {
+    "native_actions": 27
+  },
+  "rows": [
+    {
+      "id": "native-action:layout.regutter",
+      "source": "leylined/Sources/leylined/ResidentActionController.swift",
+      "source_key": "native_actions",
+      "source_id": "layout.regutter",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:move.cancel",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "move.cancel",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:move.cursor.east",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "move.cursor.east",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:move.cursor.north",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "move.cursor.north",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:move.cursor.south",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "move.cursor.south",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:move.cursor.west",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "move.cursor.west",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:move.drop",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "move.drop",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:move.execute.auto",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "move.execute.auto",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:move.execute.swap",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "move.execute.swap",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:move.level.down",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "move.level.down",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:move.level.up",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "move.level.up",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:move.off",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "move.off",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:move.rotate",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "move.rotate",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:move.start",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "move.start",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:nav.focus.east",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "nav.focus.east",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:nav.focus.north",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "nav.focus.north",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:nav.focus.south",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "nav.focus.south",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:nav.focus.west",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "nav.focus.west",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:resize.adjust.east",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "resize.adjust.east",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:resize.adjust.north",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "resize.adjust.north",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:resize.adjust.south",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "resize.adjust.south",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:resize.adjust.west",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "resize.adjust.west",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:resize.off",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "resize.off",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:resize.start",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "resize.start",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:service.restart",
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "source_key": "native_actions",
+      "source_id": "service.restart",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:space.management.toggle",
+      "source": "leylined/Sources/leylined/ResidentSpaceManagement.swift",
+      "source_key": "native_actions",
+      "source_id": "space.management.toggle",
+      "disposition": "keep",
+      "event_source": "focused_space_keyboard_chord_or_menu",
+      "generation_rule": "input_generation_stable_space_identity_display_visibility",
+      "failure": "typed_refusal_never_retargets_another_space_or_overwrites_invalid_preferences",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "native-action:window.select",
+      "source": "leylined/Sources/leylined/ResidentActionController.swift",
+      "source_key": "native_actions",
+      "source_id": "window.select",
+      "disposition": "keep",
+      "event_source": "resident_input_or_typed_menu_action",
+      "generation_rule": "request_revision_observer_epoch_input_generation_window_lifetime_space_topology",
+      "failure": "typed_refusal_preserves_admitted_identity_and_prior_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "path:border_focus",
+      "source": "docs/contracts/retained-ux-contract.md",
+      "source_key": null,
+      "source_id": null,
+      "disposition": "keep",
+      "event_source": "ax_focus_notification",
+      "generation_rule": "revision_observer_window_display_space_topology_context",
+      "failure": "bounded_typed_refusal_clear_obsolete_projection",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent",
+        "menu_tracking",
+        "sleep_wake",
+        "no_focus_empty_space",
+        "hostile_ax_reads"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "path:border_frame",
+      "source": "docs/contracts/retained-ux-contract.md",
+      "source_key": null,
+      "source_id": null,
+      "disposition": "keep",
+      "event_source": "ax_move_resize_notification",
+      "generation_rule": "revision_observer_window_display_space_topology_context",
+      "failure": "bounded_typed_refusal_clear_obsolete_projection",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent",
+        "menu_tracking",
+        "sleep_wake",
+        "no_focus_empty_space",
+        "hostile_ax_reads"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "path:border_clear",
+      "source": "docs/contracts/retained-ux-contract.md",
+      "source_key": null,
+      "source_id": null,
+      "disposition": "keep",
+      "event_source": "destroy_minimize_trust_space_off",
+      "generation_rule": "revision_observer_window_display_space_topology_context",
+      "failure": "bounded_typed_refusal_clear_obsolete_projection",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent",
+        "menu_tracking",
+        "sleep_wake",
+        "no_focus_empty_space",
+        "hostile_ax_reads"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "path:mode_origin",
+      "source": "docs/contracts/retained-ux-contract.md",
+      "source_key": null,
+      "source_id": null,
+      "disposition": "keep",
+      "event_source": "tap_mode_transition",
+      "generation_rule": "revision_observer_window_display_space_topology_context",
+      "failure": "bounded_typed_refusal_clear_obsolete_projection",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent",
+        "menu_tracking",
+        "sleep_wake",
+        "no_focus_empty_space",
+        "hostile_ax_reads"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "path:adopt_largest_first",
+      "source": "docs/contracts/retained-ux-contract.md",
+      "source_key": null,
+      "source_id": null,
+      "disposition": "keep",
+      "event_source": "window_created_notification",
+      "generation_rule": "revision_observer_window_display_space_topology_context",
+      "failure": "bounded_typed_refusal_clear_obsolete_projection",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent",
+        "menu_tracking",
+        "sleep_wake",
+        "no_focus_empty_space",
+        "hostile_ax_reads"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "path:reclaim",
+      "source": "docs/contracts/retained-ux-contract.md",
+      "source_key": null,
+      "source_id": null,
+      "disposition": "keep",
+      "event_source": "window_destroyed_minimized_notification",
+      "generation_rule": "revision_observer_window_display_space_topology_context",
+      "failure": "bounded_typed_refusal_clear_obsolete_projection",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent",
+        "menu_tracking",
+        "sleep_wake",
+        "no_focus_empty_space",
+        "hostile_ax_reads"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "path:cross_display_relocation",
+      "source": "docs/contracts/retained-ux-contract.md",
+      "source_key": null,
+      "source_id": null,
+      "disposition": "keep",
+      "event_source": "targeted_frame_notification",
+      "generation_rule": "revision_observer_window_display_space_topology_context",
+      "failure": "bounded_typed_refusal_clear_obsolete_projection",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent",
+        "menu_tracking",
+        "sleep_wake",
+        "no_focus_empty_space",
+        "hostile_ax_reads"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "path:space_activation",
+      "source": "docs/contracts/retained-ux-contract.md",
+      "source_key": null,
+      "source_id": null,
+      "disposition": "keep",
+      "event_source": "display_local_space_notification",
+      "generation_rule": "revision_observer_window_display_space_topology_context",
+      "failure": "bounded_typed_refusal_clear_obsolete_projection",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent",
+        "menu_tracking",
+        "sleep_wake",
+        "no_focus_empty_space",
+        "hostile_ax_reads"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "path:configuration",
+      "source": "docs/contracts/retained-ux-contract.md",
+      "source_key": null,
+      "source_id": null,
+      "disposition": "keep",
+      "event_source": "directory_write_replace_create_event",
+      "generation_rule": "revision_observer_window_display_space_topology_context",
+      "failure": "bounded_typed_refusal_clear_obsolete_projection",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent",
+        "menu_tracking",
+        "sleep_wake",
+        "no_focus_empty_space",
+        "hostile_ax_reads"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "path:menu_space_toggle",
+      "source": "docs/contracts/retained-ux-contract.md",
+      "source_key": null,
+      "source_id": null,
+      "disposition": "keep",
+      "event_source": "retained_menu_target_context",
+      "generation_rule": "revision_observer_window_display_space_topology_context",
+      "failure": "bounded_typed_refusal_clear_obsolete_projection",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent",
+        "menu_tracking",
+        "sleep_wake",
+        "no_focus_empty_space",
+        "hostile_ax_reads"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "path:menu_open",
+      "source": "docs/contracts/retained-ux-contract.md",
+      "source_key": null,
+      "source_id": null,
+      "disposition": "keep",
+      "event_source": "status_item_click",
+      "generation_rule": "revision_observer_window_display_space_topology_context",
+      "failure": "bounded_typed_refusal_clear_obsolete_projection",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent",
+        "menu_tracking",
+        "sleep_wake",
+        "no_focus_empty_space",
+        "hostile_ax_reads"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "path:recovery",
+      "source": "docs/contracts/retained-ux-contract.md",
+      "source_key": null,
+      "source_id": null,
+      "disposition": "keep",
+      "event_source": "independent_escape_and_recovery_artifact",
+      "generation_rule": "revision_observer_window_display_space_topology_context",
+      "failure": "bounded_typed_refusal_clear_obsolete_projection",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent",
+        "menu_tracking",
+        "sleep_wake",
+        "no_focus_empty_space",
+        "hostile_ax_reads"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "path:input_intent",
+      "source": "docs/contracts/retained-ux-contract.md",
+      "source_key": null,
+      "source_id": null,
+      "disposition": "keep",
+      "event_source": "tap_callback",
+      "generation_rule": "revision_observer_window_display_space_topology_context",
+      "failure": "bounded_typed_refusal_clear_obsolete_projection",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent",
+        "menu_tracking",
+        "sleep_wake",
+        "no_focus_empty_space",
+        "hostile_ax_reads"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "path:fault_release",
+      "source": "docs/contracts/retained-ux-contract.md",
+      "source_key": null,
+      "source_id": null,
+      "disposition": "keep",
+      "event_source": "tap_local_liveness_deadline",
+      "generation_rule": "revision_observer_window_display_space_topology_context",
+      "failure": "bounded_typed_refusal_clear_obsolete_projection",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent",
+        "menu_tracking",
+        "sleep_wake",
+        "no_focus_empty_space",
+        "hostile_ax_reads"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "path:crash_recovery",
+      "source": "docs/contracts/retained-ux-contract.md",
+      "source_key": null,
+      "source_id": null,
+      "disposition": "keep",
+      "event_source": "launchd_exit_event",
+      "generation_rule": "revision_observer_window_display_space_topology_context",
+      "failure": "bounded_typed_refusal_clear_obsolete_projection",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent",
+        "menu_tracking",
+        "sleep_wake",
+        "no_focus_empty_space",
+        "hostile_ax_reads"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "path:cache_integrity",
+      "source": "leylined/Sources/leylined/ProjectionCacheIntegrityAudit.swift",
+      "disposition": "keep",
+      "event_source": "explicit_startup_recovery_or_topology_baseline",
+      "generation_rule": "session_observation_epoch_activity_revision_and_exact_window_lifetime",
+      "failure": "typed_failure_or_superseded_without_clean_authority",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "sleep_wake",
+        "hostile_ax_reads"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "path:minimum_learning",
+      "source": "leylined/Sources/leylined/ResidentMinimumLearning.swift",
+      "disposition": "keep",
+      "event_source": "successful_per_axis_issued_write_and_settled_fresh_effect_evidence",
+      "generation_rule": "exact_request_receipt_epoch_pid_window_lifetime_space_display_topology_and_guarded_journal_commit",
+      "failure": "unproven_stale_unwritten_noop_or_cached_mismatch_cannot_learn",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "repeat_burst_final_intent",
+        "hostile_ax_reads"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "path:startup_readiness",
+      "source": "leylined/Sources/leylined/ResidentStartupSeedGate.swift",
+      "disposition": "keep",
+      "event_source": "genuine_complete_world_seed_then_accepted_native_partition_reconciliation",
+      "generation_rule": "captured_lifecycle_and_observation_epoch_off_and_stale_seed_cannot_resume",
+      "failure": "pending_capture_blocks_claims_without_fabricating_failure_or_turning_desired_management_off",
+      "scenarios": [
+        "warm_six_windows",
+        "sleep_wake",
+        "no_focus_empty_space",
+        "hostile_ax_reads"
+      ],
+      "owner": "resident"
+    },
+    {
+      "id": "capability:windows_selection",
+      "source": "leylined/Sources/leylined/ResidentControlsState.swift",
+      "source_key": null,
+      "source_id": null,
+      "source_symbol": "selectionAction",
+      "disposition": "keep",
+      "event_source": "retained_windows_menu_click",
+      "generation_rule": "immutable_request_candidate_revision_observer_epoch_window_lifetime_space_display_topology",
+      "failure": "explicit_refusal_missing_or_stale_evidence_never_certifies_success",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "menu_tracking",
+        "hostile_ax_reads"
+      ],
+      "correctness_cases": [
+        "frozen_menu_target",
+        "obscured_managed_member",
+        "reused_lifetime_refusal",
+        "OFF_target_refusal"
+      ],
+      "budget_refs": [
+        "navigation"
+      ],
+      "live_certification": false,
+      "owner": "resident"
+    },
+    {
+      "id": "capability:gutter_configuration",
+      "source": "leylined/Sources/leylined/ResidentControls.swift",
+      "source_key": null,
+      "source_id": null,
+      "source_symbol": "setGlobalGutter",
+      "disposition": "keep",
+      "event_source": "global_gutter_menu_or_directory_settings_event",
+      "generation_rule": "immutable_request_candidate_revision_observer_epoch_window_lifetime_space_display_topology",
+      "failure": "explicit_refusal_missing_or_stale_evidence_never_certifies_success",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "menu_tracking",
+        "hostile_ax_reads"
+      ],
+      "correctness_cases": [
+        "zero_default_custom_gutter",
+        "replace_safe_settings",
+        "no_double_inset",
+        "invalid_geometry_refusal"
+      ],
+      "budget_refs": [
+        "lifecycle"
+      ],
+      "live_certification": false,
+      "owner": "resident"
+    },
+    {
+      "id": "capability:gutter_reapply",
+      "source": "leylined/Sources/leylined/ResidentControlsState.swift",
+      "source_key": null,
+      "source_id": null,
+      "source_symbol": "regutterAction",
+      "disposition": "keep",
+      "event_source": "retained_menu_original_space_action",
+      "generation_rule": "immutable_request_candidate_revision_observer_epoch_window_lifetime_space_display_topology",
+      "failure": "explicit_refusal_missing_or_stale_evidence_never_certifies_success",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "menu_tracking",
+        "hostile_ax_reads"
+      ],
+      "correctness_cases": [
+        "original_space_target",
+        "inactive_or_OFF_refusal",
+        "all_affected_frames_verified",
+        "raw_partition_conserved"
+      ],
+      "budget_refs": [
+        "lifecycle"
+      ],
+      "live_certification": false,
+      "owner": "resident"
+    },
+    {
+      "id": "capability:exact_move_preview",
+      "source": "leylined/Sources/LeylineModel/MoveCandidate.swift",
+      "source_key": null,
+      "source_id": null,
+      "source_symbol": "MoveCandidate",
+      "disposition": "keep",
+      "event_source": "move_cursor_stage_candidate_transition",
+      "generation_rule": "immutable_request_candidate_revision_observer_epoch_window_lifetime_space_display_topology",
+      "failure": "explicit_refusal_missing_or_stale_evidence_never_certifies_success",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "menu_tracking",
+        "hostile_ax_reads"
+      ],
+      "correctness_cases": [
+        "swap",
+        "single_edge_insert",
+        "span_insert",
+        "recursive_insert",
+        "all_affected_frames_equal_commit"
+      ],
+      "budget_refs": [
+        "stage_feedback",
+        "edge_commit_visible",
+        "edge_commit_verified"
+      ],
+      "live_certification": false,
+      "owner": "resident"
+    },
+    {
+      "id": "capability:move_confirmation_identity",
+      "source": "leylined/Sources/leylined/ResidentActionController.swift",
+      "source_key": null,
+      "source_id": null,
+      "source_symbol": "bindCandidate",
+      "disposition": "keep",
+      "event_source": "move_confirmation_or_replacement_candidate",
+      "generation_rule": "immutable_request_candidate_revision_observer_epoch_window_lifetime_space_display_topology",
+      "failure": "explicit_refusal_missing_or_stale_evidence_never_certifies_success",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "menu_tracking",
+        "hostile_ax_reads"
+      ],
+      "correctness_cases": [
+        "exact_candidate_id",
+        "fresh_lifetimes",
+        "display_space_topology_fence",
+        "replacement_requires_fresh_confirmation"
+      ],
+      "budget_refs": [
+        "edge_commit_visible",
+        "edge_commit_verified"
+      ],
+      "live_certification": false,
+      "owner": "resident"
+    },
+    {
+      "id": "capability:settled_clamp_learning",
+      "source": "leylined/Sources/leylined/ResidentMinimumLearning.swift",
+      "source_key": null,
+      "source_id": null,
+      "source_symbol": "settledClampAxes",
+      "disposition": "keep",
+      "event_source": "successful_actual_shrink_write_then_separate_matching_confirmation",
+      "generation_rule": "immutable_request_candidate_revision_observer_epoch_window_lifetime_space_display_topology",
+      "failure": "explicit_refusal_missing_or_stale_evidence_never_certifies_success",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "menu_tracking",
+        "hostile_ax_reads"
+      ],
+      "correctness_cases": [
+        "partial_shrink_progress",
+        "unchanged_wrapper_refusal",
+        "separate_confirmation",
+        "wrong_scope_refusal",
+        "durable_floor_and_replacement_preview"
+      ],
+      "budget_refs": [
+        "move_resize",
+        "lifecycle"
+      ],
+      "live_certification": false,
+      "owner": "resident"
+    },
+    {
+      "id": "capability:native_performance_trace",
+      "source": "leylined/Sources/leylined/ResidentPerformanceTrace.swift",
+      "source_key": null,
+      "source_id": null,
+      "source_symbol": "ResidentPerformanceTrace",
+      "disposition": "keep",
+      "event_source": "bounded_read_only_trace_request",
+      "generation_rule": "immutable_request_candidate_revision_observer_epoch_window_lifetime_space_display_topology",
+      "failure": "explicit_refusal_missing_or_stale_evidence_never_certifies_success",
+      "scenarios": [
+        "warm_six_windows",
+        "stress_twenty_windows",
+        "menu_tracking",
+        "hostile_ax_reads"
+      ],
+      "correctness_cases": [
+        "actual_receipt_and_key_up",
+        "bounded128_pagination4096_ring",
+        "recording_drop_and_sequence_gap",
+        "no_HID_inference",
+        "independent_pixels_required"
+      ],
+      "budget_refs": [
+        "input_intent",
+        "border_submission",
+        "border_visible",
+        "move_resize",
+        "tap_release"
+      ],
+      "live_certification": false,
+      "owner": "resident"
+    }
+  ],
+  "budgets": [
+    {
+      "id": "border_submission",
+      "start": "receipt",
+      "end": "render_submitted",
+      "p95_ms": 16,
+      "minimum_samples": 200
+    },
+    {
+      "id": "border_visible",
+      "start": "receipt",
+      "end": "physically_visible",
+      "p95_ms": 125,
+      "minimum_samples": 200
+    },
+    {
+      "id": "input_intent",
+      "start": "receipt",
+      "end": "intent_resolved",
+      "p50_ms": 10,
+      "p95_ms": 20,
+      "p99_ms": 40,
+      "minimum_samples": 200
+    },
+    {
+      "id": "navigation",
+      "start": "receipt",
+      "end": "verified",
+      "p50_ms": 50,
+      "p95_ms": 100,
+      "p99_ms": 150,
+      "minimum_samples": 200
+    },
+    {
+      "id": "move_resize",
+      "start": "receipt",
+      "end": "physically_visible",
+      "p50_ms": 75,
+      "p95_ms": 125,
+      "p99_ms": 200,
+      "minimum_samples": 200
+    },
+    {
+      "id": "stage_feedback",
+      "start": "receipt",
+      "end": "render_submitted",
+      "p95_ms": 50,
+      "minimum_samples": 200
+    },
+    {
+      "id": "edge_commit_visible",
+      "start": "receipt",
+      "end": "physically_visible",
+      "p95_ms": 200,
+      "minimum_samples": 200
+    },
+    {
+      "id": "edge_commit_verified",
+      "start": "receipt",
+      "end": "verified",
+      "p95_ms": 500,
+      "p99_ms": 1000,
+      "minimum_samples": 200
+    },
+    {
+      "id": "noop_world",
+      "start": "receipt",
+      "end": "plan_committed",
+      "p95_ms": 50,
+      "maximum_ax_writes": 0,
+      "minimum_samples": 100
+    },
+    {
+      "id": "lifecycle",
+      "start": "receipt",
+      "end": "verified",
+      "p50_ms": 250,
+      "p95_ms": 500,
+      "p99_ms": 1000,
+      "minimum_samples": 100
+    },
+    {
+      "id": "cached_snapshot",
+      "start": "receipt",
+      "end": "targeted_read_completed",
+      "p50_ms": 50,
+      "p95_ms": 75,
+      "strict_less": true,
+      "minimum_samples": 100
+    },
+    {
+      "id": "tap_release",
+      "start": "receipt",
+      "end": "tap_released",
+      "max_ms": 250,
+      "minimum_samples": 20
+    },
+    {
+      "id": "crash_serving",
+      "start": "receipt",
+      "end": "serving",
+      "p95_ms": 3000,
+      "minimum_samples": 20
+    },
+    {
+      "id": "serving_converged",
+      "start": "serving",
+      "end": "verified",
+      "p95_ms": 2000,
+      "minimum_samples": 20
+    },
+    {
+      "id": "trust_loss",
+      "start": "receipt",
+      "end": "plan_committed",
+      "max_ms": 2000,
+      "minimum_samples": 20
+    },
+    {
+      "id": "held_resize_final",
+      "start": "receipt",
+      "end": "verified",
+      "max_ms": 150,
+      "minimum_visible_updates_per_second": 10,
+      "maximum_pending_desired": 1,
+      "minimum_samples": 200
+    }
+  ],
+  "timers": [
+    {
+      "id": "tap_liveness",
+      "purpose": "fault_release",
+      "owner": "tap_thread",
+      "deadline_ms": 250,
+      "recurring": true,
+      "interaction_poll": false,
+      "cost": "atomic_liveness_read_and_claim_swap",
+      "cadence_ms": 25,
+      "source": "leylined/Sources/leylined/ResidentInput.swift",
+      "status": "implemented",
+      "fault_after_ms": 200
+    },
+    {
+      "id": "targeted_evidence_deadline",
+      "purpose": "bounded_evidence_failure",
+      "owner": "resident_effector",
+      "deadline_ms": 1000,
+      "recurring": false,
+      "interaction_poll": false,
+      "cost": "one_in_flight_lookup_no_read_retry",
+      "status": "implemented_one_shot",
+      "source": "leylined/Sources/leylined/Effector/ResidentAXPort.swift"
+    },
+    {
+      "id": "cache_integrity_audit",
+      "purpose": "off_lane_integrity",
+      "owner": "canonical_observer",
+      "deadline_ms": 10000,
+      "recurring": false,
+      "interaction_poll": false,
+      "cost": "guarded_read_only_inventory_and_targeted_validation_on_utility_worker",
+      "status": "implemented_on_explicit_baseline_request_one_shot",
+      "source": "leylined/Sources/leylined/ProjectionCacheIntegrityAudit.swift",
+      "idle_cost": 0,
+      "maximum_active_workers": 1,
+      "maximum_pending_seeds": 1,
+      "maximum_active_timers": 1
+    },
+    {
+      "id": "core_authority_heartbeat",
+      "purpose": "independent_authority_liveness",
+      "owner": "core_authority",
+      "cadence_ms": 50,
+      "deadline_ms": 250,
+      "recurring": true,
+      "interaction_poll": false,
+      "cost": "transition_lock_try_probe_no_world_read",
+      "status": "implemented",
+      "source": "leylined/Sources/leylined/CoreRuntimeServices.swift"
+    },
+    {
+      "id": "ax_message_deadline",
+      "purpose": "bounded_external_ax_call",
+      "owner": "canonical_observer_and_effector_port",
+      "deadline_ms": 100,
+      "recurring": false,
+      "interaction_poll": false,
+      "cost": "one_targeted_ax_message_attribute_batch_capability_identity_or_setter_call",
+      "status": "implemented",
+      "source": "leylined/Sources/leylined/TargetedProjectionSnapshot.swift"
+    },
+    {
+      "id": "ax_targeted_total_read_deadline",
+      "purpose": "bounded_targeted_observation",
+      "owner": "canonical_observer",
+      "deadline_ms": 200,
+      "recurring": false,
+      "interaction_poll": false,
+      "cost": "bounded_attribute_set_no_world_enumeration",
+      "status": "implemented",
+      "source": "leylined/Sources/leylined/TargetedProjectionSnapshot.swift"
+    },
+    {
+      "id": "subscriber_send_deadline",
+      "purpose": "slow_reader_isolation",
+      "owner": "core_subscriber_writer",
+      "deadline_ms": 1000,
+      "recurring": false,
+      "interaction_poll": false,
+      "cost": "one_send_on_separate_writer_bounded_queue",
+      "status": "implemented",
+      "source": "leylined/Sources/leylined/CoreServer.swift"
+    },
+    {
+      "id": "core_trust_audit",
+      "purpose": "ax_grant_transition_audit",
+      "owner": "core_trust_audit",
+      "cadence_ms": 1000,
+      "deadline_ms": 2000,
+      "recurring": true,
+      "interaction_poll": false,
+      "cost": "one_AXIsProcessTrusted_call_per_second_no_window_focus_world_read",
+      "status": "implemented",
+      "source": "leylined/Sources/leylined/CoreTrustAudit.swift"
+    },
+    {
+      "id": "resident_client_completion_deadline",
+      "purpose": "bounded_on_demand_command_completion_wait",
+      "owner": "resident_command_client",
+      "deadline_ms": 10000,
+      "minimum_deadline_ms": 1000,
+      "maximum_deadline_ms": 60000,
+      "recurring": false,
+      "interaction_poll": false,
+      "idle_cost": 0,
+      "cost": "one_scoped_subscription_shutdown_without_result_polling",
+      "status": "implemented_on_demand_one_shot",
+      "source": "leylined/Sources/leylined/ResidentCommandClient.swift"
+    },
+    {
+      "id": "exclusive_maintenance_deadline",
+      "purpose": "bounded_quiescence_and_reset_failure",
+      "owner": "resident_maintenance",
+      "deadline_ms": 2000,
+      "recurring": false,
+      "interaction_poll": false,
+      "idle_cost": 0,
+      "cost": "one_acknowledgment_barrier_and_permit_invalidation_no_state_poll",
+      "status": "implemented_on_demand_one_shot",
+      "source": "leylined/Sources/leylined/ResidentMaintenance.swift"
+    },
+    {
+      "id": "ax_transient_recovery",
+      "purpose": "one_bounded_external_fault_recovery",
+      "owner": "canonical_observer",
+      "deadline_ms": 100,
+      "recurring": false,
+      "interaction_poll": false,
+      "idle_cost": 0,
+      "cost": "one_generation_session_epoch_bound_fresh_baseline_after_cannot_complete_no_self_rearm",
+      "status": "implemented_on_external_fault_one_shot",
+      "source": "leylined/Sources/leylined/ProjectionTransientRecovery.swift"
+    },
+    {
+      "id": "ax_settled_handle_repair",
+      "purpose": "one_issued_effect_semantic_repair",
+      "owner": "canonical_effector_port",
+      "deadline_ms": 100,
+      "recurring": false,
+      "interaction_poll": false,
+      "idle_cost": 0,
+      "cost": "one_settled_target_read_and_at_most_one_owner_scoped_fresh_wrapper_retry_under_existing_one_second_effect_lease",
+      "status": "implemented_on_issued_frame_mismatch_one_shot",
+      "source": "leylined/Sources/leylined/Effector/ResidentAXPort.swift"
+    },
+    {
+      "id": "resident_control_completion_deadline",
+      "purpose": "bounded_lifecycle_completion",
+      "owner": "resident_controls",
+      "deadline_ms": 5000,
+      "recurring": false,
+      "interaction_poll": false,
+      "cost": "bounded_pending_deadline_map_scan_and_lifecycle_invalidation",
+      "idle_cost": 0,
+      "source": "leylined/Sources/leylined/ResidentControlRequests.swift",
+      "status": "implemented_on_demand_one_shot",
+      "maximum_pending_deadlines": 64,
+      "maximum_active_timers": 1
+    },
+    {
+      "id": "input_fault_notice_dismissal",
+      "purpose": "bounded_fault_notice_lifetime",
+      "owner": "resident_controls_presentation",
+      "deadline_ms": 3000,
+      "recurring": false,
+      "interaction_poll": false,
+      "cost": "one_reused_timer_and_identity_guarded_panel_dismissal",
+      "idle_cost": 0,
+      "source": "leylined/Sources/leylined/ResidentInputFaultNoticePresenter.swift",
+      "status": "implemented_on_fault_release_one_shot",
+      "maximum_active_timers": 1
+    },
+    {
+      "id": "socket_frame_read_deadline",
+      "purpose": "bound_local_request_frame_reads",
+      "owner": "resident_socket_transport",
+      "deadline_ms": 2000,
+      "recurring": false,
+      "interaction_poll": false,
+      "cost": "one_poll_deadline_per_inbound_frame_maximum128_connections",
+      "idle_cost": 0,
+      "source": "leylined/Sources/leylined/FramedJSONSocket.swift",
+      "status": "implemented_bounded_transport_operation"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "warm_six_windows",
+      "windows": 6,
+      "expected": "exact_identity_revision_and_final_state"
+    },
+    {
+      "id": "stress_twenty_windows",
+      "windows": 20,
+      "expected": "same_semantics_bounded_queue"
+    },
+    {
+      "id": "repeat_burst_final_intent",
+      "windows": 6,
+      "expected": "one_in_flight_latest_pending_relative_accumulation_ordered_barriers"
+    },
+    {
+      "id": "menu_tracking",
+      "windows": 6,
+      "expected": "common_run_loop_delivery_original_space_target"
+    },
+    {
+      "id": "sleep_wake",
+      "windows": 6,
+      "expected": "invalidate_old_generation_fresh_baseline"
+    },
+    {
+      "id": "no_focus_empty_space",
+      "windows": 0,
+      "expected": "clear_ring_independent_display_space_control"
+    },
+    {
+      "id": "hostile_ax_reads",
+      "windows": 6,
+      "expected": "bounded_typed_failure_authority_and_tap_progress"
+    }
+  ],
+  "queue": {
+    "maximum_ordered_pending": 32,
+    "maximum_pending_desired_per_lane": 1
+  },
+  "border_budget_status": "proposed_frozen_absolute_gates_not_live_measurement",
+  "source_paths": [
+    "keymap/global.json",
+    "keymap/modes.json",
+    "docs/contracts/retained-ux-contract.md",
+    "docs/contracts/event-driven-responsiveness.md",
+    "docs/contracts/core-window-manager-spec.md",
+    "leylined/Sources/leylined/ProjectionCacheIntegrityAudit.swift",
+    "leylined/Sources/leylined/ResidentControlRequests.swift",
+    "leylined/Sources/leylined/ResidentInputFaultNoticePresenter.swift",
+    "leylined/Sources/leylined/ResidentInputFaultMailbox.swift",
+    "leylined/Sources/leylined/ResidentInputFaultNoticeState.swift",
+    "leylined/Sources/LeylineModel/Minsize.swift",
+    "leylined/Sources/leylined/ResidentMinimumLearning.swift",
+    "leylined/Sources/leylined/ResidentStartupSeedGate.swift",
+    "leylined/Sources/leylined/ResidentControlsState.swift",
+    "leylined/Sources/leylined/ResidentControls.swift",
+    "leylined/Sources/LeylineModel/MoveCandidate.swift",
+    "leylined/Sources/leylined/ResidentActionController.swift",
+    "leylined/Sources/leylined/ResidentPerformanceTrace.swift",
+    "leylined/Sources/leylined/ResidentSpaceManagement.swift"
+  ]
+}

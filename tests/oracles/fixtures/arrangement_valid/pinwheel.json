@@ -1,0 +1,15 @@
+{
+  "note": "The PINWHEEL — the layout NO BSP tree can express (the rollout's whole justification), HAND-AUTHORED. Four segments on a 2880x1800 canvas, rotationally symmetric, each running from ONE canvas edge to the NEXT segment's interior track so that NO single segment spans a full canvas dimension: v@960 over y[0,1200] (top edge -> hy1 track), v@1920 over y[600,1800] (hy0 track -> bottom edge), h@600 over x[960,2880] (vx0 track -> right edge), h@1200 over x[0,1920] (left edge -> vx1 track). The four arms pin a centre rectangle (960,600,960,600) as a FIFTH cell. cells() derives EXACTLY 5 filled rectangles (A left, B top, C centre, D right, E bottom) — see arrangement/pinwheel_cells.json for the frames — so the arrangement is a VALID partition: ok:true, no violations. Coordinate-exact: a fat-fingered span gives 4 or 6 cells, not 5; cross-checked in experiments/line-model/arrangement.py (valid:True, n_cells:5). This is the non-slicing validity proof S1 exists to establish — the store can HOLD a pinwheel (S9 will BUILD it).",
+  "fn": "valid",
+  "arrangement": [
+    {"axis": "v", "coord": 960, "lo": 0, "hi": 1200},
+    {"axis": "v", "coord": 1920, "lo": 600, "hi": 1800},
+    {"axis": "h", "coord": 600, "lo": 960, "hi": 2880},
+    {"axis": "h", "coord": 1200, "lo": 0, "hi": 1920}
+  ],
+  "canvas": {"x": 0, "y": 0, "w": 2880, "h": 1800},
+  "expect": {
+    "ok": true,
+    "violations": []
+  }
+}

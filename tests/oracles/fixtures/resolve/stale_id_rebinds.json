@@ -1,0 +1,59 @@
+{
+  "note": "a leaf cached window_id 999 that is no longer present (app restarted) → sticky fails, the descriptor re-resolves to the current window of its app. Models app-restart re-resolution (§7 application_launched).",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "children": [
+          "a"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 999,
+        "binding": {
+          "bundle_id": "app",
+          "title_pattern": "Editor"
+        }
+      }
+    }
+  },
+  "windows": [
+    {
+      "window_id": 42,
+      "bundle_id": "app",
+      "title": "Editor — new session"
+    }
+  ],
+  "expect": {
+    "bound": [
+      {
+        "leaf_id": "a",
+        "tier": "title",
+        "window_id": 42
+      }
+    ],
+    "tree": {
+      "nodes": {
+        "a": {
+          "binding": {
+            "bundle_id": "app",
+            "title_pattern": "Editor"
+          },
+          "id": "a",
+          "window_id": 42
+        },
+        "r": {
+          "children": [
+            "a"
+          ],
+          "id": "r"
+        }
+      },
+      "root_id": "r"
+    },
+    "unmanaged": [],
+    "vacant": []
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "note": "S5 step 5 (the feasible case) — a ROOMY 2-window row (a/b min w 100, span 1000) fits, so B::valve returns the tree byte-unchanged → arrangement::valve's cells are IDENTICAL to the un-valved cells_stack (two non-stacked cells, stack:null each) and facts:[]. The embedded eq_unvalved asserts valve.arrangement == cells_stack(tree) byte-for-byte: composing the valve over a feasible scene is a no-op, exactly as B::valve is a no-op on a feasible tree. Proves S5 added ZERO eager-fold behavior.",
+  "fn": "valve_noop",
+  "focused_leaf": null,
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": { "id": "r", "mode": "row", "children": ["a", "b"] },
+      "a": { "id": "a", "window_id": 1, "min_size": { "w": 100, "h": 100 } },
+      "b": { "id": "b", "window_id": 2, "min_size": { "w": 100, "h": 100 } }
+    }
+  },
+  "topology": {
+    "displays": [{ "id": 1, "frame": [0, 0, 1000, 1000], "usable": [0, 0, 1000, 1000] }],
+    "gap": 0
+  },
+  "config": {},
+  "expect": {
+    "arrangement": [
+      {
+        "atoms": [[0, 0]],
+        "display_id": 1,
+        "filled": true,
+        "frame": { "h": 1000, "w": 500, "x": 0, "y": 0 },
+        "i0": 0,
+        "i1": 0,
+        "j0": 0,
+        "j1": 0,
+        "stack": null
+      },
+      {
+        "atoms": [[1, 0]],
+        "display_id": 1,
+        "filled": true,
+        "frame": { "h": 1000, "w": 500, "x": 500, "y": 0 },
+        "i0": 1,
+        "i1": 1,
+        "j0": 0,
+        "j1": 0,
+        "stack": null
+      }
+    ],
+    "facts": [],
+    "eq_unvalved": true
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "note": "NESTED/CASCADE collapse to a FIXPOINT: root→outer→inner→[a,b] (each of root and outer has exactly one internal child, then inner holds the two leaves). Removing 'b' makes inner single-childed → inner collapses to 'a'; that makes outer single-childed → outer collapses to 'a'; that makes root single-childed → root collapses to 'a'. The whole chain settles: result is the lone leaf 'a' as root. Stresses the until()-to-fixpoint loop over a multi-level chain.",
+  "fn": "remove",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "row",
+        "children": [
+          "outer"
+        ]
+      },
+      "outer": {
+        "id": "outer",
+        "mode": "col",
+        "children": [
+          "inner"
+        ]
+      },
+      "inner": {
+        "id": "inner",
+        "mode": "row",
+        "children": [
+          "a",
+          "b"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1
+      },
+      "b": {
+        "id": "b",
+        "window_id": 2
+      }
+    }
+  },
+  "leaf": "b",
+  "expect": {
+    "nodes": {
+      "a": {
+        "id": "a",
+        "window_id": 1
+      }
+    },
+    "root_id": "a"
+  }
+}

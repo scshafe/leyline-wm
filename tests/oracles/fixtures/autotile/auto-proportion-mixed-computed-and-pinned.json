@@ -1,0 +1,84 @@
+{
+  "note": "Mixed tree: the COMPUTED col root has its ratios stripped (→ equal), while its PINNED row child keeps [4,1] and ratio_source. auto_proportion equalizes only the auto-managed splits.",
+  "fn": "auto_proportion",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "mode": "col",
+        "children": [
+          "a",
+          "c"
+        ],
+        "ratios": [
+          2,
+          1
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1
+      },
+      "c": {
+        "id": "c",
+        "mode": "row",
+        "children": [
+          "d",
+          "e"
+        ],
+        "ratios": [
+          4,
+          1
+        ],
+        "ratio_source": "pinned"
+      },
+      "d": {
+        "id": "d",
+        "window_id": 2
+      },
+      "e": {
+        "id": "e",
+        "window_id": 3
+      }
+    }
+  },
+  "expect": {
+    "nodes": {
+      "a": {
+        "id": "a",
+        "window_id": 1
+      },
+      "c": {
+        "children": [
+          "d",
+          "e"
+        ],
+        "id": "c",
+        "mode": "row",
+        "ratio_source": "pinned",
+        "ratios": [
+          4,
+          1
+        ]
+      },
+      "d": {
+        "id": "d",
+        "window_id": 2
+      },
+      "e": {
+        "id": "e",
+        "window_id": 3
+      },
+      "r": {
+        "children": [
+          "a",
+          "c"
+        ],
+        "id": "r",
+        "mode": "col"
+      }
+    },
+    "root_id": "r"
+  }
+}

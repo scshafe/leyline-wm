@@ -1,0 +1,216 @@
+{
+  "schema": "leyline/native-acceptance-scenarios/v1",
+  "spec": "docs/contracts/core-window-manager-spec.md#acceptance-and-performance-contract",
+  "window_counts": [
+    1,
+    6,
+    12,
+    20
+  ],
+  "budgets": [
+    {
+      "id": "border_submission",
+      "start": "receipt",
+      "end": "render_submitted",
+      "p95_ms": 16,
+      "minimum_samples": 200,
+      "required_origin": "hid",
+      "visible_required": false
+    },
+    {
+      "id": "border_visible",
+      "start": "receipt",
+      "end": "physically_visible",
+      "p95_ms": 125,
+      "minimum_samples": 200,
+      "required_origin": "hid",
+      "visible_required": true
+    },
+    {
+      "id": "input_intent",
+      "start": "receipt",
+      "end": "intent_resolved",
+      "p50_ms": 10,
+      "p95_ms": 20,
+      "p99_ms": 40,
+      "minimum_samples": 200,
+      "required_origin": "hid",
+      "visible_required": false
+    },
+    {
+      "id": "navigation",
+      "start": "receipt",
+      "end": "verified",
+      "p50_ms": 50,
+      "p95_ms": 100,
+      "p99_ms": 150,
+      "minimum_samples": 200,
+      "required_origin": "hid",
+      "visible_required": false
+    },
+    {
+      "id": "move_resize",
+      "start": "receipt",
+      "end": "physically_visible",
+      "p50_ms": 75,
+      "p95_ms": 125,
+      "p99_ms": 200,
+      "minimum_samples": 200,
+      "required_origin": "hid",
+      "visible_required": true
+    },
+    {
+      "id": "stage_feedback",
+      "start": "receipt",
+      "end": "render_submitted",
+      "p95_ms": 50,
+      "minimum_samples": 200,
+      "required_origin": "hid",
+      "visible_required": false
+    },
+    {
+      "id": "edge_commit_visible",
+      "start": "receipt",
+      "end": "physically_visible",
+      "p95_ms": 200,
+      "minimum_samples": 200,
+      "required_origin": "hid",
+      "visible_required": true
+    },
+    {
+      "id": "edge_commit_verified",
+      "start": "receipt",
+      "end": "verified",
+      "p95_ms": 500,
+      "p99_ms": 1000,
+      "minimum_samples": 200,
+      "required_origin": "hid",
+      "visible_required": false
+    },
+    {
+      "id": "noop_world",
+      "start": "receipt",
+      "end": "plan_committed",
+      "p95_ms": 50,
+      "maximum_ax_writes": 0,
+      "minimum_samples": 100,
+      "required_origin": "os_event",
+      "visible_required": false
+    },
+    {
+      "id": "lifecycle",
+      "start": "receipt",
+      "end": "verified",
+      "p50_ms": 250,
+      "p95_ms": 500,
+      "p99_ms": 1000,
+      "minimum_samples": 100,
+      "required_origin": "fixture_lifecycle",
+      "visible_required": false
+    },
+    {
+      "id": "cached_snapshot",
+      "start": "receipt",
+      "end": "targeted_read_completed",
+      "p50_ms": 50,
+      "p95_ms": 75,
+      "strict_less": true,
+      "minimum_samples": 100,
+      "required_origin": "socket",
+      "visible_required": false
+    },
+    {
+      "id": "tap_release",
+      "start": "receipt",
+      "end": "tap_released",
+      "max_ms": 250,
+      "minimum_samples": 20,
+      "required_origin": "hid",
+      "visible_required": false
+    },
+    {
+      "id": "crash_serving",
+      "start": "receipt",
+      "end": "serving",
+      "p95_ms": 3000,
+      "minimum_samples": 20,
+      "required_origin": "process_fault",
+      "visible_required": false
+    },
+    {
+      "id": "serving_converged",
+      "start": "serving",
+      "end": "verified",
+      "p95_ms": 2000,
+      "minimum_samples": 20,
+      "required_origin": "process_fault",
+      "visible_required": false
+    },
+    {
+      "id": "trust_loss",
+      "start": "receipt",
+      "end": "plan_committed",
+      "max_ms": 2000,
+      "minimum_samples": 20,
+      "required_origin": "os_event",
+      "visible_required": false
+    },
+    {
+      "id": "held_resize_final",
+      "start": "receipt",
+      "end": "verified",
+      "max_ms": 150,
+      "minimum_visible_updates_per_second": 10,
+      "maximum_pending_desired": 1,
+      "minimum_samples": 200,
+      "required_origin": "hid",
+      "visible_required": true
+    }
+  ],
+  "physical_scanout_proven": false,
+  "endpoint_provenance": {
+    "receipt": [
+      "resident_input_callback",
+      "resident_socket_admission",
+      "resident_notification_callback",
+      "independent_process_exit",
+      "independent_trust_transition",
+      "independent_stall_start",
+      "fixture_lifecycle_callback",
+      "resident_menu_admission",
+      "resident_controller_admission"
+    ],
+    "intent_resolved": [
+      "resident_input_resolution"
+    ],
+    "plan_committed": [
+      "resident_authority_commit",
+      "resident_authority_publication_return"
+    ],
+    "render_submitted": [
+      "resident_appkit_submission"
+    ],
+    "effect_issued": [
+      "resident_ax_issue"
+    ],
+    "verified": [
+      "resident_scoped_ax_readback",
+      "resident_layout_fixpoint"
+    ],
+    "key_up": [
+      "resident_input_callback"
+    ],
+    "tap_released": [
+      "resident_tap_local_release"
+    ],
+    "serving": [
+      "independent_ready_probe"
+    ],
+    "targeted_read_completed": [
+      "resident_targeted_read_completion"
+    ],
+    "physically_visible": [
+      "independent_windowserver_composition"
+    ]
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "note": "set_ratio on a computed row node stamps ratio_source=pinned (a hand-set ratio auto-layout must not re-snap — the split analogue of a pinned frame, I4) AND records the ratios. ok:true.",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "mode": "row",
+        "children": [
+          "a",
+          "b"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1
+      },
+      "b": {
+        "id": "b",
+        "window_id": 2
+      }
+    }
+  },
+  "op": "set_ratio",
+  "args": {
+    "node": "r",
+    "ratios": [
+      2,
+      1
+    ]
+  },
+  "expect": {
+    "ok": true,
+    "tree": {
+      "nodes": {
+        "a": {
+          "id": "a",
+          "window_id": 1
+        },
+        "b": {
+          "id": "b",
+          "window_id": 2
+        },
+        "r": {
+          "children": [
+            "a",
+            "b"
+          ],
+          "id": "r",
+          "mode": "row",
+          "ratio_source": "pinned",
+          "ratios": [
+            2,
+            1
+          ]
+        }
+      },
+      "root_id": "r"
+    }
+  }
+}

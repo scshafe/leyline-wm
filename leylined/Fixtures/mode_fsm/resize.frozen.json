@@ -1,0 +1,50 @@
+[
+  {
+    "mode": "resize",
+    "chord": "0x35",
+    "verb": "ley parcel resize-mode off",
+    "exit_predicate": "unconditional_exit"
+  },
+  {
+    "mode": "resize",
+    "chord": "0x5A",
+    "transition": "default"
+  },
+  {
+    "mode": "resize",
+    "chord": "cmd + ctrl + alt + shift - r",
+    "verb": "ley parcel resize-mode off",
+    "exit_predicate": "unconditional_exit"
+  },
+  {
+    "mode": "resize",
+    "chord": "cmd + ctrl + alt + shift - r",
+    "verb": "ley parcel resize-mode on",
+    "exit_predicate": "exit_on_any_nonzero",
+    "is_enter": true
+  },
+  {
+    "mode": "resize",
+    "chord": "h",
+    "verb": "ley parcel resize-mode adjust west",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "resize",
+    "chord": "j",
+    "verb": "ley parcel resize-mode adjust south",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "resize",
+    "chord": "k",
+    "verb": "ley parcel resize-mode adjust north",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "resize",
+    "chord": "l",
+    "verb": "ley parcel resize-mode adjust east",
+    "exit_predicate": "no_exit"
+  }
+]

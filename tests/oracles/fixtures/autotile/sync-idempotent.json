@@ -1,0 +1,120 @@
+{
+  "note": "IDEMPOTENCE (mount-shape, the production steady-state). Input is the per-display tree sync itself produces: root(region) → d:1(pinned mount, display 1) → i:w:2(row)=[w:1,w:2]. Observed = both windows, tileable, non-minimized, with frames inside display 1. managed-live = {1,2}; both bound, nothing dead, no newcomers. ensure_scaffold sees a tree already rooted at 'root' → INCREMENTAL path (keeps the mount + its BSP, does NOT rebuild). PRUNE and ADOPT are both no-ops; auto_proportion finds no explicit ratios on the computed row → output is byte-for-byte the input (modulo key order, normalized by -S). The mount-world analogue of the old bare-BSP idempotence test — guards against spurious churn on a steady-state pass now that the tree is always mount-shaped after the first sync.",
+  "fn": "sync",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "i:w:2"
+        ]
+      },
+      "i:w:2": {
+        "id": "i:w:2",
+        "mode": "row",
+        "children": [
+          "w:1",
+          "w:2"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      }
+    }
+  },
+  "observed": [
+    {
+      "window_id": 1,
+      "app": "A",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        0,
+        0,
+        600,
+        800
+      ]
+    },
+    {
+      "window_id": 2,
+      "app": "B",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        600,
+        0,
+        600,
+        800
+      ]
+    }
+  ],
+  "focused_leaf": "w:1",
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1200,
+          800
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "nodes": {
+      "d:1": {
+        "children": [
+          "i:w:2"
+        ],
+        "display_id": 1,
+        "frame_source": "pinned",
+        "id": "d:1",
+        "mode": "row"
+      },
+      "i:w:2": {
+        "children": [
+          "w:1",
+          "w:2"
+        ],
+        "id": "i:w:2",
+        "mode": "row"
+      },
+      "root": {
+        "children": [
+          "d:1"
+        ],
+        "id": "root",
+        "mode": "region"
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      }
+    },
+    "root_id": "root"
+  }
+}

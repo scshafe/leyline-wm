@@ -1,0 +1,66 @@
+{
+  "note": "end-to-end vacant handling (reuses the vacant_reserves_slot tree). A vacant leaf `v` (binding kept, window gone — §7) contributes NO target, so the diff issues no phantom show/hide for it; the live bound window 1 is simply noop. Vacancy reserves geometry without driving the backend.",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "a",
+          "v"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1,
+        "binding": {
+          "app": "A"
+        }
+      },
+      "v": {
+        "id": "v",
+        "binding": {
+          "app": "Gone"
+        }
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          800
+        ]
+      }
+    ]
+  },
+  "observed": [
+    {
+      "window_id": 1,
+      "frame": [
+        0,
+        0,
+        500,
+        800
+      ],
+      "minimized": false
+    }
+  ],
+  "expect": {
+    "hide": [],
+    "noop": [
+      {
+        "window_id": 1
+      }
+    ],
+    "reframe": [],
+    "show": []
+  }
+}

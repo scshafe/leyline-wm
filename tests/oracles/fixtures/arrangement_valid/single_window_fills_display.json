@@ -1,0 +1,10 @@
+{
+  "note": "FILL PROPERTY (Phase B3): a single window fills its display. An arrangement with ZERO gridlines is one window occupying the whole canvas. valid() MUST report ok:true, no violations — the one full-canvas cell claims the sole atom (claimed_atoms == nx*ny == 1), so the no-gap clause is satisfied with no empty space where a window could go. The degenerate base case of the no-gap fill property: even with one window, the display is fully covered, never a partial fill leaving dead space. Pairs with clean_2x2 (multi-cell fill) and hole_center (the RED gap proof).",
+  "fn": "valid",
+  "arrangement": [],
+  "canvas": {"x": 0, "y": 0, "w": 2880, "h": 1800},
+  "expect": {
+    "ok": true,
+    "violations": []
+  }
+}

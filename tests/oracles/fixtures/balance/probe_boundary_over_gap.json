@@ -1,0 +1,13 @@
+{
+  "note": "The +px partner of probe_boundary_exact_gap: gap 10, 3 children min w 321 → required = Σ963 + 20 = 983 > span 980 → candidate. surplus = all-but-first = [b,c]. Matches fit_sizes' $tmin(963)>$avail(960) overlap point.",
+  "fn": "probe",
+  "tree": { "root_id": "r", "nodes": {
+    "r": {"id":"r","mode":"row","children":["a","b","c"]},
+    "a": {"id":"a","window_id":1,"min_size":{"w":321,"h":100}},
+    "b": {"id":"b","window_id":2,"min_size":{"w":321,"h":100}},
+    "c": {"id":"c","window_id":3,"min_size":{"w":321,"h":100}} } },
+  "topology": { "displays": [{"id":1,"frame":[0,0,1000,1000],"usable":[0,0,1000,1000]}], "gap":10 },
+  "expect": [
+    {"kind":"stack","phase":"candidate","node":"r","axis":"row","required":983,"span":980,"surplus":["b","c"]}
+  ]
+}

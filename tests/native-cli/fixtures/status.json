@@ -1,0 +1,65 @@
+{
+  "ok": true,
+  "op": "status",
+  "pid": 4242,
+  "revision": 7,
+  "world": {
+    "management_enabled": true,
+    "resident_running": true,
+    "observation": {
+      "world_complete": true
+    },
+    "focus": {
+      "eligible": true,
+      "space_enabled": true,
+      "space_visible": true
+    }
+  },
+  "health": {
+    "schema": 2,
+    "world_seed": {
+      "ready": true,
+      "revision": 1
+    },
+    "focus_observer": {
+      "ready": true,
+      "window_notifications_ready": true,
+      "pid": 700,
+      "generation": 2,
+      "degraded_reason": null
+    },
+    "mode_subscription": {
+      "connected": false,
+      "ready": false,
+      "epoch": null,
+      "sequence": null,
+      "degraded_reason": "native_mode_source"
+    },
+    "projection": {
+      "required": true,
+      "mounted": true,
+      "degraded": false,
+      "degraded_reason": null,
+      "last_rendered_revision": 7
+    },
+    "resident": {
+      "mode_source": "in_process",
+      "input": {
+        "mode": "default",
+        "generation": 1,
+        "tap_installed": true,
+        "desired_running": true,
+        "claims_allowed": true,
+        "space_control_allowed": true,
+        "active_action_ids": [
+          "space.management.toggle"
+        ],
+        "accepting_claims": true,
+        "tap_create_failed": false,
+        "safety_released": false,
+        "normal_path_subprocesses": 0
+      }
+    },
+    "owner": "resident"
+  }
+}

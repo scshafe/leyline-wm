@@ -1,0 +1,74 @@
+{
+  "note": "HOMING KNOB — config:{homing:\"focus\"} EXPLICIT (config-gated flexibility, arrangement-sole-backbone Phase C). Same scene as sync-homing-geometric-not-empty-display (two displays D1 {0,0,1440,900} + D2 {1440,0,1440,900}; an empty tree; TWO tileable newcomers whose observed frames BOTH land on D1), but with the homing knob set EXPLICITLY to its DEFAULT \"focus\". Asserts that the explicit default reproduces the geometric homing BYTE-FOR-BYTE: both windows pile into D1's mount (root -> [d:1 -> i:w:2[w:1,w:2]]), D2 (empty) gets NO mount. Pins that the knob's DEFAULT is the today-behavior tripwire — flipping homing to empty_first is the ONLY thing that changes the output (proven by sync-homing-empty-first-fills-empty-display, same scene + same expect-shape minus the pile).",
+  "fn": "sync",
+  "tree": {
+    "root_id": null,
+    "nodes": {}
+  },
+  "observed": [
+    {
+      "window_id": 1,
+      "app": "A",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [100, 100, 800, 600]
+    },
+    {
+      "window_id": 2,
+      "app": "B",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [300, 300, 800, 600]
+    }
+  ],
+  "focused_leaf": null,
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [0, 0, 1440, 900],
+        "usable": [0, 25, 1440, 875]
+      },
+      {
+        "id": 2,
+        "frame": [1440, 0, 1440, 900],
+        "usable": [1440, 25, 1440, 875]
+      }
+    ]
+  },
+  "config": {
+    "homing": "focus"
+  },
+  "expect": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": ["d:1"]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": ["i:w:2"]
+      },
+      "i:w:2": {
+        "id": "i:w:2",
+        "mode": "row",
+        "children": ["w:1", "w:2"]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      }
+    }
+  }
+}

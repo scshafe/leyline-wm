@@ -1,0 +1,10 @@
+{
+  "fn": "half_select",
+  "note": "fork-2 orthogonal axis: a north/south tuck splits the neighbor cell with a VERTICAL divider (halves west/east). The focused window's ORIGIN x=100 is left of the neighbor cell midpoint (x=540), so it takes the LEADING (west) half — exercising the dir->axis mapping (north/south -> perpendicular x -> west/east).",
+  "target_cell": {"frame": {"x": 0, "y": 0, "w": 1080, "h": 480}},
+  "focused_frame": {"x": 100, "y": 480, "w": 200, "h": 200},
+  "display": {"frame": {"x": 0, "y": 0, "w": 1920, "h": 1080}},
+  "dir": "south",
+  "tol": 4,
+  "expect": "west"
+}

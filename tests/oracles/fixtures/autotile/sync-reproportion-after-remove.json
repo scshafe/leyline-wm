@@ -1,0 +1,215 @@
+{
+  "note": "REPROPORTION runs LIVE inside sync — the gap this refactor closes (mount-shape). root(region) → d:1(pinned mount) → R(row)=[g, p, w:5], where g is a COMPUTED col (ratio_source:'computed', ratios:[3,1], children [w:1,w:2]) and p is a PINNED col (ratio_source:'pinned', ratios:[3,1], children [w:3,w:4]). Observed drops window 5 (closed) but keeps 1-4 (all tileable). PRUNE removes w:5 from R (and its aligned ratio slot — R has no explicit ratios, stays equal); R keeps two children [g,p] so it does NOT collapse, and the single-childed pinned mount d:1 is kept by the collapse-guard. The folded-in auto_proportion then: (a) STRIPS g's [3,1] — a computed row/col's ratios re-equalize to the no-ratios default; (b) LEAVES p's [3,1] untouched — ratio_source:'pinned' is read, never re-snapped (the split analogue of a pinned frame, I4). Asserting g loses .ratios while p keeps [3,1] in ONE sync call proves auto_proportion is folded into sync, not a separate pass a caller might forget — now inside the display mount.",
+  "fn": "sync",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "R"
+        ]
+      },
+      "R": {
+        "id": "R",
+        "mode": "row",
+        "children": [
+          "g",
+          "p",
+          "w:5"
+        ]
+      },
+      "g": {
+        "id": "g",
+        "mode": "col",
+        "ratio_source": "computed",
+        "ratios": [
+          3,
+          1
+        ],
+        "children": [
+          "w:1",
+          "w:2"
+        ]
+      },
+      "p": {
+        "id": "p",
+        "mode": "col",
+        "ratio_source": "pinned",
+        "ratios": [
+          3,
+          1
+        ],
+        "children": [
+          "w:3",
+          "w:4"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      },
+      "w:3": {
+        "id": "w:3",
+        "window_id": 3
+      },
+      "w:4": {
+        "id": "w:4",
+        "window_id": 4
+      },
+      "w:5": {
+        "id": "w:5",
+        "window_id": 5
+      }
+    }
+  },
+  "observed": [
+    {
+      "window_id": 1,
+      "app": "A",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        0,
+        0,
+        400,
+        800
+      ]
+    },
+    {
+      "window_id": 2,
+      "app": "B",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        0,
+        0,
+        400,
+        800
+      ]
+    },
+    {
+      "window_id": 3,
+      "app": "C",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        400,
+        0,
+        400,
+        800
+      ]
+    },
+    {
+      "window_id": 4,
+      "app": "D",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        400,
+        0,
+        400,
+        800
+      ]
+    }
+  ],
+  "focused_leaf": null,
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1200,
+          800
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "nodes": {
+      "R": {
+        "children": [
+          "g",
+          "p"
+        ],
+        "id": "R",
+        "mode": "row"
+      },
+      "d:1": {
+        "children": [
+          "R"
+        ],
+        "display_id": 1,
+        "frame_source": "pinned",
+        "id": "d:1",
+        "mode": "row"
+      },
+      "g": {
+        "children": [
+          "w:1",
+          "w:2"
+        ],
+        "id": "g",
+        "mode": "col",
+        "ratio_source": "computed"
+      },
+      "p": {
+        "children": [
+          "w:3",
+          "w:4"
+        ],
+        "id": "p",
+        "mode": "col",
+        "ratio_source": "pinned",
+        "ratios": [
+          3,
+          1
+        ]
+      },
+      "root": {
+        "children": [
+          "d:1"
+        ],
+        "id": "root",
+        "mode": "region"
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      },
+      "w:3": {
+        "id": "w:3",
+        "window_id": 3
+      },
+      "w:4": {
+        "id": "w:4",
+        "window_id": 4
+      }
+    },
+    "root_id": "root"
+  }
+}

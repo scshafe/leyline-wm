@@ -1,0 +1,22 @@
+{
+  "note": "S8 bag lift: detach leaf a from a 2-leaf row → parent r is left with one child (b) and collapses to a fixpoint, so b becomes the root. The reflow that makes the lifted window's slot disappear.",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": { "id": "r", "mode": "row", "children": ["a", "b"] },
+      "a": { "id": "a", "window_id": 1 },
+      "b": { "id": "b", "window_id": 2 }
+    }
+  },
+  "op": "remove_leaf",
+  "args": { "leaf": "a" },
+  "expect": {
+    "ok": true,
+    "tree": {
+      "root_id": "b",
+      "nodes": {
+        "b": { "id": "b", "window_id": 2 }
+      }
+    }
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "note": "end-to-end frame reconciliation (reuses the row_basic tree). A row of two presented windows (101, 102) that have drifted from their projected halves → reframe both, no show/hide. The reframe dimension of the diff, driven by project's computed frames.",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d1"
+        ]
+      },
+      "d1": {
+        "id": "d1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "a",
+          "b"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 101,
+        "binding": {
+          "app": "A"
+        }
+      },
+      "b": {
+        "id": "b",
+        "window_id": 102,
+        "binding": {
+          "app": "B"
+        }
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          800
+        ]
+      }
+    ]
+  },
+  "observed": [
+    {
+      "window_id": 101,
+      "frame": [
+        20,
+        0,
+        480,
+        800
+      ],
+      "minimized": false
+    },
+    {
+      "window_id": 102,
+      "frame": [
+        490,
+        0,
+        510,
+        800
+      ],
+      "minimized": false
+    }
+  ],
+  "expect": {
+    "hide": [],
+    "noop": [],
+    "reframe": [
+      {
+        "frame": {
+          "h": 800,
+          "w": 500,
+          "x": 0,
+          "y": 0
+        },
+        "from": {
+          "h": 800,
+          "w": 480,
+          "x": 20,
+          "y": 0
+        },
+        "window_id": 101
+      },
+      {
+        "frame": {
+          "h": 800,
+          "w": 500,
+          "x": 500,
+          "y": 0
+        },
+        "from": {
+          "h": 800,
+          "w": 510,
+          "x": 490,
+          "y": 0
+        },
+        "window_id": 102
+      }
+    ],
+    "show": []
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "note": "Gapped exact boundary: gap 10 → root inset makes span.w = 1000-2*10 = 980. 3 children min w 320 → required = Σ960 + (3-1)*10 = 980 == span → NOT > → no candidate. Pins the (cnt-1)*gap term AND the root-inset span (both untested at gap 0). Matches fit_sizes' $tmin(960)==$avail(960) feasible point exactly.",
+  "fn": "probe",
+  "tree": { "root_id": "r", "nodes": {
+    "r": {"id":"r","mode":"row","children":["a","b","c"]},
+    "a": {"id":"a","window_id":1,"min_size":{"w":320,"h":100}},
+    "b": {"id":"b","window_id":2,"min_size":{"w":320,"h":100}},
+    "c": {"id":"c","window_id":3,"min_size":{"w":320,"h":100}} } },
+  "topology": { "displays": [{"id":1,"frame":[0,0,1000,1000],"usable":[0,0,1000,1000]}], "gap":10 },
+  "expect": []
+}

@@ -1,0 +1,20 @@
+{
+  "fn": "insert_line",
+  "note": "S18-span THE AREA-TILE TOOTH / non-contiguity reject (the structural teeth that valid_rec CANNOT supply): BASE = a VALID staircase [{v,500,[0,1000]},{h,300,[0,500]}] → 3 cells {0,0,500,300},{500,0,500,1000},{0,300,500,700} (VERIFIED valid_rec ok:true). The span insert_line(h;150;{0,1000}) crosses the two cells whose y-extent contains 150 — {0,0,500,300} (h:300) and {500,0,500,1000} (h:1000) — whose block bbox is the FULL canvas {0,0,1000,1000}. The span x[0,1000] DOES anchor the block's x-faces {0,1000} (anchor passes), but the crossed cells do NOT tile the bbox: sum_area 500*300+500*1000 == 650000 != bbox_area 1000*1000 == 1000000 (the right cell is taller). The EXACT-integer area-tile tooth catches this; valid_rec would SILENTLY re-merge the dangling fragment to a coarser-but-valid partition (the lineops.jq:29-43 finding, VERIFIED) — so this is NOT delegated to valid_rec. Bare arm emits {ok:false,reason} with NO arr (store intact).",
+  "topology": { "displays": [ { "id": 1, "frame": [0, 0, 1000, 1000] } ], "gap": 0 },
+  "arr": {
+    "segments": [
+      { "axis": "v", "coord": 500, "lo": 0, "hi": 1000, "id": 1 },
+      { "axis": "h", "coord": 300, "lo": 0, "hi": 500, "id": 2 }
+    ],
+    "bindings": {},
+    "off_top": []
+  },
+  "axis": "h",
+  "coord": 150,
+  "span": { "lo": 0, "hi": 1000 },
+  "expect": {
+    "ok": false,
+    "reason": "insert_line: span [0,1000] does not anchor the block's outer faces / the spanned cells are not a contiguous gapless run on axis h"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "note": "no stack on the path → null (a stackless region scope has nothing to cycle). scope cycle errors cleanly here.",
+  "fn": "stack_ancestor",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": { "id": "r", "mode": "region", "children": ["a", "b"] },
+      "a": { "id": "a", "binding": { "app": "A" } },
+      "b": { "id": "b", "binding": { "app": "B" } }
+    }
+  },
+  "node": "a",
+  "expect": null
+}

@@ -1,0 +1,131 @@
+{
+  "fn": "move_bounded_sibling",
+  "note": "S17.3 Arm B (a parent-level drag does not reach a sibling block). Three columns over 1000x1000: v@300 (id:1) + v@600 (id:2) → A {0,300}, B {300,600}, C {600,1000}. Drag v@300 (id:1) by delta=+50: A::incident(v@300) is ONLY {A,B} (verified — C has no face on v@300), so the reflow is bounded to A|B. ASSERTS sibling_cell_byte_eq: the C-column cell's DERIVED partition frame (A::cells_rec) is BYTE-IDENTICAL before/after (the sibling block C never reflows — it is not incident to the dragged line). dragged_coord_after pins L moved 300->350. The structural reason it holds: a sibling cell with no face on L is never in A::incident, so its bounding segments' coords/spans are carried verbatim → its derived frame is byte-identical. The radius never crosses to the non-incident sibling.",
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "line_id": 1,
+  "delta": 50,
+  "sibling_region": {
+    "x": 600,
+    "y": 0,
+    "w": 400,
+    "h": 1000
+  },
+  "arr": {
+    "segments": [
+      {
+        "axis": "v",
+        "coord": 300,
+        "lo": 0,
+        "hi": 1000,
+        "id": 1
+      },
+      {
+        "axis": "v",
+        "coord": 600,
+        "lo": 0,
+        "hi": 1000,
+        "id": 2
+      }
+    ],
+    "bindings": {
+      "1:0:0": {
+        "window_id": 10,
+        "presented": true,
+        "frame": {
+          "x": 0,
+          "y": 0,
+          "w": 300,
+          "h": 1000
+        },
+        "contents": [
+          {
+            "window_id": 10,
+            "presented": true,
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "w": 300,
+              "h": 1000
+            }
+          }
+        ]
+      },
+      "1:1:0": {
+        "window_id": 11,
+        "presented": true,
+        "frame": {
+          "x": 300,
+          "y": 0,
+          "w": 300,
+          "h": 1000
+        },
+        "contents": [
+          {
+            "window_id": 11,
+            "presented": true,
+            "frame": {
+              "x": 300,
+              "y": 0,
+              "w": 300,
+              "h": 1000
+            }
+          }
+        ]
+      },
+      "1:2:0": {
+        "window_id": 20,
+        "presented": true,
+        "frame": {
+          "x": 600,
+          "y": 0,
+          "w": 400,
+          "h": 1000
+        },
+        "contents": [
+          {
+            "window_id": 20,
+            "presented": true,
+            "frame": {
+              "x": 600,
+              "y": 0,
+              "w": 400,
+              "h": 1000
+            }
+          }
+        ]
+      }
+    },
+    "off_top": []
+  },
+  "expect": {
+    "dragged_coord_after": 350,
+    "ok": true,
+    "sibling_before": [
+      {
+        "frame": {
+          "h": 1000,
+          "w": 400,
+          "x": 600,
+          "y": 0
+        },
+        "i0": 2,
+        "j0": 0
+      }
+    ],
+    "sibling_cell_byte_eq": true,
+    "valid": true
+  }
+}

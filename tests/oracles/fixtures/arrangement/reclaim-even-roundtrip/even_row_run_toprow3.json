@@ -1,0 +1,34 @@
+{
+  "note": "EVEN row-run: top row split into 3 cells (w1/w2/w3) over a full-width bottom cell (w4) — mixed-axis. Close the MIDDLE top cell w2. Under EVEN the row-run survivors {w1,w3} EACH grow by freed/2 (equal widths), where ABSORBER would grow only one. even_axis w, even_group [1,3].",
+  "prior": {
+    "root_id": "root",
+    "nodes": {
+      "root": { "id": "root", "mode": "region", "children": ["d:1"] },
+      "d:1":  { "id": "d:1", "mode": "col", "frame_source": "pinned", "display_id": 1, "children": ["nTop", "w:4"] },
+      "nTop": { "id": "nTop", "mode": "row", "children": ["w:1", "w:2", "w:3"] },
+      "w:1":  { "id": "w:1", "window_id": 1 },
+      "w:2":  { "id": "w:2", "window_id": 2 },
+      "w:3":  { "id": "w:3", "window_id": 3 },
+      "w:4":  { "id": "w:4", "window_id": 4 }
+    }
+  },
+  "observed": [
+    { "window_id": 1, "frame": [0, 0, 635, 536],     "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true },
+    { "window_id": 2, "frame": [643, 0, 635, 536],   "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true },
+    { "window_id": 3, "frame": [1286, 0, 634, 536],  "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true },
+    { "window_id": 4, "frame": [0, 544, 1920, 536],  "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true }
+  ],
+  "observed2": [
+    { "window_id": 1, "frame": [0, 0, 635, 536],     "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true },
+    { "window_id": 3, "frame": [1286, 0, 634, 536],  "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true },
+    { "window_id": 4, "frame": [0, 544, 1920, 536],  "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true }
+  ],
+  "topology": {
+    "displays": [
+      { "id": 1, "frame": { "x": 0, "y": 0, "w": 1920, "h": 1080 }, "usable": { "x": 0, "y": 0, "w": 1920, "h": 1080 } }
+    ],
+    "dead_zones": [],
+    "gap": 8
+  },
+  "expect": { "grid_persists": true, "even_axis": "w", "even_group": [1, 3], "even_differs": true }
+}

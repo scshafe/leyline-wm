@@ -1,0 +1,11 @@
+{
+  "revision": 2,
+  "generation": 7,
+  "timed": {"op": "control", "request_id": "timed-reset", "action_id": "reset", "args": {"mode": "soft", "resume": true}},
+  "next": {"op": "control", "request_id": "next-start", "action_id": "start"},
+  "new_stop": {"op": "control", "request_id": "new-stop", "action_id": "stop"},
+  "reused": {"op": "control", "request_id": "timed-reset", "action_id": "start"},
+  "eviction_count": 64,
+  "eviction_request_prefix": "control-eviction-",
+  "scope": {"management_enabled": false, "resident_running": false, "readiness_verified": false}
+}

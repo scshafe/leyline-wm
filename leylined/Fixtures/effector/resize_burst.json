@@ -1,0 +1,40 @@
+{
+  "baseline": [
+    0,
+    0,
+    100,
+    80
+  ],
+  "deltas": [
+    [
+      10,
+      0
+    ],
+    [
+      10,
+      0
+    ],
+    [
+      10,
+      0
+    ],
+    [
+      10,
+      0
+    ]
+  ],
+  "expected_first": [
+    0,
+    0,
+    110,
+    80
+  ],
+  "expected_final": [
+    0,
+    0,
+    140,
+    80
+  ],
+  "expected_issues": 2,
+  "expected_coalesced": 2
+}

@@ -1,0 +1,16 @@
+{
+  "note": "S4 step 1 (R5): _canvas($T) is the per-display usable-rect LIST [{display_id, rect}], NOT a single union. FLUSH 2-display topology (display 2 at x=1000 edge-to-edge against display 1's right edge, ZERO physical inter-frame gap, the only separation being the per-display gap:8 inset). Each rect = G::inset_frame(display_usable; gap) — the same inset the pinned mount tiles over (parcel.jq:245). MUST be two rects {8,8,984,984}@d1 + {1008,8,984,984}@d2, NEVER the folded single {8,8,1984,984} union (folding is the seductive-wrong-move that reintroduces the global-bag fusion R5 exists to prevent). A geometric band filter would mis-handle the flush case; this is structural.",
+  "fn": "canvas",
+  "arr": [],
+  "topology": {
+    "displays": [
+      { "id": 1, "frame": [0, 0, 1000, 1000] },
+      { "id": 2, "frame": [1000, 0, 1000, 1000] }
+    ],
+    "gap": 8
+  },
+  "expect": [
+    { "display_id": 1, "rect": { "x": 8, "y": 8, "w": 984, "h": 984 } },
+    { "display_id": 2, "rect": { "x": 1008, "y": 8, "w": 984, "h": 984 } }
+  ]
+}

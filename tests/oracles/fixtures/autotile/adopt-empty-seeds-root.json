@@ -1,0 +1,23 @@
+{
+  "note": "adopt into an empty tree: the new window leaf seeds the root directly — no split, no internal node, no stack.",
+  "fn": "adopt",
+  "tree": {
+    "root_id": null,
+    "nodes": {}
+  },
+  "window_leaf": {
+    "id": "w1",
+    "window_id": 1
+  },
+  "focused_leaf": null,
+  "focused_frame": null,
+  "expect": {
+    "nodes": {
+      "w1": {
+        "id": "w1",
+        "window_id": 1
+      }
+    },
+    "root_id": "w1"
+  }
+}

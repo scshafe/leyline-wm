@@ -1,0 +1,14 @@
+{
+  "note": "S8 guard: remove_leaf rejects an internal (split) node — removing it would detach a whole subtree. Callers pass a window leaf id (w:<wid>), never an internal node.",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": { "id": "r", "mode": "row", "children": ["a", "b"] },
+      "a": { "id": "a", "window_id": 1 },
+      "b": { "id": "b", "window_id": 2 }
+    }
+  },
+  "op": "remove_leaf",
+  "args": { "leaf": "r" },
+  "expect": { "ok": false, "reason": "not a leaf: r" }
+}

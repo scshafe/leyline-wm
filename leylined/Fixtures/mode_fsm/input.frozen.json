@@ -1,0 +1,416 @@
+[
+  {
+    "mode": "input",
+    "chord": "0",
+    "verb": "ley input append 0",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "0x24",
+    "verb": "ley input submit",
+    "exit_predicate": "unconditional_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "0x31",
+    "verb": "ley input append \" \"",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "0x33",
+    "verb": "ley input backspace",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "0x35",
+    "verb": "ley input dismiss",
+    "exit_predicate": "unconditional_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "0x5A",
+    "transition": "default"
+  },
+  {
+    "mode": "input",
+    "chord": "1",
+    "verb": "ley input append 1",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "2",
+    "verb": "ley input append 2",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "3",
+    "verb": "ley input append 3",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "4",
+    "verb": "ley input append 4",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "5",
+    "verb": "ley input append 5",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "6",
+    "verb": "ley input append 6",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "7",
+    "verb": "ley input append 7",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "8",
+    "verb": "ley input append 8",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "9",
+    "verb": "ley input append 9",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "a",
+    "verb": "ley input append a",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "b",
+    "verb": "ley input append b",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "c",
+    "verb": "ley input append c",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "cmd + ctrl + alt + shift - 0x31",
+    "verb": "ley input capture",
+    "exit_predicate": "unconditional_exit",
+    "is_enter": true
+  },
+  {
+    "mode": "input",
+    "chord": "cmd + ctrl + alt + shift - 0x31",
+    "verb": "ley input dismiss",
+    "exit_predicate": "unconditional_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "d",
+    "verb": "ley input append d",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "e",
+    "verb": "ley input append e",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "f",
+    "verb": "ley input append f",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "g",
+    "verb": "ley input append g",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "h",
+    "verb": "ley input append h",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "i",
+    "verb": "ley input append i",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "j",
+    "verb": "ley input append j",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "k",
+    "verb": "ley input append k",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "l",
+    "verb": "ley input append l",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "m",
+    "verb": "ley input append m",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "n",
+    "verb": "ley input append n",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "o",
+    "verb": "ley input append o",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "p",
+    "verb": "ley input append p",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "q",
+    "verb": "ley input append q",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "r",
+    "verb": "ley input append r",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "s",
+    "verb": "ley input append s",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - a",
+    "verb": "ley input append A",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - b",
+    "verb": "ley input append B",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - c",
+    "verb": "ley input append C",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - d",
+    "verb": "ley input append D",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - e",
+    "verb": "ley input append E",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - f",
+    "verb": "ley input append F",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - g",
+    "verb": "ley input append G",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - h",
+    "verb": "ley input append H",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - i",
+    "verb": "ley input append I",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - j",
+    "verb": "ley input append J",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - k",
+    "verb": "ley input append K",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - l",
+    "verb": "ley input append L",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - m",
+    "verb": "ley input append M",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - n",
+    "verb": "ley input append N",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - o",
+    "verb": "ley input append O",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - p",
+    "verb": "ley input append P",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - q",
+    "verb": "ley input append Q",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - r",
+    "verb": "ley input append R",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - s",
+    "verb": "ley input append S",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - t",
+    "verb": "ley input append T",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - u",
+    "verb": "ley input append U",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - v",
+    "verb": "ley input append V",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - w",
+    "verb": "ley input append W",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - x",
+    "verb": "ley input append X",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - y",
+    "verb": "ley input append Y",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "shift - z",
+    "verb": "ley input append Z",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "t",
+    "verb": "ley input append t",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "u",
+    "verb": "ley input append u",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "v",
+    "verb": "ley input append v",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "w",
+    "verb": "ley input append w",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "x",
+    "verb": "ley input append x",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "y",
+    "verb": "ley input append y",
+    "exit_predicate": "no_exit"
+  },
+  {
+    "mode": "input",
+    "chord": "z",
+    "verb": "ley input append z",
+    "exit_predicate": "no_exit"
+  }
+]

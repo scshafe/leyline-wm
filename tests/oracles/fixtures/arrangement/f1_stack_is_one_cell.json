@@ -1,0 +1,23 @@
+{
+  "note": "S5 step 3 (GREEN) — the partition invariant (S1) sees a stacked cell as EXACTLY ONE cell. A 3-deep stack of leaves a/b/c presents only its top (parcel.jq:250); from_floorplan draws NO divider for a stack node, so the segment bag is empty and the atom grid is one cell filling the canvas. valid_stack (= valid_md over from_floorplan's bag) reports a VALID partition (no overlap, no gap) — because the surplus members b,c contribute no frame. This is why R1's full-partition invariant is UNAFFECTED by stacks. Paired with the hand-authored RED f1_stack_dangling_overlaps, which leaks a surplus frame and proves the check does NOT false-green.",
+  "fn": "valid_stack",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": { "id": "r", "mode": "stack", "stack_source": "manual", "top": "a", "children": ["a", "b", "c"] },
+      "a": { "id": "a", "window_id": 1 },
+      "b": { "id": "b", "window_id": 2 },
+      "c": { "id": "c", "window_id": 3 }
+    }
+  },
+  "topology": {
+    "displays": [{ "id": 1, "frame": [0, 0, 1000, 1000], "usable": [0, 0, 1000, 1000] }],
+    "gap": 0
+  },
+  "expect": {
+    "ok": true,
+    "per_display": [
+      { "display_id": 1, "ok": true, "violations": [] }
+    ]
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "fn": "author",
+  "note": "S6 step 2/3 — a 2-then-3-window slicing adopt sequence. EMPTY tree + three observed tileable windows: bsp's sync seeds 301, adopts 302, adopts 303 (each slicing-insert at the focus anchor), authoring a nested BSP. The arrangement derives the segment bag (from_floorplan) and emits arrangement_targets byte-equal to bsp's reconcile_targets. The behavior-preserving cutover proof on a deeper slicing tree (the divider count > 1).",
+  "tree": {},
+  "observed": [
+    {
+      "window_id": 301,
+      "app": "A",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "minimized": false,
+      "frame": [
+        0,
+        0,
+        1600,
+        1000
+      ]
+    },
+    {
+      "window_id": 302,
+      "app": "B",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "minimized": false,
+      "frame": [
+        0,
+        0,
+        1600,
+        1000
+      ]
+    },
+    {
+      "window_id": 303,
+      "app": "C",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "minimized": false,
+      "frame": [
+        0,
+        0,
+        1600,
+        1000
+      ]
+    }
+  ],
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1600,
+          1000
+        ]
+      }
+    ],
+    "dead_zones": []
+  },
+  "focused_leaf": null,
+  "expect": {
+    "301": {
+      "window_id": 301,
+      "presented": true,
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 800,
+        "h": 1000
+      }
+    },
+    "302": {
+      "window_id": 302,
+      "presented": true,
+      "frame": {
+        "x": 800,
+        "y": 0,
+        "w": 800,
+        "h": 500
+      }
+    },
+    "303": {
+      "window_id": 303,
+      "presented": true,
+      "frame": {
+        "x": 800,
+        "y": 500,
+        "w": 800,
+        "h": 500
+      }
+    }
+  }
+}

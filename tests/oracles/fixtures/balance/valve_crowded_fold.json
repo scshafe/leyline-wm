@@ -1,0 +1,102 @@
+{
+  "note": "8.3 fold: a crowded row (a/b min w 600, span 1000) → r flips row→stack (stack_source:valve, valve_from:row), surplus b goes presented:false (no overlap). No focus → top defaults to first child a. Expect SEEDED+reviewed; F1 GREEN + conservation ok cross-checked.",
+  "fn": "valve",
+  "focused_leaf": null,
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "mode": "row",
+        "children": [
+          "a",
+          "b"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1,
+        "min_size": {
+          "w": 600,
+          "h": 100
+        }
+      },
+      "b": {
+        "id": "b",
+        "window_id": 2,
+        "min_size": {
+          "w": 600,
+          "h": 100
+        }
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ],
+        "usable": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "config": {},
+  "expect": {
+    "facts": [
+      {
+        "action": "fold",
+        "axis": "row",
+        "kind": "stack",
+        "node": "r",
+        "required": 1200,
+        "span": 1000,
+        "surplus": [
+          "b"
+        ],
+        "top": "a"
+      }
+    ],
+    "tree": {
+      "nodes": {
+        "a": {
+          "id": "a",
+          "min_size": {
+            "h": 100,
+            "w": 600
+          },
+          "window_id": 1
+        },
+        "b": {
+          "id": "b",
+          "min_size": {
+            "h": 100,
+            "w": 600
+          },
+          "window_id": 2
+        },
+        "r": {
+          "children": [
+            "a",
+            "b"
+          ],
+          "id": "r",
+          "mode": "stack",
+          "stack_source": "valve",
+          "valve_from": "row"
+        }
+      },
+      "root_id": "r"
+    }
+  }
+}

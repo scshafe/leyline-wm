@@ -1,0 +1,15 @@
+{
+  "note": "leaf cursor → its closest enclosing stack (the node whose `top` changes what's presented). r→box[stack]→a, scope cycle on a acts on box.",
+  "fn": "stack_ancestor",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": { "id": "r", "mode": "region", "children": ["box"] },
+      "box": { "id": "box", "mode": "stack", "top": "a", "children": ["a", "b"] },
+      "a": { "id": "a", "binding": { "app": "A" } },
+      "b": { "id": "b", "binding": { "app": "B" } }
+    }
+  },
+  "node": "a",
+  "expect": "box"
+}

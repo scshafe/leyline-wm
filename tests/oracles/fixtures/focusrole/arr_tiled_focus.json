@@ -1,0 +1,18 @@
+{
+  "note": "A1: arrangement store, focused window bound 1-deep (a plain tiled cell) -> focus. This is the operator-reported bug scene: pre-A1 the tree-native resolver found no .nodes leaf and fell through to the caps branch, painting a TILED window azure.",
+  "store": {
+    "segments": [{"axis": "v", "coord": 960, "lo": 0, "hi": 1080}],
+    "bindings": {
+      "1:0:0": {"window_id": 101, "presented": true, "frame": {"x": 0, "y": 0, "w": 952, "h": 1080},
+                "contents": [{"window_id": 101, "presented": true, "frame": {"x": 0, "y": 0, "w": 952, "h": 1080}}]},
+      "1:1:0": {"window_id": 102, "presented": true, "frame": {"x": 968, "y": 0, "w": 952, "h": 1080},
+                "contents": [{"window_id": 102, "presented": true, "frame": {"x": 968, "y": 0, "w": 952, "h": 1080}}]}
+    },
+    "off_top": [],
+    "topology": {"displays": [{"id": 1, "frame": {"x": 0, "y": 0, "w": 1920, "h": 1080}}], "gap": 8},
+    "promotions": []
+  },
+  "window_id": 101,
+  "observed": [{"window_id": 101, "app": "A", "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true, "minimized": false, "frame": {"x": 0, "y": 0, "w": 952, "h": 1080}}],
+  "expect": "focus"
+}

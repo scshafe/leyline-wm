@@ -1,0 +1,9 @@
+{
+  "_doc": "East: 200 direct, edge=1000 beats 202's edge=1900; 201 excluded by strict > 0 (perp_overlap = 0 at touching y=700). West: 202 wraps to the east-edge band first because its wrap_edge_distance (672) beats 200's (1572). North/south: noCandidate (no x-axis overlap between source and any candidate).",
+  "results": {
+    "north": { "outcome": "noCandidate", "winner": null },
+    "east":  { "outcome": "direct",      "winner": 200, "ranked": [200, 202] },
+    "south": { "outcome": "noCandidate", "winner": null },
+    "west":  { "outcome": "wrap",        "winner": 202, "ranked": [202, 200] }
+  }
+}

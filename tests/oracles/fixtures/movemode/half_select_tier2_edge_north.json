@@ -1,0 +1,10 @@
+{
+  "fn": "half_select",
+  "note": "fork-2 tier 2 (nearest display edge): the focused origin y=200 TIES the neighbor cell midpoint (y=200) within tol, so tier 1 cannot decide. Tier 2 compares the FOCUSED origin (200) to the DISPLAY midpoint (540): 200 < 540 -> nearer the TOP edge -> LEADING (north) half. (On a tier-1 tie the focused origin equals the neighbor cell midpoint by construction, so this also reads as 'the neighbor cell sits in the top half'.) The old centre-only rule had NO branch for this.",
+  "target_cell": {"frame": {"x": 0, "y": 0, "w": 480, "h": 400}},
+  "focused_frame": {"x": 480, "y": 200, "w": 480, "h": 100},
+  "display": {"frame": {"x": 0, "y": 0, "w": 1920, "h": 1080}},
+  "dir": "west",
+  "tol": 4,
+  "expect": "north"
+}

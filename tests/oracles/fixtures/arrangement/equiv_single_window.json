@@ -1,0 +1,51 @@
+{
+  "note": "SET-EQUALITY proof (one window): a lone inset window -> floorplan has ZERO interior edges, so from_floorplan yields an EMPTY segment bag and the arrangement derives ONE cell == the whole canvas {8,8,984,984}, matching floorplan's single cell. The degenerate base case. SET equality, no leaf_id.",
+  "fn": "equiv",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "w:1"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 8
+  },
+  "expect": [
+    {
+      "x": 8,
+      "y": 8,
+      "w": 984,
+      "h": 984
+    }
+  ]
+}

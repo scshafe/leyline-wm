@@ -1,0 +1,9 @@
+{
+  "_doc": "Window 200 is filtered out before ranking by is_visible=false. No other candidates → all directions noCandidate.",
+  "results": {
+    "north": { "outcome": "noCandidate", "winner": null },
+    "east":  { "outcome": "noCandidate", "winner": null },
+    "south": { "outcome": "noCandidate", "winner": null },
+    "west":  { "outcome": "noCandidate", "winner": null }
+  }
+}

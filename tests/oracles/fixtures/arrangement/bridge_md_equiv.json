@@ -1,0 +1,25 @@
+{
+  "note": "S4 step 4 (R5): the from_floorplan bridge extended to the per-display case. from_floorplan over a pinned-mount tree (the FLUSH cells_multi_display tree — root → d:1(pinned)→w:1, d:2(pinned)→w:2) yields an EMPTY segment bag (floorplan already does the STRUCTURAL cross-display edge exclusion: two cells on separate display mounts have a region LCA → no edge → no gridline). bridge_md_equiv homes that bag per display and derives cells_md, re-applying the per-display gutter inset over each bag's OWN rect → the per-display cell rect set {8,8,984,984}+{1008,8,984,984}, BYTE-IDENTICAL (jq -S) to floorplan/cells_multi_display's own cells. The equivalence oracle that ties the new per-display path back to the shipped floorplan.jq cross-display behavior. Tree+topology reused verbatim from floorplan/cells_multi_display (flush displays, display 2 at x=1000).",
+  "fn": "bridge",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": { "id": "root", "mode": "region", "children": ["d:1", "d:2"] },
+      "d:1": { "id": "d:1", "mode": "row", "frame_source": "pinned", "display_id": 1, "children": ["w:1"] },
+      "d:2": { "id": "d:2", "mode": "row", "frame_source": "pinned", "display_id": 2, "children": ["w:2"] },
+      "w:1": { "id": "w:1", "window_id": 1 },
+      "w:2": { "id": "w:2", "window_id": 2 }
+    }
+  },
+  "topology": {
+    "displays": [
+      { "id": 1, "frame": [0, 0, 1000, 1000] },
+      { "id": 2, "frame": [1000, 0, 1000, 1000] }
+    ],
+    "gap": 8
+  },
+  "expect": [
+    { "x": 8, "y": 8, "w": 984, "h": 984 },
+    { "x": 1008, "y": 8, "w": 984, "h": 984 }
+  ]
+}

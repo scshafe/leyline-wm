@@ -1,0 +1,10 @@
+{
+  "scenarios": ["default_then_recovery", "held_mode_recovery", "released_during_journal", "invalidated_during_journal", "released_while_transition_held"],
+  "entry_chord": "cmd + ctrl + alt + shift - r",
+  "action_id": "resize.start",
+  "input_origin": "input",
+  "socket_origin": "socket",
+  "reconcile_origin": "internal_reconcile",
+  "released_reason": "input_generation_released",
+  "invalidated_reason": "queued_command_invalidated"
+}

@@ -1,0 +1,35 @@
+{
+  "note": "S4 step 5 (R5): valid_md runs S1's full partition-validity (no-overlap AND no-gap) PER bag — a gap on display 1 must NOT implicate display 2. FLUSH 2-display topology. Display 1 carries a 4-segment courtyard hole (left v@350, right v@650 over y[350,650]; top h@350, bottom h@650 over x[350,650] — all homed to d1, scaled into d1's rect) → per_display[0].ok=false with BOTH a non_rectangular (the 8-atom ring, box 9) AND a gap (the courtyard the ring fails to fill; gap and nonrect are DUAL in this atom-grid model, cf arrangement_valid/hole_center). Display 2 has NO segment → ONE full cell → per_display[1].ok=true. The inter-display band is outside every bag's rect, so it is never a region to be filled — the false-positive S1's single-bag valid() over the union rect would hit. HAND-AUTHORED ok:false (the violations are derived from the courtyard geometry, never blind-blessed) — a broken valid_md that ran over the union rect, or dropped per-bag isolation, would diverge.",
+  "fn": "valid_md",
+  "arr": [
+    { "axis": "v", "coord": 350, "lo": 350, "hi": 650 },
+    { "axis": "v", "coord": 650, "lo": 350, "hi": 650 },
+    { "axis": "h", "coord": 350, "lo": 350, "hi": 650 },
+    { "axis": "h", "coord": 650, "lo": 350, "hi": 650 }
+  ],
+  "topology": {
+    "displays": [
+      { "id": 1, "frame": [0, 0, 1000, 1000] },
+      { "id": 2, "frame": [1000, 0, 1000, 1000] }
+    ],
+    "gap": 8
+  },
+  "expect": {
+    "ok": false,
+    "per_display": [
+      {
+        "display_id": 1,
+        "ok": false,
+        "violations": [
+          { "kind": "non_rectangular", "frame": { "x": 8, "y": 8, "w": 984, "h": 984 }, "atoms": 8, "box": 9 },
+          { "kind": "gap", "missing_area": 878256, "frame": { "x": 8, "y": 8, "w": 984, "h": 984 } }
+        ]
+      },
+      {
+        "display_id": 2,
+        "ok": true,
+        "violations": []
+      }
+    ]
+  }
+}

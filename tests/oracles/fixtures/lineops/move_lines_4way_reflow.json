@@ -1,0 +1,43 @@
+{
+  "fn": "move_lines_check",
+  "note": "J1 (junction drag) — the 4-way: one compound move shifts the crossing v@500 (+100) AND h@500 (-50) in ONE author + ONE validity pass; all four cells resize coherently (still 4 cells, valid, conserved). The two clamps are independent by construction at a 4-way (the lines' endpoints sit on the canvas faces, not on each other), and move_lines canonicalizes to v-then-h — order_independent pins that input order is irrelevant (the reversed moves list byte-equals). bindings are untouched (move_lines is partition-only, like move_line).",
+  "topology": {
+    "displays": [
+      {"id": 1, "frame": [0, 0, 1000, 1000]}
+    ],
+    "gap": 0
+  },
+  "moves": [
+    {"line_id": 1, "delta": 100},
+    {"line_id": 2, "delta": -50}
+  ],
+  "arr": {
+    "segments": [
+      {"axis": "v", "coord": 500, "lo": 0, "hi": 1000, "id": 1},
+      {"axis": "h", "coord": 500, "lo": 0, "hi": 1000, "id": 2}
+    ],
+    "bindings": {
+      "1:0:0": {"window_id": 10, "presented": true, "frame": {"x": 0, "y": 0, "w": 500, "h": 500}},
+      "1:1:0": {"window_id": 11, "presented": true, "frame": {"x": 500, "y": 0, "w": 500, "h": 500}},
+      "1:0:1": {"window_id": 12, "presented": true, "frame": {"x": 0, "y": 500, "w": 500, "h": 500}},
+      "1:1:1": {"window_id": 13, "presented": true, "frame": {"x": 500, "y": 500, "w": 500, "h": 500}}
+    },
+    "off_top": []
+  },
+  "expect": {
+    "ok": true,
+    "reason": null,
+    "applied": [
+      {"line_id": 1, "cdelta": 100},
+      {"line_id": 2, "cdelta": -50}
+    ],
+    "coords_after": [600, 450],
+    "order_independent": true,
+    "valid": true,
+    "ncells_before": 4,
+    "ncells_after": 4,
+    "bindings_byte_eq": true,
+    "store_intact_on_reject": null,
+    "ride_endpoints": null
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "_doc": "East display is a vertically narrower band than the source window's y-range. Three candidates on D2: Viable (positive overlap, closer), NoOverlap (touches at y=700 → perp_overlap = 0, not viable per strict > 0 rule), Farther (positive overlap but farther east). Locks the strict-positive overlap rule and the edge_distance primary key.",
+  "displays": [
+    { "index": 1, "frame": { "x": 0,    "y":   0, "w": 1512, "h": 982 } },
+    { "index": 2, "frame": { "x": 1512, "y": 200, "w": 2560, "h": 800 } }
+  ],
+  "windows": [
+    { "id": 100, "display": 1, "frame": { "x":  100, "y": 100, "w": 600, "h": 600 }, "app": "Source"    },
+    { "id": 200, "display": 2, "frame": { "x": 1700, "y": 250, "w": 800, "h": 300 }, "app": "Viable"    },
+    { "id": 201, "display": 2, "frame": { "x": 1700, "y": 700, "w": 800, "h": 300 }, "app": "NoOverlap" },
+    { "id": 202, "display": 2, "frame": { "x": 2600, "y": 300, "w": 800, "h": 400 }, "app": "Farther"   }
+  ],
+  "source": { "window_id": 100 }
+}

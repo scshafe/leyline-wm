@@ -1,0 +1,146 @@
+{
+  "note": "8.3 strip discipline: w:1 has an AUTHORED min_size (present pre-stamp), w:2 is bare. valve_live stamps w:2 (from store), folds, then strips ONLY the stamped min (w:2) — w:1's authored min SURVIVES (forward-safe for Stage-7 authored mins; stamp_min_sizes never clobbers authored). Pins that $unmin = pre-stamp-null leaves only.",
+  "fn": "valve_live",
+  "focused_leaf": null,
+  "minstore": {
+    "Chrome": {
+      "w": 600,
+      "h": 100
+    }
+  },
+  "observed": [
+    {
+      "window_id": 1,
+      "app": "Chrome",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        0,
+        0,
+        500,
+        1000
+      ]
+    },
+    {
+      "window_id": 2,
+      "app": "Chrome",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        500,
+        0,
+        500,
+        1000
+      ]
+    }
+  ],
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "w:1",
+          "w:2"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1,
+        "min_size": {
+          "w": 700,
+          "h": 120
+        }
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ],
+        "usable": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "config": {},
+  "expect": {
+    "facts": [
+      {
+        "action": "fold",
+        "axis": "row",
+        "kind": "stack",
+        "node": "d:1",
+        "required": 1300,
+        "span": 1000,
+        "surplus": [
+          "w:2"
+        ],
+        "top": "w:1"
+      }
+    ],
+    "tree": {
+      "nodes": {
+        "d:1": {
+          "children": [
+            "w:1",
+            "w:2"
+          ],
+          "display_id": 1,
+          "frame_source": "pinned",
+          "id": "d:1",
+          "mode": "stack",
+          "stack_source": "valve",
+          "valve_from": "row"
+        },
+        "root": {
+          "children": [
+            "d:1"
+          ],
+          "id": "root",
+          "mode": "region"
+        },
+        "w:1": {
+          "id": "w:1",
+          "min_size": {
+            "h": 120,
+            "w": 700
+          },
+          "window_id": 1
+        },
+        "w:2": {
+          "id": "w:2",
+          "window_id": 2
+        }
+      },
+      "root_id": "root"
+    }
+  }
+}

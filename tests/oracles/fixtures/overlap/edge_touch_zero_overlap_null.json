@@ -1,0 +1,10 @@
+{
+  "note": "WS-A contract pin (ov>0, strict): a float flush against a cell's RIGHT edge — touching the seam x=500 but not crossing it — has overlap AREA exactly 0 (ov_x = min(500,700)-max(0,500) = 0) and is filtered → null. A mere edge-touch is NOT 'sitting over' the cell; the caller falls back to sync-adopt rather than splitting a cell the float only abuts. Pins the `ov > 0` (strict, not >=) boundary so a future `ov >= 0` slip — which would make EVERY non-overlapping-but-aligned cell a candidate — reddens here.",
+  "arr": {
+    "bindings": {
+      "1:0:0": {"window_id": 11, "presented": true, "frame": {"x": 0, "y": 0, "w": 500, "h": 500}}
+    }
+  },
+  "float_frame": {"x": 500, "y": 0, "w": 200, "h": 500},
+  "expect": null
+}

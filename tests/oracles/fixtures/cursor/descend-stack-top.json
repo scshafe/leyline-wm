@@ -1,0 +1,14 @@
+{
+  "note": "descend into a stack goes to its presented child (top), not the first child.",
+  "fn": "descend",
+  "tree": {
+    "root_id": "s",
+    "nodes": {
+      "s": { "id": "s", "mode": "stack", "top": "b", "children": ["a", "b"] },
+      "a": { "id": "a", "binding": { "app": "A" } },
+      "b": { "id": "b", "binding": { "app": "B" } }
+    }
+  },
+  "node": "s",
+  "expect": "b"
+}

@@ -1,0 +1,136 @@
+{
+  "schema": "leyline/input-stop-barrier-tests/v1",
+  "stop_event": "did_stop",
+  "scenarios": [
+    {
+      "name": "restart_then_stop_late_ack_never_resumes",
+      "steps": [
+        {"op": "resume", "event": "obsolete_restart", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "ack", "callback": 0, "expect": {"stop_calls": 1, "events": ["did_stop"], "overflows": 0}}
+      ]
+    },
+    {
+      "name": "stop_then_start_waits_for_actual_teardown",
+      "steps": [
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "start", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "ack", "callback": 0, "expect": {"stop_calls": 1, "events": ["did_stop", "start"], "overflows": 0}}
+      ]
+    },
+    {
+      "name": "many_alternations_share_one_teardown_and_keep_latest_intent",
+      "steps": [
+        {"op": "resume", "event": "obsolete_start_0", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_2", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_4", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_6", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_8", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_10", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_12", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_14", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_16", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_18", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_20", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_22", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_24", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_26", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_28", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_30", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_32", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_34", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_36", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_38", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_40", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_42", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_44", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_46", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_48", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_50", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_52", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_54", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_56", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_58", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_60", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "obsolete_start_62", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "resume", "event": "latest_start", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "ack", "callback": 0, "expect": {"stop_calls": 1, "events": ["did_stop", "latest_start"], "overflows": 0}}
+      ]
+    },
+    {
+      "name": "maintenance_acknowledges_only_after_teardown_and_after_did_stop",
+      "steps": [
+        {"op": "resume", "event": "obsolete_restart", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "stop", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "when_stopped", "event": "maintenance_input_ack", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "ack", "callback": 0, "expect": {"stop_calls": 1, "events": ["did_stop", "maintenance_input_ack"], "overflows": 0}}
+      ]
+    },
+    {
+      "name": "maintenance_waiter_overflow_never_fabricates_ninth_ack",
+      "steps": [
+        {"op": "when_stopped", "event": "maintenance_ack_0", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "when_stopped", "event": "maintenance_ack_1", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "when_stopped", "event": "maintenance_ack_2", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "when_stopped", "event": "maintenance_ack_3", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "when_stopped", "event": "maintenance_ack_4", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "when_stopped", "event": "maintenance_ack_5", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "when_stopped", "event": "maintenance_ack_6", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "when_stopped", "event": "maintenance_ack_7", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "when_stopped", "event": "forbidden_overflow_ack", "expect": {"stop_calls": 1, "events": [], "overflows": 1}},
+        {"op": "ack", "callback": 0, "expect": {"stop_calls": 1, "events": ["did_stop", "maintenance_ack_0", "maintenance_ack_1", "maintenance_ack_2", "maintenance_ack_3", "maintenance_ack_4", "maintenance_ack_5", "maintenance_ack_6", "maintenance_ack_7"], "overflows": 1}}
+      ]
+    },
+    {
+      "name": "duplicate_ack_cannot_repeat_resume",
+      "steps": [
+        {"op": "resume", "event": "start", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "ack", "callback": 0, "expect": {"stop_calls": 1, "events": ["did_stop", "start"], "overflows": 0}},
+        {"op": "ack", "callback": 0, "expect": {"stop_calls": 1, "events": ["did_stop", "start"], "overflows": 0}}
+      ]
+    },
+    {
+      "name": "old_duplicate_ack_cannot_release_fresh_stop",
+      "steps": [
+        {"op": "resume", "event": "first_start", "expect": {"stop_calls": 1, "events": [], "overflows": 0}},
+        {"op": "ack", "callback": 0, "expect": {"stop_calls": 1, "events": ["did_stop", "first_start"], "overflows": 0}},
+        {"op": "resume", "event": "fresh_start", "expect": {"stop_calls": 2, "events": ["did_stop", "first_start"], "overflows": 0}},
+        {"op": "when_stopped", "event": "fresh_maintenance_ack", "expect": {"stop_calls": 2, "events": ["did_stop", "first_start"], "overflows": 0}},
+        {"op": "ack", "callback": 0, "expect": {"stop_calls": 2, "events": ["did_stop", "first_start"], "overflows": 0}},
+        {"op": "ack", "callback": 1, "expect": {"stop_calls": 2, "events": ["did_stop", "first_start", "did_stop", "fresh_maintenance_ack", "fresh_start"], "overflows": 0}}
+      ]
+    }
+  ]
+}

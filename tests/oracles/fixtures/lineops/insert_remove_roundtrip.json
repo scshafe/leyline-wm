@@ -1,0 +1,22 @@
+{
+  "fn": "roundtrip",
+  "note": "S14a.3 THE inverse-pair tripwire: remove_line ∘ insert_line == identity, BYTE-EXACT on the WHOLE store. The input bag [v@700, v@300] is NON-canonically ordered (from_floorplan would sort to [v@300, v@700] by [axis,coord,lo]) — proving the round-trip rides APPEND-TO-TAIL (insert appends v@500 id:1 to the tail, never re-sorts) + FILTER-BY-ID (remove drops id:1, never re-sorts), NOT append-then-sort. VERIFIED: append-then-sort_by([axis,coord,lo]) BREAKS identity on this very scene (sorted_eq:false) while append-tail/filter is byte-exact (identity:true). insert v@500 full-span splits the unique middle column {300,0,400,1000} (the only cell whose x-extent strictly contains 500); valid_rec green at both ends.",
+  "topology": { "displays": [ { "id": 1, "frame": [0, 0, 1000, 1000] } ], "gap": 0 },
+  "arr": {
+    "segments": [
+      { "axis": "v", "coord": 700, "lo": 0, "hi": 1000 },
+      { "axis": "v", "coord": 300, "lo": 0, "hi": 1000 }
+    ],
+    "bindings": {},
+    "off_top": []
+  },
+  "axis": "v",
+  "coord": 500,
+  "span": { "lo": 0, "hi": 1000 },
+  "expect": {
+    "identity": true,
+    "ins_ok": true,
+    "rem_ok": true,
+    "valid_after_insert": true
+  }
+}

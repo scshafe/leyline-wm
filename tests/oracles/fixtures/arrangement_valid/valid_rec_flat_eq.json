@@ -1,0 +1,21 @@
+{
+  "note": "S11.2 (R-lift) base case: valid_rec on a FLAT bridge ($fx.arr = {segments, bindings:{}, off_top:[]}) is BYTE-IDENTICAL to valid_md($fx.arr.segments; T). With empty bindings no cell has a non-empty .nested.segments, so _valid_nested_at returns [] for every bag, the optional `nested` key is OMITTED (the {} not {nested:[]} guard), and valid_rec's body reduces statement-for-statement to valid_md's per-display { ok, per_display } envelope. NOTE this fixture carries fn:\"valid_rec_flat_eq\" — a NEW fn the wrapped dispatch handles — distinct from the existing arrangement_valid fixtures' fn:\"valid\". The harness emits {eq:bool}. Scene: a v@500 interior gridline homed to d1 splits it into two valid filled cells; d2 (no segment) is one vacuously-valid cell — a clean ok:true partition. Asserting eq:true proves the base case attaches no nested key and never recurses; the byte-equal comparison ALSO proves no `nested` key appears (valid_md never emits one).",
+  "fn": "valid_rec_flat_eq",
+  "arr": {
+    "segments": [
+      { "axis": "v", "coord": 500, "lo": 8, "hi": 992 }
+    ],
+    "bindings": {},
+    "off_top": []
+  },
+  "topology": {
+    "displays": [
+      { "id": 1, "frame": [0, 0, 1000, 1000] },
+      { "id": 2, "frame": [1000, 0, 1000, 1000] }
+    ],
+    "gap": 8
+  },
+  "expect": {
+    "eq": true
+  }
+}

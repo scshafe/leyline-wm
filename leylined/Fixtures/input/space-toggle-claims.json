@@ -1,0 +1,9 @@
+{
+  "schema": "leyline/space-toggle-claims/v1",
+  "action_id": "space.management.toggle",
+  "chord": "cmd + ctrl + alt + shift - a",
+  "modes": ["default", "move", "resize"],
+  "expected_claim_counts": {"default": 8, "move": 22, "resize": 13, "input": 0},
+  "expected_retained_action_count": 25,
+  "expected_total_claim_count": 43
+}

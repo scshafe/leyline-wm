@@ -1,0 +1,64 @@
+{
+  "note": "cells: a lone inset window → one cell {8,8,984,984}, display_id 1. Reuses project/gap_single_window_inset.",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "w:1"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 8
+  },
+  "expect": {
+    "cells": [
+      {
+        "display_id": 1,
+        "frame": {
+          "h": 984,
+          "w": 984,
+          "x": 8,
+          "y": 8
+        },
+        "leaf_id": "w:1"
+      }
+    ],
+    "corners": [],
+    "edges": [],
+    "root": {
+      "h": 984,
+      "w": 984,
+      "x": 8,
+      "y": 8
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "note": "partition boundary: an empty observed set. Both buckets are empty {managed:[], float:[]}. Guards the (.observed // [])[] reduce over zero windows — the reactor must get a well-formed empty partition, not null.",
+  "fn": "partition",
+  "observed": [],
+  "rules": [],
+  "expect": {
+    "float": [],
+    "managed": []
+  }
+}

@@ -1,0 +1,785 @@
+{
+  "space_a_on": {
+    "focused_space": {
+      "space_key": "space-A",
+      "display_id": "display-A",
+      "space_enabled": true
+    },
+    "resident_running": true
+  },
+  "space_b_off": {
+    "focused_space": {
+      "space_key": "space-B",
+      "display_id": "display-B",
+      "space_enabled": false
+    },
+    "resident_running": true
+  },
+  "space_a_off_preference": {
+    "active_context": {
+      "space_key": "space-A",
+      "display_id": "display-A",
+      "space_enabled": true
+    },
+    "space_activation": {
+      "space-A": false
+    }
+  },
+  "empty_space_a": {
+    "focus": null,
+    "focused_space": {
+      "space_key": "space-A",
+      "display_id": "display-A",
+      "space_enabled": true
+    }
+  },
+  "unknown_space": {
+    "focus": {
+      "window_id": 7
+    },
+    "space_identity_available": false
+  },
+  "counter_identity": {
+    "focused_space": {
+      "space_key": 3,
+      "display_id": 1,
+      "space_enabled": true
+    }
+  },
+  "stopped": {
+    "focus": null,
+    "resident_running": false,
+    "resident_status": "Stopped"
+  },
+  "space_a_windows": {
+    "observer_epoch": "menu-observer",
+    "observer_generation": 5,
+    "management_enabled": true,
+    "resident_running": true,
+    "focused_space": {
+      "space_key": "space-A",
+      "display_id": "display-A",
+      "space_enabled": true,
+      "space_visible": true,
+      "space_identity_available": true
+    },
+    "space_contexts": [
+      {
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "space_key": "space-B",
+        "display_id": "display-B",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      }
+    ],
+    "space_activation": {
+      "space-A": true,
+      "space-B": true
+    },
+    "windows": [
+      {
+        "window_id": 11,
+        "pid": 111,
+        "window_generation": 2,
+        "app_name": "Editor",
+        "title": "Front",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 12,
+        "pid": 112,
+        "window_generation": 2,
+        "app_name": "Editor",
+        "title": "Buried",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 13,
+        "pid": 113,
+        "window_generation": 2,
+        "app_name": "Browser",
+        "title": "Nested",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 14,
+        "pid": 114,
+        "window_generation": 2,
+        "app_name": "Ignored",
+        "title": "Private",
+        "eligible": false,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 15,
+        "pid": 115,
+        "window_generation": 2,
+        "app_name": "Minimized",
+        "title": "Hidden",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true,
+        "minimized": true
+      },
+      {
+        "window_id": 99,
+        "pid": 199,
+        "window_generation": 2,
+        "app_name": "Unmanaged",
+        "title": "Outside",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      }
+    ],
+    "model_state": {
+      "arrangement": {
+        "bindings": {
+          "1:0:0": {
+            "contents": [
+              {
+                "window_id": 11
+              },
+              {
+                "window_id": 12
+              }
+            ]
+          },
+          "1:1:0": {
+            "nested": {
+              "bindings": {
+                "0:0:0": {
+                  "window_id": 13
+                },
+                "0:1:0": {
+                  "contents": [
+                    {
+                      "window_id": 14
+                    },
+                    {
+                      "window_id": 15
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "focus_b_while_menu_a": {
+    "observer_epoch": "menu-observer",
+    "observer_generation": 5,
+    "management_enabled": true,
+    "resident_running": true,
+    "focused_space": {
+      "space_key": "space-B",
+      "display_id": "display-B",
+      "space_enabled": true,
+      "space_visible": true,
+      "space_identity_available": true
+    },
+    "space_contexts": [
+      {
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "space_key": "space-B",
+        "display_id": "display-B",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      }
+    ],
+    "space_activation": {
+      "space-A": true,
+      "space-B": true
+    },
+    "windows": [
+      {
+        "window_id": 11,
+        "pid": 111,
+        "window_generation": 2,
+        "app_name": "Editor",
+        "title": "Front",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 12,
+        "pid": 112,
+        "window_generation": 2,
+        "app_name": "Editor",
+        "title": "Buried",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 13,
+        "pid": 113,
+        "window_generation": 2,
+        "app_name": "Browser",
+        "title": "Nested",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 14,
+        "pid": 114,
+        "window_generation": 2,
+        "app_name": "Ignored",
+        "title": "Private",
+        "eligible": false,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 15,
+        "pid": 115,
+        "window_generation": 2,
+        "app_name": "Minimized",
+        "title": "Hidden",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true,
+        "minimized": true
+      },
+      {
+        "window_id": 99,
+        "pid": 199,
+        "window_generation": 2,
+        "app_name": "Unmanaged",
+        "title": "Outside",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      }
+    ],
+    "model_state": {
+      "arrangement": {
+        "bindings": {
+          "1:0:0": {
+            "contents": [
+              {
+                "window_id": 11
+              },
+              {
+                "window_id": 12
+              }
+            ]
+          },
+          "1:1:0": {
+            "nested": {
+              "bindings": {
+                "0:0:0": {
+                  "window_id": 13
+                },
+                "0:1:0": {
+                  "contents": [
+                    {
+                      "window_id": 14
+                    },
+                    {
+                      "window_id": 15
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "space_a_disabled_while_menu": {
+    "observer_epoch": "menu-observer",
+    "observer_generation": 5,
+    "management_enabled": true,
+    "resident_running": true,
+    "focused_space": {
+      "space_key": "space-B",
+      "display_id": "display-B",
+      "space_enabled": true,
+      "space_visible": true,
+      "space_identity_available": true
+    },
+    "space_contexts": [
+      {
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": false,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "space_key": "space-B",
+        "display_id": "display-B",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      }
+    ],
+    "space_activation": {
+      "space-A": false,
+      "space-B": true
+    },
+    "windows": [
+      {
+        "window_id": 11,
+        "pid": 111,
+        "window_generation": 2,
+        "app_name": "Editor",
+        "title": "Front",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 12,
+        "pid": 112,
+        "window_generation": 2,
+        "app_name": "Editor",
+        "title": "Buried",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 13,
+        "pid": 113,
+        "window_generation": 2,
+        "app_name": "Browser",
+        "title": "Nested",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 14,
+        "pid": 114,
+        "window_generation": 2,
+        "app_name": "Ignored",
+        "title": "Private",
+        "eligible": false,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 15,
+        "pid": 115,
+        "window_generation": 2,
+        "app_name": "Minimized",
+        "title": "Hidden",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true,
+        "minimized": true
+      },
+      {
+        "window_id": 99,
+        "pid": 199,
+        "window_generation": 2,
+        "app_name": "Unmanaged",
+        "title": "Outside",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      }
+    ],
+    "model_state": {
+      "arrangement": {
+        "bindings": {
+          "1:0:0": {
+            "contents": [
+              {
+                "window_id": 11
+              },
+              {
+                "window_id": 12
+              }
+            ]
+          },
+          "1:1:0": {
+            "nested": {
+              "bindings": {
+                "0:0:0": {
+                  "window_id": 13
+                },
+                "0:1:0": {
+                  "contents": [
+                    {
+                      "window_id": 14
+                    },
+                    {
+                      "window_id": 15
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "buried_reused_while_menu": {
+    "observer_epoch": "menu-observer",
+    "observer_generation": 5,
+    "management_enabled": true,
+    "resident_running": true,
+    "focused_space": {
+      "space_key": "space-B",
+      "display_id": "display-B",
+      "space_enabled": true,
+      "space_visible": true,
+      "space_identity_available": true
+    },
+    "space_contexts": [
+      {
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "space_key": "space-B",
+        "display_id": "display-B",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      }
+    ],
+    "space_activation": {
+      "space-A": true,
+      "space-B": true
+    },
+    "windows": [
+      {
+        "window_id": 11,
+        "pid": 111,
+        "window_generation": 2,
+        "app_name": "Editor",
+        "title": "Front",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 12,
+        "pid": 112,
+        "window_generation": 3,
+        "app_name": "Editor",
+        "title": "Buried",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 13,
+        "pid": 113,
+        "window_generation": 2,
+        "app_name": "Browser",
+        "title": "Nested",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 14,
+        "pid": 114,
+        "window_generation": 2,
+        "app_name": "Ignored",
+        "title": "Private",
+        "eligible": false,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 15,
+        "pid": 115,
+        "window_generation": 2,
+        "app_name": "Minimized",
+        "title": "Hidden",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true,
+        "minimized": true
+      },
+      {
+        "window_id": 99,
+        "pid": 199,
+        "window_generation": 2,
+        "app_name": "Unmanaged",
+        "title": "Outside",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      }
+    ],
+    "model_state": {
+      "arrangement": {
+        "bindings": {
+          "1:0:0": {
+            "contents": [
+              {
+                "window_id": 11
+              },
+              {
+                "window_id": 12
+              }
+            ]
+          },
+          "1:1:0": {
+            "nested": {
+              "bindings": {
+                "0:0:0": {
+                  "window_id": 13
+                },
+                "0:1:0": {
+                  "contents": [
+                    {
+                      "window_id": 14
+                    },
+                    {
+                      "window_id": 15
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "unknown_while_menu": {
+    "observer_epoch": "menu-observer",
+    "observer_generation": 5,
+    "management_enabled": true,
+    "resident_running": true,
+    "focused_space": {
+      "space_key": "space-B",
+      "display_id": "display-B",
+      "space_enabled": true,
+      "space_visible": true,
+      "space_identity_available": true
+    },
+    "space_contexts": [],
+    "space_activation": {
+      "space-A": true,
+      "space-B": true
+    },
+    "windows": [
+      {
+        "window_id": 11,
+        "pid": 111,
+        "window_generation": 2,
+        "app_name": "Editor",
+        "title": "Front",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 12,
+        "pid": 112,
+        "window_generation": 2,
+        "app_name": "Editor",
+        "title": "Buried",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 13,
+        "pid": 113,
+        "window_generation": 2,
+        "app_name": "Browser",
+        "title": "Nested",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 14,
+        "pid": 114,
+        "window_generation": 2,
+        "app_name": "Ignored",
+        "title": "Private",
+        "eligible": false,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "window_id": 15,
+        "pid": 115,
+        "window_generation": 2,
+        "app_name": "Minimized",
+        "title": "Hidden",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true,
+        "minimized": true
+      },
+      {
+        "window_id": 99,
+        "pid": 199,
+        "window_generation": 2,
+        "app_name": "Unmanaged",
+        "title": "Outside",
+        "eligible": true,
+        "space_key": "space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      }
+    ],
+    "model_state": {
+      "arrangement": {
+        "bindings": {
+          "1:0:0": {
+            "contents": [
+              {
+                "window_id": 11
+              },
+              {
+                "window_id": 12
+              }
+            ]
+          },
+          "1:1:0": {
+            "nested": {
+              "bindings": {
+                "0:0:0": {
+                  "window_id": 13
+                },
+                "0:1:0": {
+                  "contents": [
+                    {
+                      "window_id": 14
+                    },
+                    {
+                      "window_id": 15
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "space_identity_available": false
+  }
+}

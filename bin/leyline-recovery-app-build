@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Build the independent grant-free Recovery application, without starting it.
+set -euo pipefail
+recovery_root="$(cd "$(dirname "$0")/.." && pwd -P)"
+recovery_app="$recovery_root/bin/Leyline Recovery.app"
+recovery_arch="$(uname -m)"
+recovery_flags=()
+while (($#)); do
+  case "$1" in
+    --tests) recovery_flags=(-DLEYLINE_BUILD_TESTS); recovery_app="$recovery_root/bin/Leyline Recovery Tests.app"; shift ;;
+    --output-app) [[ $# -ge 2 ]] || exit 64; recovery_app="$2"; shift 2 ;;
+    --arch) [[ $# -ge 2 ]] || exit 64; recovery_arch="$2"; shift 2 ;;
+    --help|-h) printf '%s\n' 'leyline-recovery-app-build [--tests] [--output-app PATH] [--arch arm64|x86_64]'; exit 0 ;;
+    *) printf 'Unknown recovery build option: %s\n' "$1" >&2; exit 64 ;;
+  esac
+done
+case "$recovery_arch" in arm64|x86_64) ;; *) exit 64 ;; esac
+[[ "$recovery_app" == *.app ]] || exit 64
+"$recovery_root/bin/leyline-grant-free-check" "$recovery_root/bin/leyline-recovery.swift"
+mkdir -p "$recovery_app/Contents/MacOS"
+cp "$recovery_root/bin/leyline-recovery.Info.plist" "$recovery_app/Contents/Info.plist"
+swiftc ${recovery_flags[@]+"${recovery_flags[@]}"} -target "$recovery_arch-apple-macos14.0" -O -framework AppKit \
+  -file-prefix-map "$recovery_root=/leyline" -debug-prefix-map "$recovery_root=/leyline" \
+  -o "$recovery_app/Contents/MacOS/leyline-recovery" "$recovery_root/bin/leyline-recovery.swift"
+"$recovery_root/bin/leyline-codesign" "$recovery_app" org.leyline.recovery
+printf 'Built Recovery: %s\n' "$recovery_app"

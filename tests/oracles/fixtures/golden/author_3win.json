@@ -1,0 +1,96 @@
+{
+  "expect_targets": {
+    "301": {
+      "frame": {
+        "h": 1000,
+        "w": 800,
+        "x": 0,
+        "y": 0
+      },
+      "presented": true,
+      "window_id": 301
+    },
+    "302": {
+      "frame": {
+        "h": 500,
+        "w": 800,
+        "x": 800,
+        "y": 0
+      },
+      "presented": true,
+      "window_id": 302
+    },
+    "303": {
+      "frame": {
+        "h": 500,
+        "w": 800,
+        "x": 800,
+        "y": 500
+      },
+      "presented": true,
+      "window_id": 303
+    }
+  },
+  "kind": "strategy_author",
+  "name": "author_3win",
+  "note": "A1 strategy-author golden: empty tree + 3 tileable windows → seed→adopt→adopt (nested BSP). bsp's authored presented frames, frozen.",
+  "observed": [
+    {
+      "app": "A",
+      "frame": [
+        0,
+        0,
+        1600,
+        1000
+      ],
+      "minimized": false,
+      "resizable": true,
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "window_id": 301
+    },
+    {
+      "app": "B",
+      "frame": [
+        0,
+        0,
+        1600,
+        1000
+      ],
+      "minimized": false,
+      "resizable": true,
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "window_id": 302
+    },
+    {
+      "app": "C",
+      "frame": [
+        0,
+        0,
+        1600,
+        1000
+      ],
+      "minimized": false,
+      "resizable": true,
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "window_id": 303
+    }
+  ],
+  "seed": null,
+  "topology": {
+    "dead_zones": [],
+    "displays": [
+      {
+        "frame": [
+          0,
+          0,
+          1600,
+          1000
+        ],
+        "id": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "leyline/recursive-space-partition-fixture/v1",
+  "expected_managed_ids": [11, 12, 31, 32],
+  "variants": {
+    "nested": {
+      "segments": [], "off_top": [],
+      "bindings": {"1:0:0": {"nested": {"segments": [{"axis": "v", "coord": 600, "lo": 30, "hi": 800}], "off_top": [], "bindings": {
+        "0:0:0": {"window_id": 11, "min_size": {"w": 200, "h": 100}},
+        "0:1:0": {"window_id": 12, "min_size": {"w": 250, "h": 100}}
+      }}}}
+    },
+    "overload": {
+      "segments": [], "off_top": [],
+      "bindings": {"1:0:0": {"window_id": 11, "min_size": {"w": 800, "h": 500}, "stack_source": "overload", "contents": [
+        {"window_id": 11, "min_size": {"w": 800, "h": 500}},
+        {"window_id": 12, "min_size": {"w": 800, "h": 500}}
+      ]}}
+    }
+  }
+}

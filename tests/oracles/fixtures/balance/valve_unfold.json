@@ -1,0 +1,96 @@
+{
+  "note": "8.3 reversibility: a prior valve stack (stack_source:valve, valve_from:row) whose children now FIT (min w 300, span 1000) → valve un-folds it back to row (markers + top dropped), facts [{action:unfold, node:r}]. Proves the valve is reversible per-settle, not a latch.",
+  "fn": "valve",
+  "focused_leaf": null,
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "mode": "stack",
+        "stack_source": "valve",
+        "valve_from": "row",
+        "top": "a",
+        "children": [
+          "a",
+          "b"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1,
+        "min_size": {
+          "w": 300,
+          "h": 100
+        }
+      },
+      "b": {
+        "id": "b",
+        "window_id": 2,
+        "min_size": {
+          "w": 300,
+          "h": 100
+        }
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ],
+        "usable": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "config": {},
+  "expect": {
+    "facts": [
+      {
+        "action": "unfold",
+        "kind": "stack",
+        "node": "r"
+      }
+    ],
+    "tree": {
+      "nodes": {
+        "a": {
+          "id": "a",
+          "min_size": {
+            "h": 100,
+            "w": 300
+          },
+          "window_id": 1
+        },
+        "b": {
+          "id": "b",
+          "min_size": {
+            "h": 100,
+            "w": 300
+          },
+          "window_id": 2
+        },
+        "r": {
+          "children": [
+            "a",
+            "b"
+          ],
+          "id": "r",
+          "mode": "row"
+        }
+      },
+      "root_id": "r"
+    }
+  }
+}

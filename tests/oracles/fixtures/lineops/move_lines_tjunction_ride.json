@@ -1,0 +1,43 @@
+{
+  "fn": "move_lines_check",
+  "note": "J1 (junction drag) — the T-junction: crossbar v@500 (full height) with a stem h@500 anchored on it (lo=500). Moving the crossbar +100 RIDES the stem's anchored endpoint (lo 500→600, _translate_and_ride); the stem then moves -50 over its POST-RIDE geometry (canonical v-then-h makes this deterministic). 3 cells before and after, valid, conserved. ride_endpoints pins the stem's ridden lo.",
+  "topology": {
+    "displays": [
+      {"id": 1, "frame": [0, 0, 1000, 1000]}
+    ],
+    "gap": 0
+  },
+  "moves": [
+    {"line_id": 2, "delta": -50},
+    {"line_id": 1, "delta": 100}
+  ],
+  "ride_line_id": 2,
+  "arr": {
+    "segments": [
+      {"axis": "v", "coord": 500, "lo": 0, "hi": 1000, "id": 1},
+      {"axis": "h", "coord": 500, "lo": 500, "hi": 1000, "id": 2}
+    ],
+    "bindings": {
+      "1:0:0": {"window_id": 10, "presented": true, "frame": {"x": 0, "y": 0, "w": 500, "h": 1000}},
+      "1:1:0": {"window_id": 11, "presented": true, "frame": {"x": 500, "y": 0, "w": 500, "h": 500}},
+      "1:1:1": {"window_id": 12, "presented": true, "frame": {"x": 500, "y": 500, "w": 500, "h": 500}}
+    },
+    "off_top": []
+  },
+  "expect": {
+    "ok": true,
+    "reason": null,
+    "applied": [
+      {"line_id": 1, "cdelta": 100},
+      {"line_id": 2, "cdelta": -50}
+    ],
+    "coords_after": [450, 600],
+    "order_independent": true,
+    "valid": true,
+    "ncells_before": 3,
+    "ncells_after": 3,
+    "bindings_byte_eq": true,
+    "store_intact_on_reject": null,
+    "ride_endpoints": {"lo": 600, "hi": 1000}
+  }
+}

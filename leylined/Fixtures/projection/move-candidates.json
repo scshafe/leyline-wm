@@ -1,0 +1,902 @@
+{
+  "cases": [
+    {
+      "name": "swap",
+      "world": {
+        "observer_epoch": "preview-observer",
+        "observer_generation": 8,
+        "topology_revision": 4,
+        "model_state_revision": 41,
+        "mode": "move",
+        "mode_context_window_id": 1,
+        "mode_context_space_key": "space:fixture-A",
+        "management_enabled": true,
+        "observation": {
+          "world_complete": true
+        },
+        "focus": {
+          "window_id": 1,
+          "pid": 501,
+          "window_generation": 2,
+          "managed": true,
+          "eligible": true,
+          "space_enabled": true,
+          "space_visible": true,
+          "space_identity_available": true,
+          "space_key": "space:fixture-A",
+          "display_id": "display:fixture-primary",
+          "observer_generation": 8,
+          "frame": {
+            "x": 0,
+            "y": 30,
+            "w": 396,
+            "h": 770
+          }
+        },
+        "windows": [
+          {
+            "window_id": 1,
+            "pid": 501,
+            "window_generation": 2,
+            "managed": true,
+            "eligible": true,
+            "space_enabled": true,
+            "space_visible": true,
+            "space_identity_available": true,
+            "space_key": "space:fixture-A",
+            "display_id": "display:fixture-primary",
+            "observer_generation": 8,
+            "frame": {
+              "x": 0,
+              "y": 30,
+              "w": 396,
+              "h": 770
+            }
+          },
+          {
+            "window_id": 2,
+            "pid": 502,
+            "window_generation": 2,
+            "managed": true,
+            "eligible": true,
+            "space_enabled": true,
+            "space_visible": true,
+            "space_identity_available": true,
+            "space_key": "space:fixture-A",
+            "display_id": "display:fixture-primary",
+            "observer_generation": 8,
+            "frame": {
+              "x": 404,
+              "y": 30,
+              "w": 396,
+              "h": 381
+            }
+          },
+          {
+            "window_id": 3,
+            "pid": 503,
+            "window_generation": 2,
+            "managed": true,
+            "eligible": true,
+            "space_enabled": true,
+            "space_visible": true,
+            "space_identity_available": true,
+            "space_key": "space:fixture-A",
+            "display_id": "display:fixture-primary",
+            "observer_generation": 8,
+            "frame": {
+              "x": 804,
+              "y": 30,
+              "w": 396,
+              "h": 381
+            }
+          },
+          {
+            "window_id": 4,
+            "pid": 504,
+            "window_generation": 2,
+            "managed": true,
+            "eligible": true,
+            "space_enabled": true,
+            "space_visible": true,
+            "space_identity_available": true,
+            "space_key": "space:fixture-A",
+            "display_id": "display:fixture-primary",
+            "observer_generation": 8,
+            "frame": {
+              "x": 404,
+              "y": 419,
+              "w": 796,
+              "h": 381
+            }
+          }
+        ],
+        "model_state": {
+          "arrangement": {
+            "segments": [],
+            "bindings": {
+              "1:0:0": {
+                "window_id": 1,
+                "frame": {
+                  "x": 0,
+                  "y": 30,
+                  "w": 396,
+                  "h": 770
+                }
+              },
+              "1:1:0": {
+                "window_id": 2,
+                "frame": {
+                  "x": 404,
+                  "y": 30,
+                  "w": 396,
+                  "h": 381
+                }
+              },
+              "1:2:0": {
+                "window_id": 3,
+                "frame": {
+                  "x": 804,
+                  "y": 30,
+                  "w": 396,
+                  "h": 381
+                }
+              },
+              "1:3:0": {
+                "window_id": 4,
+                "frame": {
+                  "x": 404,
+                  "y": 419,
+                  "w": 796,
+                  "h": 381
+                }
+              }
+            },
+            "off_top": [],
+            "promotions": []
+          },
+          "interaction": {
+            "mode": "move",
+            "source_window_id": 1,
+            "cursor_window_id": 2,
+            "active_space_key": "space:fixture-A",
+            "selection": {
+              "scope": "run",
+              "level": 1,
+              "anchor_window_id": 2,
+              "cursor_window_id": 2,
+              "ordered_window_ids": [
+                2,
+                3
+              ],
+              "boundary": {
+                "axis": "h",
+                "coord": 30,
+                "lo": 404,
+                "hi": 1200,
+                "side": "north",
+                "owner_path": []
+              }
+            },
+            "candidate": {
+              "schema": "leyline/move-candidate/v1",
+              "candidate_id": "candidate-swap",
+              "operation": "swap",
+              "source_window_id": 1,
+              "target_window_id": 2,
+              "selection": {
+                "scope": "run",
+                "level": 1,
+                "anchor_window_id": 2,
+                "cursor_window_id": 2,
+                "ordered_window_ids": [
+                  2,
+                  3
+                ],
+                "boundary": {
+                  "axis": "h",
+                  "coord": 30,
+                  "lo": 404,
+                  "hi": 1200,
+                  "side": "north",
+                  "owner_path": []
+                }
+              },
+              "base": {
+                "observer_epoch": "preview-observer",
+                "observer_generation": 8,
+                "topology_revision": 4,
+                "active_space_key": "space:fixture-A",
+                "state_revision": 41,
+                "arrangement": {
+                  "segments": [],
+                  "bindings": {
+                    "1:0:0": {
+                      "window_id": 1,
+                      "frame": {
+                        "x": 0,
+                        "y": 30,
+                        "w": 396,
+                        "h": 770
+                      }
+                    },
+                    "1:1:0": {
+                      "window_id": 2,
+                      "frame": {
+                        "x": 404,
+                        "y": 30,
+                        "w": 396,
+                        "h": 381
+                      }
+                    },
+                    "1:2:0": {
+                      "window_id": 3,
+                      "frame": {
+                        "x": 804,
+                        "y": 30,
+                        "w": 396,
+                        "h": 381
+                      }
+                    },
+                    "1:3:0": {
+                      "window_id": 4,
+                      "frame": {
+                        "x": 404,
+                        "y": 419,
+                        "w": 796,
+                        "h": 381
+                      }
+                    }
+                  },
+                  "off_top": [],
+                  "promotions": []
+                },
+                "window_identities": {
+                  "1": {
+                    "pid": 501,
+                    "window_generation": 2
+                  },
+                  "2": {
+                    "pid": 502,
+                    "window_generation": 2
+                  },
+                  "3": {
+                    "pid": 503,
+                    "window_generation": 2
+                  },
+                  "4": {
+                    "pid": 504,
+                    "window_generation": 2
+                  }
+                }
+              },
+              "desired_arrangement": {
+                "segments": [],
+                "bindings": {
+                  "1:0:0": {
+                    "window_id": 1,
+                    "frame": {
+                      "x": 404,
+                      "y": 30,
+                      "w": 396,
+                      "h": 381
+                    }
+                  },
+                  "1:1:0": {
+                    "window_id": 2,
+                    "frame": {
+                      "x": 0,
+                      "y": 30,
+                      "w": 396,
+                      "h": 770
+                    }
+                  },
+                  "1:2:0": {
+                    "window_id": 3,
+                    "frame": {
+                      "x": 804,
+                      "y": 30,
+                      "w": 396,
+                      "h": 381
+                    }
+                  },
+                  "1:3:0": {
+                    "window_id": 4,
+                    "frame": {
+                      "x": 404,
+                      "y": 419,
+                      "w": 796,
+                      "h": 381
+                    }
+                  }
+                },
+                "off_top": [],
+                "promotions": []
+              },
+              "targets": {
+                "1": {
+                  "window_id": 1,
+                  "presented": true,
+                  "frame": {
+                    "x": 404,
+                    "y": 30,
+                    "w": 396,
+                    "h": 381
+                  }
+                },
+                "2": {
+                  "window_id": 2,
+                  "presented": true,
+                  "frame": {
+                    "x": 0,
+                    "y": 30,
+                    "w": 396,
+                    "h": 770
+                  }
+                }
+              },
+              "affected_frames": {
+                "1": {
+                  "window_id": 1,
+                  "presented": true,
+                  "frame": {
+                    "x": 404,
+                    "y": 30,
+                    "w": 396,
+                    "h": 381
+                  }
+                },
+                "2": {
+                  "window_id": 2,
+                  "presented": true,
+                  "frame": {
+                    "x": 0,
+                    "y": 30,
+                    "w": 396,
+                    "h": 770
+                  }
+                }
+              }
+            },
+            "observer_generation": 8,
+            "topology_revision": 4
+          }
+        }
+      },
+      "commit_targets": {
+        "1": {
+          "window_id": 1,
+          "presented": true,
+          "frame": {
+            "x": 404,
+            "y": 30,
+            "w": 396,
+            "h": 381
+          }
+        },
+        "2": {
+          "window_id": 2,
+          "presented": true,
+          "frame": {
+            "x": 0,
+            "y": 30,
+            "w": 396,
+            "h": 770
+          }
+        }
+      }
+    },
+    {
+      "name": "insert_with_reclaim",
+      "world": {
+        "observer_epoch": "preview-observer",
+        "observer_generation": 8,
+        "topology_revision": 4,
+        "model_state_revision": 41,
+        "mode": "move",
+        "mode_context_window_id": 1,
+        "mode_context_space_key": "space:fixture-A",
+        "management_enabled": true,
+        "observation": {
+          "world_complete": true
+        },
+        "focus": {
+          "window_id": 1,
+          "pid": 501,
+          "window_generation": 2,
+          "managed": true,
+          "eligible": true,
+          "space_enabled": true,
+          "space_visible": true,
+          "space_identity_available": true,
+          "space_key": "space:fixture-A",
+          "display_id": "display:fixture-primary",
+          "observer_generation": 8,
+          "frame": {
+            "x": 0,
+            "y": 30,
+            "w": 396,
+            "h": 770
+          }
+        },
+        "windows": [
+          {
+            "window_id": 1,
+            "pid": 501,
+            "window_generation": 2,
+            "managed": true,
+            "eligible": true,
+            "space_enabled": true,
+            "space_visible": true,
+            "space_identity_available": true,
+            "space_key": "space:fixture-A",
+            "display_id": "display:fixture-primary",
+            "observer_generation": 8,
+            "frame": {
+              "x": 0,
+              "y": 30,
+              "w": 396,
+              "h": 770
+            }
+          },
+          {
+            "window_id": 2,
+            "pid": 502,
+            "window_generation": 2,
+            "managed": true,
+            "eligible": true,
+            "space_enabled": true,
+            "space_visible": true,
+            "space_identity_available": true,
+            "space_key": "space:fixture-A",
+            "display_id": "display:fixture-primary",
+            "observer_generation": 8,
+            "frame": {
+              "x": 404,
+              "y": 30,
+              "w": 396,
+              "h": 381
+            }
+          },
+          {
+            "window_id": 3,
+            "pid": 503,
+            "window_generation": 2,
+            "managed": true,
+            "eligible": true,
+            "space_enabled": true,
+            "space_visible": true,
+            "space_identity_available": true,
+            "space_key": "space:fixture-A",
+            "display_id": "display:fixture-primary",
+            "observer_generation": 8,
+            "frame": {
+              "x": 804,
+              "y": 30,
+              "w": 396,
+              "h": 381
+            }
+          },
+          {
+            "window_id": 4,
+            "pid": 504,
+            "window_generation": 2,
+            "managed": true,
+            "eligible": true,
+            "space_enabled": true,
+            "space_visible": true,
+            "space_identity_available": true,
+            "space_key": "space:fixture-A",
+            "display_id": "display:fixture-primary",
+            "observer_generation": 8,
+            "frame": {
+              "x": 404,
+              "y": 419,
+              "w": 796,
+              "h": 381
+            }
+          }
+        ],
+        "model_state": {
+          "arrangement": {
+            "segments": [],
+            "bindings": {
+              "1:0:0": {
+                "window_id": 1,
+                "frame": {
+                  "x": 0,
+                  "y": 30,
+                  "w": 396,
+                  "h": 770
+                }
+              },
+              "1:1:0": {
+                "window_id": 2,
+                "frame": {
+                  "x": 404,
+                  "y": 30,
+                  "w": 396,
+                  "h": 381
+                }
+              },
+              "1:2:0": {
+                "window_id": 3,
+                "frame": {
+                  "x": 804,
+                  "y": 30,
+                  "w": 396,
+                  "h": 381
+                }
+              },
+              "1:3:0": {
+                "window_id": 4,
+                "frame": {
+                  "x": 404,
+                  "y": 419,
+                  "w": 796,
+                  "h": 381
+                }
+              }
+            },
+            "off_top": [],
+            "promotions": []
+          },
+          "interaction": {
+            "mode": "move",
+            "source_window_id": 1,
+            "cursor_window_id": 2,
+            "active_space_key": "space:fixture-A",
+            "selection": {
+              "scope": "run",
+              "level": 1,
+              "anchor_window_id": 2,
+              "cursor_window_id": 2,
+              "ordered_window_ids": [
+                2,
+                3
+              ],
+              "boundary": {
+                "axis": "h",
+                "coord": 30,
+                "lo": 404,
+                "hi": 1200,
+                "side": "north",
+                "owner_path": []
+              }
+            },
+            "candidate": {
+              "schema": "leyline/move-candidate/v1",
+              "candidate_id": "candidate-insert_with_reclaim",
+              "operation": "insert",
+              "source_window_id": 1,
+              "target_window_id": 2,
+              "selection": {
+                "scope": "run",
+                "level": 1,
+                "anchor_window_id": 2,
+                "cursor_window_id": 2,
+                "ordered_window_ids": [
+                  2,
+                  3
+                ],
+                "boundary": {
+                  "axis": "h",
+                  "coord": 30,
+                  "lo": 404,
+                  "hi": 1200,
+                  "side": "north",
+                  "owner_path": []
+                }
+              },
+              "base": {
+                "observer_epoch": "preview-observer",
+                "observer_generation": 8,
+                "topology_revision": 4,
+                "active_space_key": "space:fixture-A",
+                "state_revision": 41,
+                "arrangement": {
+                  "segments": [],
+                  "bindings": {
+                    "1:0:0": {
+                      "window_id": 1,
+                      "frame": {
+                        "x": 0,
+                        "y": 30,
+                        "w": 396,
+                        "h": 770
+                      }
+                    },
+                    "1:1:0": {
+                      "window_id": 2,
+                      "frame": {
+                        "x": 404,
+                        "y": 30,
+                        "w": 396,
+                        "h": 381
+                      }
+                    },
+                    "1:2:0": {
+                      "window_id": 3,
+                      "frame": {
+                        "x": 804,
+                        "y": 30,
+                        "w": 396,
+                        "h": 381
+                      }
+                    },
+                    "1:3:0": {
+                      "window_id": 4,
+                      "frame": {
+                        "x": 404,
+                        "y": 419,
+                        "w": 796,
+                        "h": 381
+                      }
+                    }
+                  },
+                  "off_top": [],
+                  "promotions": []
+                },
+                "window_identities": {
+                  "1": {
+                    "pid": 501,
+                    "window_generation": 2
+                  },
+                  "2": {
+                    "pid": 502,
+                    "window_generation": 2
+                  },
+                  "3": {
+                    "pid": 503,
+                    "window_generation": 2
+                  },
+                  "4": {
+                    "pid": 504,
+                    "window_generation": 2
+                  }
+                }
+              },
+              "desired_arrangement": {
+                "segments": [],
+                "bindings": {
+                  "1:0:0": {
+                    "window_id": 1,
+                    "frame": {
+                      "x": 404,
+                      "y": 30,
+                      "w": 796,
+                      "h": 240
+                    }
+                  },
+                  "1:1:0": {
+                    "window_id": 2,
+                    "frame": {
+                      "x": 404,
+                      "y": 278,
+                      "w": 396,
+                      "h": 133
+                    }
+                  },
+                  "1:2:0": {
+                    "window_id": 3,
+                    "frame": {
+                      "x": 804,
+                      "y": 278,
+                      "w": 396,
+                      "h": 133
+                    }
+                  },
+                  "1:3:0": {
+                    "window_id": 4,
+                    "frame": {
+                      "x": 0,
+                      "y": 419,
+                      "w": 1200,
+                      "h": 381
+                    }
+                  }
+                },
+                "off_top": [],
+                "promotions": []
+              },
+              "targets": {
+                "1": {
+                  "window_id": 1,
+                  "presented": true,
+                  "frame": {
+                    "x": 404,
+                    "y": 30,
+                    "w": 796,
+                    "h": 240
+                  }
+                },
+                "2": {
+                  "window_id": 2,
+                  "presented": true,
+                  "frame": {
+                    "x": 404,
+                    "y": 278,
+                    "w": 396,
+                    "h": 133
+                  }
+                },
+                "3": {
+                  "window_id": 3,
+                  "presented": true,
+                  "frame": {
+                    "x": 804,
+                    "y": 278,
+                    "w": 396,
+                    "h": 133
+                  }
+                },
+                "4": {
+                  "window_id": 4,
+                  "presented": true,
+                  "frame": {
+                    "x": 0,
+                    "y": 419,
+                    "w": 1200,
+                    "h": 381
+                  }
+                }
+              },
+              "affected_frames": {
+                "1": {
+                  "window_id": 1,
+                  "presented": true,
+                  "frame": {
+                    "x": 404,
+                    "y": 30,
+                    "w": 796,
+                    "h": 240
+                  }
+                },
+                "2": {
+                  "window_id": 2,
+                  "presented": true,
+                  "frame": {
+                    "x": 404,
+                    "y": 278,
+                    "w": 396,
+                    "h": 133
+                  }
+                },
+                "3": {
+                  "window_id": 3,
+                  "presented": true,
+                  "frame": {
+                    "x": 804,
+                    "y": 278,
+                    "w": 396,
+                    "h": 133
+                  }
+                },
+                "4": {
+                  "window_id": 4,
+                  "presented": true,
+                  "frame": {
+                    "x": 0,
+                    "y": 419,
+                    "w": 1200,
+                    "h": 381
+                  }
+                }
+              }
+            },
+            "observer_generation": 8,
+            "topology_revision": 4
+          }
+        }
+      },
+      "commit_targets": {
+        "1": {
+          "window_id": 1,
+          "presented": true,
+          "frame": {
+            "x": 404,
+            "y": 30,
+            "w": 796,
+            "h": 240
+          }
+        },
+        "2": {
+          "window_id": 2,
+          "presented": true,
+          "frame": {
+            "x": 404,
+            "y": 278,
+            "w": 396,
+            "h": 133
+          }
+        },
+        "3": {
+          "window_id": 3,
+          "presented": true,
+          "frame": {
+            "x": 804,
+            "y": 278,
+            "w": 396,
+            "h": 133
+          }
+        },
+        "4": {
+          "window_id": 4,
+          "presented": true,
+          "frame": {
+            "x": 0,
+            "y": 419,
+            "w": 1200,
+            "h": 381
+          }
+        }
+      }
+    }
+  ],
+  "mutations": [
+    {
+      "name": "observer_epoch",
+      "path": "observer_epoch",
+      "value": "restarted"
+    },
+    {
+      "name": "observer_generation",
+      "path": "observer_generation",
+      "value": 9
+    },
+    {
+      "name": "topology_revision",
+      "path": "topology_revision",
+      "value": 5
+    },
+    {
+      "name": "state_revision",
+      "path": "model_state_revision",
+      "value": 42
+    },
+    {
+      "name": "global_off",
+      "path": "management_enabled",
+      "value": false
+    },
+    {
+      "name": "resident_off",
+      "path": "resident_running",
+      "value": false
+    },
+    {
+      "name": "incomplete",
+      "path": "observation.world_complete",
+      "value": false
+    },
+    {
+      "name": "source_ignored",
+      "path": "focus.eligible",
+      "value": false
+    },
+    {
+      "name": "affected_ignored",
+      "window_id": 3,
+      "path": "eligible",
+      "value": false
+    },
+    {
+      "name": "affected_off",
+      "window_id": 3,
+      "path": "space_enabled",
+      "value": false
+    },
+    {
+      "name": "affected_unknown_space",
+      "window_id": 3,
+      "path": "space_identity_available",
+      "value": false
+    },
+    {
+      "name": "reused_window_id",
+      "window_id": 3,
+      "path": "window_generation",
+      "value": 3
+    }
+  ]
+}

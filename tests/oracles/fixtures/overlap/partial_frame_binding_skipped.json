@@ -1,0 +1,11 @@
+{
+  "note": "WS-A totality: a binding whose .frame is PRESENT but PARTIAL (x,y only, no w/h) is effectively zero-area — G::frame_overlap_x/y default the missing w/h to 0, so its overlap is 0 and it is filtered out (NOT an error, NOT a false winner). The well-formed cell B is the only candidate and wins. Distinct from frameless_binding_skipped (frame:null): this proves the `// 0` defaults inside the geometry primitives keep a half-built frame from crashing or poisoning the pick. The def is total over malformed-but-present frames.",
+  "arr": {
+    "bindings": {
+      "1:0:0": {"window_id": 11, "presented": true, "frame": {"x": 100, "y": 100}},
+      "1:1:0": {"window_id": 22, "presented": true, "frame": {"x": 0, "y": 0, "w": 500, "h": 500}}
+    }
+  },
+  "float_frame": {"x": 100, "y": 100, "w": 200, "h": 200},
+  "expect": {"cell_key": "1:1:0", "window_id": 22, "frame": {"x": 0, "y": 0, "w": 500, "h": 500}}
+}

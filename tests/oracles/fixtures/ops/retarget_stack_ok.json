@@ -1,0 +1,55 @@
+{
+  "note": "retarget_stack(s, y) sets the stack's top to y — the context-switch primitive (§3/§4). ok:true.",
+  "tree": {
+    "root_id": "s",
+    "nodes": {
+      "s": {
+        "id": "s",
+        "mode": "stack",
+        "children": [
+          "x",
+          "y"
+        ],
+        "top": "x"
+      },
+      "x": {
+        "id": "x",
+        "window_id": 1
+      },
+      "y": {
+        "id": "y",
+        "window_id": 2
+      }
+    }
+  },
+  "op": "retarget_stack",
+  "args": {
+    "stack": "s",
+    "child": "y"
+  },
+  "expect": {
+    "ok": true,
+    "tree": {
+      "nodes": {
+        "s": {
+          "children": [
+            "x",
+            "y"
+          ],
+          "id": "s",
+          "mode": "stack",
+          "top": "y"
+        },
+        "x": {
+          "id": "x",
+          "window_id": 1
+        },
+        "y": {
+          "id": "y",
+          "window_id": 2
+        }
+      },
+      "root_id": "s"
+    }
+  }
+}

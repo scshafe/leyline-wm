@@ -1,0 +1,30 @@
+{
+  "admitted": {
+    "ok": true,
+    "request_id": "client-fixture-request",
+    "phase": "queued",
+    "completed": false
+  },
+  "terminal": {
+    "ok": true,
+    "request_id": "client-fixture-request",
+    "status": "accepted",
+    "phase": "completed",
+    "revision": 1
+  },
+  "unrelated_terminal": {
+    "ok": true,
+    "request_id": "other-client-request",
+    "status": "accepted",
+    "phase": "completed",
+    "revision": 1
+  },
+  "refused": {
+    "ok": false,
+    "request_id": "client-fixture-request",
+    "status": "refused",
+    "phase": "completed",
+    "reason": "focus_not_managed",
+    "revision": 0
+  }
+}

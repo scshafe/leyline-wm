@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Canonical CLI for the resident, packaged application and source development.
+set -uo pipefail
+ley_source="$0"
+while [[ -L "$ley_source" ]]; do
+  ley_source_dir="$(cd "$(dirname "$ley_source")" && pwd -P)"
+  ley_source_link="$(readlink "$ley_source")"
+  if [[ "$ley_source_link" == /* ]]; then ley_source="$ley_source_link"; else ley_source="$ley_source_dir/$ley_source_link"; fi
+done
+LEYLINE_HOME="${LEYLINE_HOME:-$(cd "$(dirname "$ley_source")/.." && pwd -P)}"
+LEYLINE_ROOT="${LEYLINE_ROOT:-$HOME/.config/leyline}"
+LEYLINE_RUNTIME_DIR="${LEYLINE_RUNTIME_DIR:-$LEYLINE_ROOT/runtime}"
+export LEYLINE_HOME LEYLINE_ROOT LEYLINE_RUNTIME_DIR
+ley_native="${LEYLINE_RESIDENT_CLIENT_BIN:-$LEYLINE_HOME/bin/leylined}"
+usage() {
+  cat <<'HELP'
+Leyline 1 — the native macOS window manager
+Usage: ley <command> [arguments]
+  install    Copy the packaged apps for this user and register the service
+  act        Execute a window-management action
+  resident   Read status, health, snapshots, results, performance or traces
+  ctl        Start, stop, restart or reset management
+  setup      Install, inspect or uninstall the per-user launchd service
+  doctor     Check process ownership, observation and configured shortcuts
+  validate   Validate configured shortcuts or source data
+  perf       Read native performance diagnostics
+  trace      Read bounded input/request traces
+  --version  Print the installed version
+HELP
+  if [[ -f "$LEYLINE_HOME/leylined/Package.swift" ]]; then
+    printf '%s\n' 'Source checkout only: build, test, bench'
+  fi
+}
+ley_command="${1:-help}"
+[[ $# -eq 0 ]] || shift
+case "$ley_command" in
+  help|-h|--help) usage; exit 0 ;;
+  version|-v|--version) exec "$ley_native" version ;;
+  install)
+    if [[ -f "$LEYLINE_HOME/release.json" ]]; then
+      ley_install_script="$(cd "$LEYLINE_HOME/../../../.." && pwd -P)/install.sh"
+    else
+      ley_install_script="$LEYLINE_HOME/install.sh"
+    fi
+    [[ -f "$ley_install_script" ]] || exec "$ley_native" install "$@"
+    exec /bin/bash "$ley_install_script" "$@" ;;
+  build|test|bench)
+    [[ -f "$LEYLINE_HOME/leylined/Package.swift" ]] || { printf 'This command requires the source distribution.\n' >&2; exit 64; } ;;
+  act|resident|ctl|doctor|validate|setup|perf|trace) ;;
+  *) printf 'ley: unknown command: %s\n' "$ley_command" >&2; usage >&2; exit 64 ;;
+esac
+source "$LEYLINE_HOME/lib/cli_output.sh" || exit 70
+source "$LEYLINE_HOME/commands/$ley_command.sh" || exit 70
+"${ley_command}_main" "$@"

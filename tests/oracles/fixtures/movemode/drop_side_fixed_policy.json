@@ -1,0 +1,9 @@
+{
+  "fn": "drop_side",
+  "note": "B3 fixed policy passes through regardless of geometry (a wide cell that aspect would v-split still drops south).",
+  "target_cell": {"frame": {"x": 0, "y": 540, "w": 1920, "h": 540}},
+  "moved_frame": {"x": 0, "y": 0, "w": 480, "h": 540},
+  "display": {"frame": {"x": 0, "y": 0, "w": 1920, "h": 1080}},
+  "policy": "south",
+  "expect": "south"
+}

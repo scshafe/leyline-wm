@@ -1,0 +1,36 @@
+{
+  "note": "STACK 2→1 collapse: a 2-child stack stk=[s1,s2] top:'s1'. Removing the top leaf 's1' first drops top, leaving stk single-childed [s2]; the stack node is then redundant and COLLAPSES — 's2' becomes the root. The leftover 'top'/'stack' framing dies with the collapsed node; result is the lone leaf 's2'. Asserts collapse applies to stacks too, and the top-drop happens before the collapse check.",
+  "fn": "remove",
+  "tree": {
+    "root_id": "stk",
+    "nodes": {
+      "stk": {
+        "id": "stk",
+        "mode": "stack",
+        "top": "s1",
+        "children": [
+          "s1",
+          "s2"
+        ]
+      },
+      "s1": {
+        "id": "s1",
+        "window_id": 1
+      },
+      "s2": {
+        "id": "s2",
+        "window_id": 2
+      }
+    }
+  },
+  "leaf": "s1",
+  "expect": {
+    "nodes": {
+      "s2": {
+        "id": "s2",
+        "window_id": 2
+      }
+    },
+    "root_id": "s2"
+  }
+}

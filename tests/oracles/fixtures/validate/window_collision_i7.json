@@ -1,0 +1,41 @@
+{
+  "note": "two distinct leaves bound to the same window_id → I7 violation (one window ↔ at most one leaf).",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "children": [
+          "a",
+          "c"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 7
+      },
+      "c": {
+        "id": "c",
+        "window_id": 7
+      }
+    }
+  },
+  "expect": {
+    "ok": false,
+    "violations": [
+      {
+        "collisions": [
+          {
+            "leaves": [
+              "a",
+              "c"
+            ],
+            "window_id": "7"
+          }
+        ],
+        "detail": "window shared by leaves",
+        "invariant": "I7"
+      }
+    ]
+  }
+}

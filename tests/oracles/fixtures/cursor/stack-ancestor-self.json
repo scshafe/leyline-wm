@@ -1,0 +1,15 @@
+{
+  "note": "a stack cursor resolves to ITSELF (at-or-above, inclusive) — scope cycle on box cycles box.",
+  "fn": "stack_ancestor",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": { "id": "r", "mode": "region", "children": ["box"] },
+      "box": { "id": "box", "mode": "stack", "top": "a", "children": ["a", "b"] },
+      "a": { "id": "a", "binding": { "app": "A" } },
+      "b": { "id": "b", "binding": { "app": "B" } }
+    }
+  },
+  "node": "box",
+  "expect": "box"
+}

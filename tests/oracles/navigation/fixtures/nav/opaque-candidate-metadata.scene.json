@@ -1,0 +1,12 @@
+{
+  "_doc": "The pure geometry ranker treats caller-supplied policy metadata, including is_floating, as opaque. Both east candidates are intentionally supplied to this fixture; live tiled eligibility is owned upstream by Parcel navigation.",
+  "displays": [
+    { "index": 1, "frame": { "x": 0, "y": 0, "w": 1512, "h": 982 } }
+  ],
+  "windows": [
+    { "id": 100, "display": 1, "frame": { "x": 100, "y": 100, "w": 400, "h": 400 }, "app": "Source" },
+    { "id": 200, "display": 1, "frame": { "x": 600, "y": 100, "w": 400, "h": 400 }, "app": "EastA" },
+    { "id": 300, "display": 1, "frame": { "x": 650, "y": 150, "w": 300, "h": 300 }, "app": "EastB", "is_floating": true }
+  ],
+  "source": { "window_id": 100 }
+}

@@ -1,0 +1,151 @@
+{
+  "note": "COLLAPSE-GUARD: a 1-window display KEEPS its mount (D). Mount-shaped input on the L-shaped topology: root(region) → [d:1(pinned mount, display 1) → i:w:2(row)=[w:1,w:2], d:3(pinned mount, display 3) → w:3]. Observed drops window 2 (closed) and keeps 1 and 3. PRUNE removes w:2 → the PLAIN row i:w:2 is single-childed and collapses, survivor w:1 inherits i:w:2's slot directly under d:1. The mount d:1 is now single-childed too — but _collapse_singletons' guard NEVER collapses a pinned mount (its display-pinned frame is load-bearing), so d:1 SURVIVES holding just w:1. d:3 and its window are untouched, and the region root keeps both mounts. Proves the guard: a display dropping to one window keeps its mount rather than being absorbed, so that display's lone window still tiles THAT display's usable rect (not a sibling's).",
+  "fn": "sync",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1",
+          "d:3"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "i:w:2"
+        ]
+      },
+      "i:w:2": {
+        "id": "i:w:2",
+        "mode": "row",
+        "children": [
+          "w:1",
+          "w:2"
+        ]
+      },
+      "d:3": {
+        "id": "d:3",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 3,
+        "children": [
+          "w:3"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      },
+      "w:3": {
+        "id": "w:3",
+        "window_id": 3
+      }
+    }
+  },
+  "observed": [
+    {
+      "window_id": 1,
+      "app": "A",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        100,
+        200,
+        800,
+        600
+      ]
+    },
+    {
+      "window_id": 3,
+      "app": "C",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        2500,
+        -1000,
+        800,
+        600
+      ]
+    }
+  ],
+  "focused_leaf": null,
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          2880,
+          1864
+        ],
+        "usable": [
+          0,
+          57,
+          2880,
+          1807
+        ]
+      },
+      {
+        "id": 3,
+        "frame": [
+          1930,
+          -1440,
+          3440,
+          1440
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "nodes": {
+      "d:1": {
+        "children": [
+          "w:1"
+        ],
+        "display_id": 1,
+        "frame_source": "pinned",
+        "id": "d:1",
+        "mode": "row"
+      },
+      "d:3": {
+        "children": [
+          "w:3"
+        ],
+        "display_id": 3,
+        "frame_source": "pinned",
+        "id": "d:3",
+        "mode": "row"
+      },
+      "root": {
+        "children": [
+          "d:1",
+          "d:3"
+        ],
+        "id": "root",
+        "mode": "region"
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:3": {
+        "id": "w:3",
+        "window_id": 3
+      }
+    },
+    "root_id": "root"
+  }
+}

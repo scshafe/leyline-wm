@@ -1,0 +1,76 @@
+{
+  "schema": "leyline/native-layout-contract-fixture/v1",
+  "topology": {"displays": [{"id": 1, "frame": [0, 0, 1000, 600]}], "gap": 0, "outer_gap": 0},
+  "world_context": {"complete": true, "trusted": true, "space_enabled": true, "active_space_key": "display:1/space:A", "observer_epoch": "native-layout-fixture-epoch", "observer_generation": 8, "topology_revision": 4, "focused_window_id": 1},
+  "scenes": {
+    "constrained": {
+      "segments": [], "bindings": {"1:0:0": {"window_id": 1, "min_size": {"w": 700, "h": 100}}}, "off_top": [],
+      "newcomers": [2], "newcomer_minimums": {"2": {"w": 200, "h": 100}},
+      "expected_frames": {"1": [0, 0, 700, 600], "2": [700, 0, 300, 600]}
+    },
+    "overload": {
+      "segments": [], "bindings": {"1:0:0": {"window_id": 1, "min_size": {"w": 600, "h": 100}}}, "off_top": [],
+      "newcomers": [2], "newcomer_minimums": {"2": {"w": 500, "h": 100}},
+      "expected_member_ids": [1, 2], "expected_top": 1, "expected_selected_top": 2,
+      "expected_frame": [0, 0, 1000, 600]
+    },
+    "nested": {
+      "segments": [{"axis": "v", "coord": 600, "lo": 0, "hi": 600}],
+      "bindings": {
+        "1:0:0": {"nested": {"segments": [{"axis": "h", "coord": 300, "lo": 0, "hi": 600}], "bindings": {"0:0:0": {"window_id": 11, "min_size": {"w": 120, "h": 100}}, "0:0:1": {"window_id": 12, "min_size": {"w": 150, "h": 100}}}, "off_top": []}},
+        "1:1:0": {"window_id": 13, "min_size": {"w": 100, "h": 100}}
+      },
+      "off_top": [], "focus": 13, "newcomers": [14, 15],
+      "expected_frames": {"11": [0, 0, 300, 300], "12": [0, 300, 600, 300], "13": [600, 0, 400, 300], "14": [600, 300, 400, 300], "15": [300, 0, 300, 300]},
+      "expected_parent_source_frame": [500, 0, 500, 600],
+      "expected_parent_frames": {"11": [0, 0, 500, 300], "12": [0, 300, 500, 300], "13": [500, 0, 500, 600]}
+    },
+    "walk": {
+      "segments": [{"axis": "v", "coord": 400, "lo": 0, "hi": 600}, {"axis": "h", "coord": 200, "lo": 400, "hi": 1000}, {"axis": "h", "coord": 400, "lo": 400, "hi": 1000}],
+      "bindings": {"1:0:0": {"window_id": 1}, "1:1:0": {"window_id": 20}, "1:1:1": {"window_id": 7}, "1:1:2": {"window_id": 13}}, "off_top": [],
+      "expected_order": [20, 7, 13],
+      "expected_run_frames": {"1": [0, 0, 500, 600], "20": [500, 0, 500, 200], "7": [500, 200, 500, 200], "13": [500, 400, 500, 200]},
+      "expected_self_span_frames": {"1": [0, 0, 400, 600], "20": [700, 0, 300, 300], "7": [400, 0, 300, 600], "13": [700, 300, 300, 300]}
+    },
+    "disconnected": {
+      "segments": [{"axis": "h", "coord": 200, "lo": 0, "hi": 1000}, {"axis": "h", "coord": 400, "lo": 0, "hi": 1000}, {"axis": "v", "coord": 400, "lo": 0, "hi": 200}, {"axis": "v", "coord": 400, "lo": 400, "hi": 600}],
+      "bindings": {"1:0:0": {"window_id": 1}, "1:1:0": {"window_id": 20}, "1:0:1": {"window_id": 2}, "1:0:2": {"window_id": 3}, "1:1:2": {"window_id": 13}}, "off_top": [],
+      "expected_order": [20]
+    },
+    "resize_face": {
+      "segments": [{"axis": "v", "coord": 600, "lo": 0, "hi": 600}],
+      "bindings": {"1:0:0": {"window_id": 1}, "1:1:0": {"window_id": 2}}, "off_top": [], "focus": 2,
+      "expected_east_frame": [640, 0, 360, 600], "expected_west_frame": [560, 0, 440, 600],
+      "expected_growth_frame": [0, 0, 1000, 600],
+      "expected_restored_frames": {"1": [0, 0, 600, 600], "2": [600, 0, 400, 600]}
+    },
+    "resize_constraint": {
+      "segments": [{"axis": "v", "coord": 600, "lo": 0, "hi": 600}],
+      "bindings": {"1:0:0": {"window_id": 1}, "1:1:0": {"window_id": 2, "min_size": {"w": 380}}}, "off_top": [],
+      "expected_source_frame": [0, 0, 620, 600], "expected_target_frame": [620, 0, 380, 600]
+    },
+    "empty_interval": {
+      "segments": [{"axis": "v", "coord": 600, "lo": 0, "hi": 600}],
+      "bindings": {"1:0:0": {"window_id": 1, "min_size": {"w": 600, "h": 400}}, "1:1:0": {"window_id": 2, "min_size": {"w": 500, "h": 400}}}, "off_top": []
+    },
+    "nested_minimum_reflow": {
+      "topology": {"displays": [{"id": 1, "frame": [0, 0, 1000, 600]}], "gap": 8, "outer_gap": 0},
+      "segments": [{"axis": "v", "coord": 200, "lo": 0, "hi": 600}, {"axis": "v", "coord": 600, "lo": 0, "hi": 600}],
+      "bindings": {
+        "1:0:0": {"window_id": 1},
+        "1:1:0": {"nested": {"segments": [{"axis": "v", "coord": 300, "lo": 0, "hi": 600}], "off_top": [], "bindings": {
+          "0:0:0": {"window_id": 11, "min_size": {"w": 99, "h": 100}},
+          "0:1:0": {"window_id": 12, "min_size": {"w": 100, "h": 100}}
+        }}},
+        "1:2:0": {"window_id": 13, "min_size": {"w": 200, "h": 100}}
+      }, "off_top": [], "expected_participants": [11, 12],
+      "expected_frames": {"1": [0, 0, 496, 600], "11": [504, 0, 99, 600], "12": [611, 0, 135, 600], "13": [754, 0, 246, 600]}
+    },
+    "unequal_depth_run": {
+      "segments": [{"axis": "h", "coord": 300, "lo": 0, "hi": 1000}, {"axis": "v", "coord": 400, "lo": 0, "hi": 300}, {"axis": "v", "coord": 700, "lo": 300, "hi": 600}],
+      "bindings": {"1:0:0": {"window_id": 1, "min_size": {"w": 100}}, "1:1:0": {"window_id": 20}, "1:0:1": {"window_id": 2}, "1:2:1": {"window_id": 13, "min_size": {"w": 150}}}, "off_top": [],
+      "expected_east_order": [20, 13],
+      "expected_frames": {"1": [850, 0, 150, 600], "20": [0, 0, 850, 300], "2": [0, 300, 700, 300], "13": [700, 300, 150, 300]}
+    }
+  }
+}

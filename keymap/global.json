@@ -1,0 +1,38 @@
+{
+  "_schema": "Global chord-to-action source for Leyline v1. Global routes are available in default, move and resize; modal bindings take precedence.",
+  "bindings": [
+    {
+      "chord": "cmd + ctrl + alt + shift - h",
+      "action_id": "nav.focus.west",
+      "precedence": "global-first"
+    },
+    {
+      "chord": "cmd + ctrl + alt + shift - j",
+      "action_id": "nav.focus.south",
+      "precedence": "global-first"
+    },
+    {
+      "chord": "cmd + ctrl + alt + shift - k",
+      "action_id": "nav.focus.north",
+      "precedence": "global-first"
+    },
+    {
+      "chord": "cmd + ctrl + alt + shift - l",
+      "action_id": "nav.focus.east",
+      "precedence": "global-first"
+    },
+    {
+      "chord": "cmd + ctrl + alt + shift - a",
+      "action_id": "space.management.toggle",
+      "precedence": "global-first"
+    },
+    {
+      "chord": "ctrl + alt - r",
+      "action_id": "service.restart",
+      "precedence": "global-first"
+    }
+  ],
+  "reserved": [
+    "cmd + ctrl + alt + shift - f"
+  ]
+}

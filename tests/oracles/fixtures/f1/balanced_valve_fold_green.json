@@ -1,0 +1,74 @@
+{
+  "note": "Stage 4.7 GATE: F1 GREEN on a REAL balance::valve output — the crowded bottom-up scene the valve folded (sub→stack). The Stage-3 no-overlap net now PROTECTS the first behavioral change: a folded balanced tree is provably overlap-free. (tree is a verbatim valve output; regenerated expect asserts ok:true.)",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "row",
+        "children": [
+          "A",
+          "sub"
+        ]
+      },
+      "sub": {
+        "id": "sub",
+        "mode": "stack",
+        "children": [
+          "c",
+          "d"
+        ],
+        "stack_source": "valve",
+        "valve_from": "row"
+      },
+      "A": {
+        "id": "A",
+        "window_id": 1,
+        "min_size": {
+          "w": 300,
+          "h": 100
+        }
+      },
+      "c": {
+        "id": "c",
+        "window_id": 2,
+        "min_size": {
+          "w": 600,
+          "h": 100
+        }
+      },
+      "d": {
+        "id": "d",
+        "window_id": 3,
+        "min_size": {
+          "w": 600,
+          "h": 100
+        }
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ],
+        "usable": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "expect": {
+    "ok": true,
+    "violations": []
+  }
+}

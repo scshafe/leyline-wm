@@ -1,0 +1,109 @@
+{
+  "note": "PRUNE a minimized window (mount-shape). root(region) → d:1(pinned mount) → i:w:2(row)=[w:1,w:2]; observed lists BOTH windows but window 2 carries minimized:true. managed-live = partition of the NON-minimized observed set, so window 2 is excluded → its leaf is pruned (the user took it out of the tiling). i:w:2 collapses, survivor w:1 inherits the mount slot, and the collapse-guard keeps the now-single-childed pinned mount d:1. Distinct from prune-closed: the window still EXISTS in observed; minimized:true alone drives the prune.",
+  "fn": "sync",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "i:w:2"
+        ]
+      },
+      "i:w:2": {
+        "id": "i:w:2",
+        "mode": "row",
+        "children": [
+          "w:1",
+          "w:2"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      }
+    }
+  },
+  "observed": [
+    {
+      "window_id": 1,
+      "app": "A",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        0,
+        0,
+        600,
+        800
+      ]
+    },
+    {
+      "window_id": 2,
+      "app": "B",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "minimized": true,
+      "frame": [
+        600,
+        0,
+        600,
+        800
+      ]
+    }
+  ],
+  "focused_leaf": null,
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1200,
+          800
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "nodes": {
+      "d:1": {
+        "children": [
+          "w:1"
+        ],
+        "display_id": 1,
+        "frame_source": "pinned",
+        "id": "d:1",
+        "mode": "row"
+      },
+      "root": {
+        "children": [
+          "d:1"
+        ],
+        "id": "root",
+        "mode": "region"
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      }
+    },
+    "root_id": "root"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "note": "float_verdict edge: a title-only rule (no app facet). An omitted app facet is vacuously true, so the rule matches any app whose title matches the regex ⇒ verdict 'off'. Pins the 'omitted facet matches anything' branch for the app side.",
+  "fn": "float_verdict",
+  "window": {
+    "window_id": 44,
+    "app": "AnyAppAtAll",
+    "title": "Picture in Picture"
+  },
+  "rules": [
+    {
+      "id": "pip",
+      "title": "Picture in Picture",
+      "manage": "off"
+    }
+  ],
+  "expect": "off"
+}

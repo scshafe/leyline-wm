@@ -1,0 +1,18 @@
+{
+  "note": "Stage 1 Step 2 (facts): a 2-leaf tree where 601 departed (gone from observed) and 602 minimized -> two prune facts carrying the DISTINCT causes a tree diff cannot recover. $live empties, so this takes sync's empty-live branch (prune + reproportion only).",
+  "fn": "sync_facts",
+  "tree": { "root_id": "d:1", "nodes": {
+    "d:1": { "id": "d:1", "mode": "row", "frame_source": "pinned", "display_id": 1, "children": ["w:601", "w:602"] },
+    "w:601": { "id": "w:601", "window_id": 601 },
+    "w:602": { "id": "w:602", "window_id": 602 }
+  } },
+  "observed": [
+    { "window_id": 602, "frame": [0, 0, 800, 600], "minimized": true, "app": "Safari", "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true }
+  ],
+  "focused_leaf": null,
+  "topology": { "displays": [{ "id": 1, "frame": [0, 0, 1440, 900], "usable": [0, 0, 1440, 900] }], "gap": 8 },
+  "expect": [
+    { "kind": "prune", "window_id": 601, "leaf": "w:601", "cause": "departed" },
+    { "kind": "prune", "window_id": 602, "leaf": "w:602", "cause": "minimized" }
+  ]
+}

@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# Optional stable local-development signing certificate. Not a distribution identity.
+# Usage: leyline-setup-signing-cert [--help]
+set -uo pipefail
+
+if [[ "${1:-}" == --help || "${1:-}" == -h ]]; then
+  printf '%s\n' 'Create an optional stable local signing identity in the login keychain.' 'This is not Developer ID signing or notarization.' 'Usage: leyline-setup-signing-cert'
+  exit 0
+fi
+[[ $# -eq 0 ]] || exit 64
+IDENT="${LEYLINE_CODESIGN_IDENTITY:-leyline-local-cert}"
+[[ "$IDENT" != - ]] || { printf 'A named local identity is required.\n' >&2; exit 64; }
+KC="$(security login-keychain 2>/dev/null | tr -d ' \t"')"
+[[ -n "$KC" && -e "$KC" ]] || KC="$HOME/Library/Keychains/login.keychain-db"
+
+_count() { security find-certificate -a -c "$IDENT" "$KC" 2>/dev/null | grep -c 'keychain:'; }
+_can_sign() {                       # 0 iff codesign signs with $IDENT unambiguously
+  local t; t="$(mktemp -d)" || return 1
+  # A FRESHLY-COMPILED Mach-O is a reliable probe; a copy of a system binary
+  # (e.g. /bin/echo) can fail codesign for reasons unrelated to the cert and
+  # false-negative this check (which would churn the cert + invalidate the grant).
+  printf 'int main(void){return 0;}\n' | cc -x c - -o "$t/p" 2>/dev/null \
+    || cp /bin/echo "$t/p" 2>/dev/null || { rm -rf "$t"; return 1; }
+  local rc=1
+  if codesign --force --sign "$IDENT" --identifier org.leyline.signing-probe --timestamp=none "$t/p" 2>/dev/null \
+     && codesign -dvv "$t/p" 2>&1 | grep -q "Authority=$IDENT"; then rc=0; fi
+  rm -rf "$t"; return $rc
+}
+
+# IDEMPOTENCY: exactly one $IDENT cert present ⇒ assume good and NO-OP. (Do NOT
+# gate this on a test-sign — recreating churns the keypair, changing the DR and
+# invalidating the grant. A count of 1 is the safe "already set up" signal; the
+# build's real `codesign --sign` is the true functional check downstream.)
+if [[ "$(_count)" == "1" ]]; then
+  echo "leyline-setup-signing-cert: '$IDENT' already present (1 cert) — nothing to do."
+  echo "  (to force a fresh cert, delete it in Keychain Access first; that needs a re-grant.)"
+  exit 0
+fi
+
+# Never delete identities automatically: certificate replacement changes grants.
+if [[ "${n:-$(_count)}" -gt 0 ]]; then
+  printf 'Multiple matching certificates exist; resolve the ambiguity in Keychain Access.\n' >&2
+  exit 65
+fi
+
+command -v openssl >/dev/null 2>&1 || { echo "leyline-setup-signing-cert: openssl not found" >&2; exit 1; }
+echo "leyline-setup-signing-cert: creating self-signed Code Signing cert '$IDENT' in:"
+echo "  $KC"
+TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
+printf '[req]\ndistinguished_name=dn\nx509_extensions=v3\nprompt=no\n[dn]\nCN=%s\n[v3]\nbasicConstraints=critical,CA:false\nkeyUsage=critical,digitalSignature\nextendedKeyUsage=critical,codeSigning\n' "$IDENT" > "$TMP/cert.cnf"
+
+openssl req -x509 -newkey rsa:2048 -nodes \
+  -keyout "$TMP/cert.key" -out "$TMP/cert.crt" -days 3650 \
+  -config "$TMP/cert.cnf" -extensions v3 \
+  || { echo "leyline-setup-signing-cert: openssl cert generation failed" >&2; exit 1; }
+
+# macOS `security import` needs a NON-EMPTY PKCS12 password (an empty one fails MAC
+# verification on the system parser). A random per-run password suffices — it only
+# guards the transient .p12; the imported key is unencrypted in the keychain.
+PW="leyline-signing-$$-$RANDOM"
+openssl pkcs12 -export -name "$IDENT" \
+  -inkey "$TMP/cert.key" -in "$TMP/cert.crt" \
+  -out "$TMP/cert.p12" -passout "pass:$PW" \
+  || { echo "leyline-setup-signing-cert: openssl pkcs12 export failed" >&2; exit 1; }
+
+security import "$TMP/cert.p12" -k "$KC" -P "$PW" -T /usr/bin/codesign \
+  || { echo "leyline-setup-signing-cert: security import failed" >&2; exit 1; }
+
+if _can_sign; then
+  echo "leyline-setup-signing-cert: OK — '$IDENT' signs cleanly, no prompt."
+  echo "Next: set LEYLINE_CODESIGN_IDENTITY for a local build. Grant permissions to the resulting app if required."
+else
+  echo "leyline-setup-signing-cert: WARNING — imported but a test-sign did not verify." >&2
+  echo "  Inspect via Keychain Access (cert needs the codeSigning EKU + its private key)." >&2
+  exit 1
+fi

@@ -1,0 +1,28 @@
+{
+  "note": "I9: 'orphan' is present in nodes but unreachable from the root 'r' (no edge leads to it). The op layer prunes such nodes (prune_unreachable), so an orphan is a malformation — and an orphan focus target used to crash autotile adopt's parent lookup. ok:false, one I9 violation naming the orphan.",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "window_id": 1
+      },
+      "orphan": {
+        "id": "orphan",
+        "window_id": 9
+      }
+    }
+  },
+  "expect": {
+    "ok": false,
+    "violations": [
+      {
+        "detail": "unreachable node",
+        "invariant": "I9",
+        "nodes": [
+          "orphan"
+        ]
+      }
+    ]
+  }
+}

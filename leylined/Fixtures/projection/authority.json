@@ -1,0 +1,30 @@
+{
+  "world": {
+    "observer_generation": 1,
+    "focus": {
+      "window_id": 101,
+      "frame": {"x": 0, "y": 38, "w": 960, "h": 1205},
+      "managed": true, "eligible": true, "tiled": true,
+      "space_enabled": true, "space_visible": true,
+      "space_key": "space:fixture-A", "display_id": "display:fixture-primary",
+      "observer_generation": 1
+    }
+  },
+  "mutations": [
+    {"name": "ignored", "focus": {"eligible": false}, "expected_role": null},
+    {"name": "unknown eligibility", "focus": {"eligible": null}, "expected_role": null},
+    {"name": "unmanaged", "focus": {"managed": false}, "expected_role": null},
+    {"name": "Space OFF", "focus": {"space_enabled": false}, "expected_role": null},
+    {"name": "inactive Space", "focus": {"space_visible": false}, "expected_role": null},
+    {"name": "unknown Space", "focus": {"space_key": null}, "expected_role": null},
+    {"name": "runtime counter is not Space identity", "focus": {"space_key": "space:runtime:1"}, "expected_role": null},
+    {"name": "unknown display", "focus": {"display_id": null}, "expected_role": null},
+    {"name": "stale observer", "focus": {"observer_generation": 0}, "expected_role": null},
+    {"name": "minimized", "focus": {"minimized": true}, "expected_role": null},
+    {"name": "destroyed", "focus": {"destroyed": true}, "expected_role": null},
+    {"name": "global stop", "world": {"management_enabled": false}, "expected_role": null},
+    {"name": "unrelated resize context", "world": {"mode": "resize", "mode_context_window_id": 102, "mode_context_space_key": "space:fixture-A"}, "expected_role": "focus"},
+    {"name": "unrelated Space context", "world": {"mode": "resize", "mode_context_window_id": 101, "mode_context_space_key": "space:fixture-B"}, "expected_role": "focus"},
+    {"name": "origin resize context", "world": {"mode": "resize", "mode_context_window_id": 101, "mode_context_space_key": "space:fixture-A"}, "expected_role": "resizing"}
+  ]
+}

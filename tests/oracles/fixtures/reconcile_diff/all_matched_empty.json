@@ -1,0 +1,58 @@
+{
+  "note": "every target already satisfied — the presented window placed at its frame, the hidden window minimized → all noop, show/reframe/hide empty. The reconcile fixpoint: a no-op cycle (I6 base case).",
+  "targets": {
+    "10": {
+      "window_id": 10,
+      "presented": true,
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 800
+      }
+    },
+    "11": {
+      "window_id": 11,
+      "presented": false,
+      "frame": null
+    }
+  },
+  "observed": [
+    {
+      "window_id": 10,
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 800
+      },
+      "minimized": false
+    },
+    {
+      "window_id": 11,
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 500,
+        "h": 800
+      },
+      "minimized": true
+    }
+  ],
+  "expect": {
+    "diff": {
+      "hide": [],
+      "noop": [
+        {
+          "window_id": 10
+        },
+        {
+          "window_id": 11
+        }
+      ],
+      "reframe": [],
+      "show": []
+    },
+    "stable": true
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "note": "S5 step 7 (peer of balance/valve_keeps_manual_stack) — the valve NEVER touches a manual stack. A layout with a manual stack m (source:manual, top x, members [x,y]) beside a separately-infeasible computed row crowd (b/c min w 600, span 500). After arrangement::valve: the manual stack's cell is bit-for-bit unchanged (stack.source:manual, members [x,y], top x), and ONLY the computed region folded (a second cell, stack.source:valve, members [b,c], top b). The fold fact names ONLY crowd. This proves balance.jq's stack_source != valve guard (the unfold sweep only un-folds source:valve) survives the lens round-trip — manual+auto coexist, and the valve auto-un-folds only its own stacks.",
+  "fn": "valve",
+  "focused_leaf": null,
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": { "id": "root", "mode": "row", "children": ["m", "crowd"] },
+      "m": { "id": "m", "mode": "stack", "stack_source": "manual", "top": "x", "children": ["x", "y"] },
+      "crowd": { "id": "crowd", "mode": "row", "children": ["b", "c"] },
+      "x": { "id": "x", "window_id": 1 },
+      "y": { "id": "y", "window_id": 2 },
+      "b": { "id": "b", "window_id": 3, "min_size": { "w": 600, "h": 50 } },
+      "c": { "id": "c", "window_id": 4, "min_size": { "w": 600, "h": 50 } }
+    }
+  },
+  "topology": {
+    "displays": [{ "id": 1, "frame": [0, 0, 1000, 1000], "usable": [0, 0, 1000, 1000] }],
+    "gap": 0
+  },
+  "config": {},
+  "expect": {
+    "arrangement": [
+      {
+        "atoms": [[0, 0]],
+        "display_id": 1,
+        "filled": true,
+        "frame": { "h": 1000, "w": 400, "x": 0, "y": 0 },
+        "i0": 0,
+        "i1": 0,
+        "j0": 0,
+        "j1": 0,
+        "stack": { "depth": 2, "members": ["x", "y"], "source": "manual", "top": "x" }
+      },
+      {
+        "atoms": [[1, 0]],
+        "display_id": 1,
+        "filled": true,
+        "frame": { "h": 1000, "w": 600, "x": 400, "y": 0 },
+        "i0": 1,
+        "i1": 1,
+        "j0": 0,
+        "j1": 0,
+        "stack": { "depth": 2, "members": ["b", "c"], "source": "valve", "top": "b" }
+      }
+    ],
+    "facts": [
+      { "action": "fold", "axis": "row", "kind": "stack", "node": "crowd", "required": 1200, "span": 500, "surplus": ["c"], "top": "b" }
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "note": "W=5 -> rows [3,2]; score |log(2/3)| = 0.405465.",
+  "w": 5,
+  "expect": {
+    "cols": 3,
+    "orient": "rows",
+    "parts": [
+      3,
+      2
+    ],
+    "rows": 2,
+    "score": 0.405465
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "_doc": "Trivial baseline: one window, one display. Every direction must return noCandidate. Proves the harness can compute the no-candidate result correctly.",
+  "displays": [
+    { "index": 1, "frame": { "x": 0, "y": 0, "w": 1512, "h": 982 } }
+  ],
+  "windows": [
+    { "id": 100, "display": 1, "frame": { "x": 100, "y": 100, "w": 600, "h": 400 }, "app": "Terminal" }
+  ],
+  "source": { "window_id": 100 }
+}

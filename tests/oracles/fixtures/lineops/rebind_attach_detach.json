@@ -1,0 +1,101 @@
+{
+  "note": "S16.2 (R2) — rebind, the universal contents op: attach -> detach -> unbind-to-reserved on a single full-canvas cell (1000x800, contents:[w101]). ATTACH w102 pushes onto the HEAD (contents:[w102,w101], new top w102, w101 demoted/off-top); DETACH (null) pops the head, the top retargets to w101 (contents:[w101]); UNBIND again empties to a RESERVED SLOT {reserved:true,contents:[]} (OCC reserved bucket, window_id ABSENT -> emits no target). ASSERTS the {ok,arr} envelope (attach/detach/unbind all ok:true); valid_rec BYTE-IDENTICAL at every step (INV blind to contents — .segments untouched); store-side conservation clean at every step (presented union stacked == bound, nothing vanishes); ncells unchanged (one cell throughout — a stack/reserved slot counts as ONE cell); segments byte-equal throughout. The S16.2 step verify.",
+  "fn": "rebind_sequence",
+  "cell_key": "1:0:0",
+  "descriptor": {
+    "window_id": 102,
+    "presented": true,
+    "frame": {
+      "x": 0,
+      "y": 0,
+      "w": 1000,
+      "h": 800
+    }
+  },
+  "arr": {
+    "segments": [],
+    "bindings": {
+      "1:0:0": {
+        "window_id": 101,
+        "presented": true,
+        "frame": {
+          "x": 0,
+          "y": 0,
+          "w": 1000,
+          "h": 800
+        },
+        "contents": [
+          {
+            "window_id": 101,
+            "presented": true,
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "w": 1000,
+              "h": 800
+            }
+          }
+        ]
+      }
+    },
+    "off_top": [],
+    "promotions": []
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          800
+        ],
+        "usable": [
+          0,
+          0,
+          1000,
+          800
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "expect": {
+    "attach_contents": [
+      {
+        "frame": {
+          "h": 800,
+          "w": 1000,
+          "x": 0,
+          "y": 0
+        },
+        "presented": true,
+        "window_id": 102
+      },
+      {
+        "frame": {
+          "h": 800,
+          "w": 1000,
+          "x": 0,
+          "y": 0
+        },
+        "presented": true,
+        "window_id": 101
+      }
+    ],
+    "attach_ok": true,
+    "conservation_ok": true,
+    "detach_ok": true,
+    "ncells_unchanged": true,
+    "reserved_after_empty": {
+      "contents": [],
+      "reserved": true
+    },
+    "segments_byte_eq": true,
+    "top_after_detach": 101,
+    "unbind_ok": true,
+    "valid_rec_ok": true,
+    "valid_rec_stable": true
+  }
+}

@@ -1,0 +1,153 @@
+{
+  "fn": "author",
+  "note": "S6 step 2/8 — the MULTI-DISPLAY slicing scene (the per-display identity proof). An already-authored per-display mount tree (root → d:1 mount[201,202] + d:3 mount[203]) re-synced against observed; the arrangement homes each segment to its display bag (cells_md), keys bindings per-display-qualified (<display_id>:<i0>:<j0>), and emits arrangement_targets byte-equal to bsp's reconcile_targets. If the i:j-only key collided across displays the top-left cell of each display would bind the wrong window — this proves it does not. expect == bsp reconcile_targets on the synced tree.",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1",
+          "d:3"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "w:201",
+          "w:202"
+        ]
+      },
+      "d:3": {
+        "id": "d:3",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 3,
+        "children": [
+          "w:203"
+        ]
+      },
+      "w:201": {
+        "id": "w:201",
+        "window_id": 201
+      },
+      "w:202": {
+        "id": "w:202",
+        "window_id": 202
+      },
+      "w:203": {
+        "id": "w:203",
+        "window_id": 203
+      }
+    }
+  },
+  "observed": [
+    {
+      "window_id": 201,
+      "app": "A",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "minimized": false,
+      "frame": [
+        0,
+        57,
+        1440,
+        1807
+      ]
+    },
+    {
+      "window_id": 202,
+      "app": "B",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "minimized": false,
+      "frame": [
+        1440,
+        57,
+        1440,
+        1807
+      ]
+    },
+    {
+      "window_id": 203,
+      "app": "C",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "minimized": false,
+      "frame": [
+        1930,
+        -1440,
+        3440,
+        1440
+      ]
+    }
+  ],
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          2880,
+          1864
+        ],
+        "usable": [
+          0,
+          57,
+          2880,
+          1807
+        ]
+      },
+      {
+        "id": 3,
+        "frame": [
+          1930,
+          -1440,
+          3440,
+          1440
+        ]
+      }
+    ]
+  },
+  "focused_leaf": null,
+  "expect": {
+    "201": {
+      "window_id": 201,
+      "presented": true,
+      "frame": {
+        "x": 0,
+        "y": 57,
+        "w": 1440,
+        "h": 1807
+      }
+    },
+    "202": {
+      "window_id": 202,
+      "presented": true,
+      "frame": {
+        "x": 1440,
+        "y": 57,
+        "w": 1440,
+        "h": 1807
+      }
+    },
+    "203": {
+      "window_id": 203,
+      "presented": true,
+      "frame": {
+        "x": 1930,
+        "y": -1440,
+        "w": 3440,
+        "h": 1440
+      }
+    }
+  }
+}

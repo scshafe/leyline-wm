@@ -1,0 +1,79 @@
+name: Verify
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      app_tag:
+        description: Release tag for a separate universal app download check
+        type: string
+        default: ""
+      homebrew_only:
+        description: Run the Homebrew package checks independently
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  macos:
+    if: ${{ inputs.app_tag == '' && !inputs.homebrew_only }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - name: Configure anonymous release identity
+        run: |
+          git config user.name "Leyline Contributors"
+          git config user.email "contributors@leyline.invalid"
+      - run: brew install jq
+      - run: scripts/development/setup-oracle-jq.sh
+      - run: bin/leylined-build --tests
+      - run: bin/leyline-recovery-app-build --tests
+      - run: bin/ley test all
+      - run: bin/ley build all
+      - run: python3 scripts/release/package_release.py --source-only --output release-check
+      - name: Verify Homebrew source installation
+        run: bash tests/release/homebrew-install.sh release-check
+  app-download:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.app_tag != '' }}
+    # GitHub requires write access to read an unpublished draft release.
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - name: Verify downloaded universal app
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          APP_TAG: ${{ inputs.app_tag }}
+        run: bash tests/release/app-download.sh "$APP_TAG"
+  homebrew:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.homebrew_only }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - name: Configure generic release identity
+        run: |
+          git config user.name "Leyline Contributors"
+          git config user.email "contributors@leyline.invalid"
+      - run: python3 scripts/release/package_release.py --source-only --output release-check
+      - name: Verify Homebrew source installation
+        run: bash tests/release/homebrew-install.sh release-check

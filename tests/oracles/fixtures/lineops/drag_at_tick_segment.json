@@ -1,0 +1,12 @@
+{ "fn": "drag_at_tick",
+  "note": "mouse-line-drag v2 (M3): one live tick on a mid-span grab — both incident windows reframe, the moved line reports its (unclamped here) coord, no store write.",
+  "arr": { "segments": [ { "axis": "v", "coord": 960, "lo": 0, "hi": 1080 } ],
+           "bindings": {
+             "1:0:0": { "window_id": 601, "presented": true, "frame": {"x":0,"y":0,"w":960,"h":1080} },
+             "1:1:0": { "window_id": 602, "presented": true, "frame": {"x":960,"y":0,"w":960,"h":1080} } } },
+  "topology": { "displays": [ { "id": 1, "frame": [0,0,1920,1080], "usable": [0,0,1920,1080], "main": true } ], "gap": 0 },
+  "x": 958, "y": 300, "tol": 12, "dx": 60, "dy": 0,
+  "expect": { "ok": true, "stuck": false,
+              "lines": [ { "axis": "v", "coord": 1020 } ],
+              "reframe": [ { "window_id": 601, "frame": {"x":0,"y":0,"w":1020,"h":1080} },
+                           { "window_id": 602, "frame": {"x":1020,"y":0,"w":900,"h":1080} } ] } }

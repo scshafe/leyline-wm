@@ -1,0 +1,42 @@
+{
+  "border_radius": {
+    "default": 12,
+    "type": "int",
+    "description": "Focus-border corner radius (px) \u2014 approximate macOS window rounding."
+  },
+  "width": {
+    "default": 1,
+    "type": "int",
+    "description": "Border stroke width in points; display-edge allowance and one shared gap between tiles. Zero disables borders and spacing."
+  },
+  "colors.focus": {
+    "default": "0xff39ff14",
+    "type": "color",
+    "description": "Focused TILED window (neon lime)."
+  },
+  "colors.resizing": {
+    "default": "0xffff8c00",
+    "type": "color",
+    "description": ":: resize mode active (orange)."
+  },
+  "colors.stacked": {
+    "default": "0xff00d7d7",
+    "type": "color",
+    "description": "Focused tile is part of a stack (cyan)."
+  },
+  "colors.moved": {
+    "default": "0xff2962ff",
+    "type": "color",
+    "description": "Movement mode: the window being moved (royal blue)."
+  },
+  "colors.move_to": {
+    "default": "0xffff5fa2",
+    "type": "color",
+    "description": "Movement mode: the virtual move-to cursor (pink)."
+  },
+  "colors.drop_edge": {
+    "default": "0xffffd400",
+    "type": "color",
+    "description": "Movement mode: the staged drop edge (vivid amber)."
+  }
+}

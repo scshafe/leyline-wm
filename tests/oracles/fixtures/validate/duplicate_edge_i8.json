@@ -1,0 +1,32 @@
+{
+  "note": "I8: a parent ('r') lists the same child ('a') twice — a duplicated (parent,child) edge. Distinct from I2 (a leaf with two DISTINCT parents): parent_count uses index() and counts r once, so I2 cannot see it. ok:false, one I8 violation naming parent r.",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "mode": "row",
+        "children": [
+          "a",
+          "a"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1
+      }
+    }
+  },
+  "expect": {
+    "ok": false,
+    "violations": [
+      {
+        "detail": "duplicate child edge",
+        "invariant": "I8",
+        "parents": [
+          "r"
+        ]
+      }
+    ]
+  }
+}

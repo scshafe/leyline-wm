@@ -1,0 +1,9 @@
+{
+  "note": "EMPTY both sides: empty observed + empty tree → the empty tree {root_id:null, nodes:{}}. managed-live = []; nothing to prune (no nodes); no newcomers; auto_proportion on {} is a no-op. The terminal/degenerate case — the reactor's bootstrap on a bare Space with no windows must produce a clean empty tree, never null or a malformed shell. Topology is irrelevant (no leaf to project), passed as {}.",
+  "fn": "sync",
+  "tree": { "root_id": null, "nodes": {} },
+  "observed": [],
+  "focused_leaf": null,
+  "topology": {},
+  "expect": { "root_id": null, "nodes": {} }
+}

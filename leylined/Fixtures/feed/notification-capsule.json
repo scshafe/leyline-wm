@@ -1,0 +1,7 @@
+{
+  "scenarios": [
+    {"name": "resize-reads-registered-window-not-fresh-callback-wrapper", "registered_window_id": 444, "registered_element": "window-444-with-verified-id", "notified_element": "equal-wrapper-with-unavailable-private-id", "expected": "window-444-with-verified-id"},
+    {"name": "destroyed-window-retains-exact-registration-capsule", "registered_window_id": 4882, "registered_element": "registered-window-4882", "notified_element": "destroyed-callback-wrapper", "expected": "registered-window-4882"},
+    {"name": "application-focus-callback-keeps-notified-candidate-for-new-binding", "registered_window_id": null, "registered_element": "application-element", "notified_element": "new-focused-window-candidate", "expected": "new-focused-window-candidate"}
+  ]
+}

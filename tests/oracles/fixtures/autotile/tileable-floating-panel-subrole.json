@@ -1,0 +1,14 @@
+{
+  "note": "Flagged edge: a tool palette / inspector reports subrole AXFloatingWindow. Not AXStandardWindow ⇒ not standard ⇒ NOT tileable. Floating panels are the canonical thing auto-tiling must leave alone.",
+  "fn": "tileable",
+  "window": {
+    "window_id": 23,
+    "app": "Pixelmator Pro",
+    "title": "Tools",
+    "role": "AXWindow",
+    "subrole": "AXFloatingWindow",
+    "resizable": true
+  },
+  "rules": [],
+  "expect": false
+}

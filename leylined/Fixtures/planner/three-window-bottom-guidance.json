@@ -1,0 +1,111 @@
+{
+  "schema": "leyline/three-window-bottom-guidance/v1",
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          30,
+          1200,
+          770
+        ]
+      }
+    ],
+    "gap": 1,
+    "outer_gap": 1
+  },
+  "world_context": {
+    "complete": true,
+    "trusted": true,
+    "space_enabled": true,
+    "active_space_key": "display:1/space:A",
+    "observer_epoch": "guidance-fixture-epoch",
+    "observer_generation": 8,
+    "topology_revision": 4,
+    "focused_window_id": 3
+  },
+  "scenes": {
+    "three": {
+      "segments": [
+        {
+          "axis": "v",
+          "coord": 600,
+          "lo": 31,
+          "hi": 799
+        }
+      ],
+      "bindings": {
+        "1:0:0": {
+          "nested": {
+            "segments": [
+              {
+                "axis": "h",
+                "coord": 415,
+                "lo": 1,
+                "hi": 600
+              }
+            ],
+            "bindings": {
+              "0:0:0": {
+                "window_id": 1,
+                "min_size": {
+                  "w": 160,
+                  "h": 120
+                }
+              },
+              "0:0:1": {
+                "window_id": 2,
+                "min_size": {
+                  "w": 160,
+                  "h": 120
+                }
+              }
+            },
+            "off_top": []
+          }
+        },
+        "1:1:0": {
+          "window_id": 3,
+          "min_size": {
+            "w": 160,
+            "h": 120
+          }
+        }
+      },
+      "off_top": [],
+      "focus": 3
+    }
+  },
+  "window_labels": {
+    "1": "terminal-top-left",
+    "2": "terminal-bottom-left",
+    "3": "browser-right"
+  },
+  "expected_browser_bottom_frame": [
+    1,
+    416,
+    1198,
+    383
+  ],
+  "expected_final_frames": {
+    "1": [
+      1,
+      31,
+      599,
+      384
+    ],
+    "2": [
+      601,
+      31,
+      598,
+      384
+    ],
+    "3": [
+      1,
+      416,
+      1198,
+      383
+    ]
+  }
+}

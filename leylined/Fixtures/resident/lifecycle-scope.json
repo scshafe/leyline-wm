@@ -1,0 +1,39 @@
+{
+  "epoch": "fixture-lifecycle-observer-epoch",
+  "receipt_before": 100,
+  "receipt_after": 200,
+  "interaction": {"kind": "resize", "origin_window_id": 11, "space_key": "space:uuid:fixture-A", "fixture_marker": "retained-layout-intent"},
+  "managed": [
+    {"window_id": 11, "pid": 111, "window_generation": 1, "eligible": true, "managed": true, "space_key": "space:uuid:fixture-A", "display_id": "display-A", "space_identity_available": true, "space_visible": true, "space_enabled": true, "frame": {"x": 0, "y": 30, "w": 596, "h": 770}},
+    {"window_id": 12, "pid": 112, "window_generation": 2, "eligible": true, "managed": true, "space_key": "space:uuid:fixture-A", "display_id": "display-A", "space_identity_available": true, "space_visible": true, "space_enabled": true, "frame": {"x": 600, "y": 30, "w": 596, "h": 770}}
+  ],
+  "ignored": {"window_id": 31, "pid": 111, "window_generation": 3, "eligible": false, "managed": false, "role": "AXWindow", "subrole": "AXDialog"},
+  "new_managed": {"window_id": 13, "pid": 113, "window_generation": 4, "eligible": true, "managed": true, "space_key": "space:uuid:fixture-A", "display_id": "display-A", "space_identity_available": true, "space_visible": true, "space_enabled": true},
+  "changed_pid": 222,
+  "changed_lifetime": 22,
+  "changed_space_key": "space:uuid:fixture-B",
+  "changed_display_id": "display-B",
+  "changed_frame": {"x": 0, "y": 30, "w": 636, "h": 770},
+  "scenarios": [
+    {"name": "ignored-tooltip-creation-preserves-resize", "event": "ax_window_created", "mutation": "ignored_created", "invalidates": false},
+    {"name": "ignored-tooltip-destruction-preserves-resize", "event": "ax_window_destroyed", "mutation": "ignored_destroyed", "invalidates": false},
+    {"name": "ignored-window-minimization-preserves-resize", "event": "ax_window_minimized", "mutation": "ignored_minimized", "invalidates": false},
+    {"name": "ignored-window-restoration-preserves-resize", "event": "ax_window_restored", "mutation": "ignored_created", "invalidates": false},
+    {"name": "ignored-popup-during-partial-frame-landing-does-not-mask-verification-timeout", "event": "ax_window_created", "mutation": "frame_changed", "invalidates": false},
+    {"name": "managed-window-creation-exits-resize", "event": "ax_window_created", "mutation": "managed_created", "invalidates": true},
+    {"name": "managed-window-destruction-exits-resize", "event": "ax_window_destroyed", "mutation": "managed_destroyed", "invalidates": true},
+    {"name": "managed-window-minimization-exits-resize", "event": "ax_window_minimized", "mutation": "managed_minimized", "invalidates": true},
+    {"name": "managed-window-restoration-exits-resize", "event": "ax_window_restored", "mutation": "managed_restored", "invalidates": true},
+    {"name": "changed-managed-owner-exits-resize", "event": "ax_window_created", "mutation": "pid_changed", "invalidates": true},
+    {"name": "changed-managed-lifetime-exits-resize", "event": "ax_window_created", "mutation": "lifetime_changed", "invalidates": true},
+    {"name": "changed-managed-Space-exits-resize", "event": "ax_window_created", "mutation": "space_changed", "invalidates": true},
+    {"name": "changed-managed-display-exits-resize", "event": "ax_window_created", "mutation": "display_changed", "invalidates": true},
+    {"name": "partial-world-stays-invalidating", "event": "ax_window_created", "mutation": "partial_world", "invalidates": true},
+    {"name": "missing-target-stays-invalidating", "event": "ax_window_created", "mutation": "missing_target", "invalidates": true},
+    {"name": "unknown-target-eligibility-stays-invalidating", "event": "ax_window_created", "mutation": "unknown_eligibility", "invalidates": true},
+    {"name": "conflicting-read-and-notification-target-stays-invalidating", "event": "ax_window_created", "mutation": "conflicting_target", "invalidates": true},
+    {"name": "folded-old-tooltip-proof-does-not-ignore-new-unknown-event", "event": "ax_window_created", "mutation": "stale_receipt", "invalidates": true},
+    {"name": "ignored-target-without-lifetime-proof-stays-invalidating", "event": "ax_window_created", "mutation": "missing_lifetime", "invalidates": true},
+    {"name": "empty-cohort-is-not-positive-interaction-authority", "event": "ax_window_created", "mutation": "empty_cohort", "invalidates": true}
+  ]
+}

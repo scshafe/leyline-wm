@@ -1,0 +1,122 @@
+{
+  "note": "THRASH-KILL PROOF (D's correctness oracle). The per-display mount tree's targets on the L-shaped topology: w1 {0,57,1440,1807} + w2 {1440,57,1440,1807} split D1's usable rect; w3 {1930,-1440,3440,1440} fills all of D3. These targets are exactly reconcile_targets(<the sync-authored per-display tree>; L-topology) — every target frame lies WITHIN its own display (no cross-display-gap frame, the bug D fixes). Observed starts DRIFTED (the raw window frames sync homed FROM: w1 {100,200,800,600}, w2 {300,400,800,600} on D1, w3 {2500,-1000,800,600} on D3). reconcile_diff emits three REFRAMEs to the per-display targets and NO show/hide; after one simulate_apply the re-diff is empty → stable:true. Proves I6 CONVERGES to the per-display fixpoint in one cycle (not merely that an already-correct state is stable) — the per-display targets are reachable AND the loop terminates, which is the whole point of D. Sibling sync-bootstrap-multi-display asserts the tree shape; reconcile/multi_display_per_display_reachable ties this diff back to the engine-authored tree end-to-end.",
+  "targets": {
+    "1": {
+      "window_id": 1,
+      "presented": true,
+      "frame": {
+        "x": 0,
+        "y": 57,
+        "w": 1440,
+        "h": 1807
+      }
+    },
+    "2": {
+      "window_id": 2,
+      "presented": true,
+      "frame": {
+        "x": 1440,
+        "y": 57,
+        "w": 1440,
+        "h": 1807
+      }
+    },
+    "3": {
+      "window_id": 3,
+      "presented": true,
+      "frame": {
+        "x": 1930,
+        "y": -1440,
+        "w": 3440,
+        "h": 1440
+      }
+    }
+  },
+  "observed": [
+    {
+      "window_id": 1,
+      "frame": [
+        100,
+        200,
+        800,
+        600
+      ],
+      "minimized": false
+    },
+    {
+      "window_id": 2,
+      "frame": [
+        300,
+        400,
+        800,
+        600
+      ],
+      "minimized": false
+    },
+    {
+      "window_id": 3,
+      "frame": [
+        2500,
+        -1000,
+        800,
+        600
+      ],
+      "minimized": false
+    }
+  ],
+  "expect": {
+    "diff": {
+      "hide": [],
+      "noop": [],
+      "reframe": [
+        {
+          "frame": {
+            "h": 1807,
+            "w": 1440,
+            "x": 0,
+            "y": 57
+          },
+          "from": {
+            "h": 600,
+            "w": 800,
+            "x": 100,
+            "y": 200
+          },
+          "window_id": 1
+        },
+        {
+          "frame": {
+            "h": 1807,
+            "w": 1440,
+            "x": 1440,
+            "y": 57
+          },
+          "from": {
+            "h": 600,
+            "w": 800,
+            "x": 300,
+            "y": 400
+          },
+          "window_id": 2
+        },
+        {
+          "frame": {
+            "h": 1440,
+            "w": 3440,
+            "x": 1930,
+            "y": -1440
+          },
+          "from": {
+            "h": 600,
+            "w": 800,
+            "x": 2500,
+            "y": -1000
+          },
+          "window_id": 3
+        }
+      ],
+      "show": []
+    },
+    "stable": true
+  }
+}

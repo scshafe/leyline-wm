@@ -1,0 +1,258 @@
+{
+  "note": "S-P3 multi-display (Amend. D positive + Amend. B). Display 1 = 2x2 grid (w1-4), display 2 = flat row (w5,w6). The goner w3 is on the GRID display → $native_prune fires for display 1; w4 absorbs up (left split kept), and the FLAT display 2 is left UNTOUCHED (display-constrained re-key keeps w5/w6 identity). grid persists (display 1 stays mixed-axis). frames_stable [1,2,5,6]: everything but the absorbing w4 is byte-stable.",
+  "prior": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1",
+          "d:2"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "nL",
+          "nR"
+        ]
+      },
+      "nL": {
+        "id": "nL",
+        "mode": "col",
+        "children": [
+          "w:1",
+          "w:2"
+        ]
+      },
+      "nR": {
+        "id": "nR",
+        "mode": "col",
+        "children": [
+          "w:3",
+          "w:4"
+        ]
+      },
+      "d:2": {
+        "id": "d:2",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 2,
+        "children": [
+          "w:5",
+          "w:6"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      },
+      "w:3": {
+        "id": "w:3",
+        "window_id": 3
+      },
+      "w:4": {
+        "id": "w:4",
+        "window_id": 4
+      },
+      "w:5": {
+        "id": "w:5",
+        "window_id": 5
+      },
+      "w:6": {
+        "id": "w:6",
+        "window_id": 6
+      }
+    }
+  },
+  "observed": [
+    {
+      "window_id": 1,
+      "frame": [
+        0,
+        0,
+        956,
+        528
+      ],
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 2,
+      "frame": [
+        0,
+        536,
+        956,
+        528
+      ],
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 3,
+      "frame": [
+        964,
+        0,
+        956,
+        528
+      ],
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 4,
+      "frame": [
+        964,
+        536,
+        956,
+        528
+      ],
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 5,
+      "frame": [
+        1920,
+        0,
+        956,
+        1064
+      ],
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 6,
+      "frame": [
+        2884,
+        0,
+        956,
+        1064
+      ],
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    }
+  ],
+  "observed2": [
+    {
+      "window_id": 1,
+      "frame": [
+        0,
+        0,
+        956,
+        528
+      ],
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 2,
+      "frame": [
+        0,
+        536,
+        956,
+        528
+      ],
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 4,
+      "frame": [
+        964,
+        536,
+        956,
+        528
+      ],
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 5,
+      "frame": [
+        1920,
+        0,
+        956,
+        1064
+      ],
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 6,
+      "frame": [
+        2884,
+        0,
+        956,
+        1064
+      ],
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    }
+  ],
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": {
+          "x": 0,
+          "y": 0,
+          "w": 1920,
+          "h": 1080
+        },
+        "usable": {
+          "x": 0,
+          "y": 0,
+          "w": 1920,
+          "h": 1080
+        }
+      },
+      {
+        "id": 2,
+        "frame": {
+          "x": 1920,
+          "y": 0,
+          "w": 1920,
+          "h": 1080
+        },
+        "usable": {
+          "x": 1920,
+          "y": 0,
+          "w": 1920,
+          "h": 1080
+        }
+      }
+    ],
+    "dead_zones": [],
+    "gap": 8
+  },
+  "expect": {
+    "grid_persists": true,
+    "revert_flattens": true,
+    "frames_stable": [
+      1,
+      2,
+      5,
+      6
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "_doc": "East: edge=20 for all three; tiebreak on -overlap puts 200 first (400), 300 second (300), 400 last (200). West wrap: same -overlap ordering after the wrap_edge_distance ties.",
+  "results": {
+    "north": { "outcome": "noCandidate", "winner": null },
+    "east":  { "outcome": "direct",      "winner": 200, "ranked": [200, 300, 400] },
+    "south": { "outcome": "noCandidate", "winner": null },
+    "west":  { "outcome": "wrap",        "winner": 200, "ranked": [200, 300, 400] }
+  }
+}

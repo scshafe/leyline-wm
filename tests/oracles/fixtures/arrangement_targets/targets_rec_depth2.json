@@ -1,0 +1,149 @@
+{
+  "note": "S11.4 (R-lift) — arrangement_targets_rec on a 2-level nested bridge, HAND-AUTHORED (no live bridge_arrangement, which cannot author nesting until S14b). The R4 window-keyed map { window_id: {window_id, presented, frame} } is INVARIANT at every depth (window_id is globally unique, so the path-qualified internal anchor is byte-invisible to the output). Single display 1 {0,0,1000,1000} gap 0. Top v@600 → LEFT cell {0,0,600,1000} (anchor 1:0:0) + RIGHT cell {600,0,400,1000} (anchor 1:1:0). The LEFT binding is INTERIOR (.nested = a child bag h@500 over LEFT.frame → child cells at child-anchors 0:0:0 top, 0:0:1 bottom, each a leaf binding for windows 201/202); the RIGHT binding is a LEAF for window 102. Every nested window resolves to EXACTLY ONE binding (no collision — the per-level localkey is display-qualified at the top, child-local 0:i0:j0 inside). ANTI-DERIVE TRAP (the #1 hazard guard): each leaf's contents[0].frame is hand-authored to DIFFER from the raw child-cell geometry (201's {5,5,590,490} ≠ raw {0,0,600,500}; 202's {5,505,590,490} ≠ raw {0,500,600,500}; 102's {610,10,380,980} ≠ raw {600,0,400,1000}) — so a future regression that DERIVES the nested frame from the partition (a second clamp dialect by the back door) reds this fixture. cells() is a LOCATOR only; the emitted frame is carried VERBATIM, zero min math. HAND-VERIFIED against the recursion. | S11 HARDENING: the RIGHT leaf 1:1:0 additionally carries a DEGENERATE nested:{segments:[]} (present-but-empty) that MUST read as a LEAF — window 102 is still emitted (expect unchanged). A drift to presence-based would recurse into the empty child bag and DROP window 102, reddening. Pins _emit_at interior predicate.",
+  "fn": "targets_rec",
+  "bridge": {
+    "segments": [
+      {
+        "axis": "v",
+        "coord": 600,
+        "lo": 0,
+        "hi": 1000
+      }
+    ],
+    "bindings": {
+      "1:0:0": {
+        "nested": {
+          "segments": [
+            {
+              "axis": "h",
+              "coord": 500,
+              "lo": 0,
+              "hi": 600
+            }
+          ],
+          "bindings": {
+            "0:0:0": {
+              "window_id": 201,
+              "presented": true,
+              "frame": {
+                "x": 5,
+                "y": 5,
+                "w": 590,
+                "h": 490
+              },
+              "contents": [
+                {
+                  "window_id": 201,
+                  "presented": true,
+                  "frame": {
+                    "x": 5,
+                    "y": 5,
+                    "w": 590,
+                    "h": 490
+                  }
+                }
+              ]
+            },
+            "0:0:1": {
+              "window_id": 202,
+              "presented": true,
+              "frame": {
+                "x": 5,
+                "y": 505,
+                "w": 590,
+                "h": 490
+              },
+              "contents": [
+                {
+                  "window_id": 202,
+                  "presented": true,
+                  "frame": {
+                    "x": 5,
+                    "y": 505,
+                    "w": 590,
+                    "h": 490
+                  }
+                }
+              ]
+            }
+          },
+          "off_top": []
+        }
+      },
+      "1:1:0": {
+        "window_id": 102,
+        "presented": true,
+        "frame": {
+          "x": 610,
+          "y": 10,
+          "w": 380,
+          "h": 980
+        },
+        "contents": [
+          {
+            "window_id": 102,
+            "presented": true,
+            "frame": {
+              "x": 610,
+              "y": 10,
+              "w": 380,
+              "h": 980
+            }
+          }
+        ],
+        "nested": {
+          "segments": [],
+          "bindings": {},
+          "off_top": []
+        }
+      }
+    },
+    "off_top": []
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "expect": {
+    "102": {
+      "window_id": 102,
+      "presented": true,
+      "frame": {
+        "x": 610,
+        "y": 10,
+        "w": 380,
+        "h": 980
+      }
+    },
+    "201": {
+      "window_id": 201,
+      "presented": true,
+      "frame": {
+        "x": 5,
+        "y": 5,
+        "w": 590,
+        "h": 490
+      }
+    },
+    "202": {
+      "window_id": 202,
+      "presented": true,
+      "frame": {
+        "x": 5,
+        "y": 505,
+        "w": 590,
+        "h": 490
+      }
+    }
+  }
+}

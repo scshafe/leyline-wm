@@ -1,0 +1,14 @@
+{
+  "note": "W=3 -> rows [2,1] (top row 2, bottom 1 stretched); score log2 (= the 1-cell row's 2/1 distortion, minimaxed).",
+  "w": 3,
+  "expect": {
+    "cols": 2,
+    "orient": "rows",
+    "parts": [
+      2,
+      1
+    ],
+    "rows": 2,
+    "score": 0.693147
+  }
+}

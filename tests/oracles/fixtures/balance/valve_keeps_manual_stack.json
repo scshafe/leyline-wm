@@ -1,0 +1,154 @@
+{
+  "note": "8.5 coexistence (the central claim): a MANUAL stack m (stack_source:manual) sits beside a crowded computed row 'crowd' (b/c min w 600). The valve un-folds only stack_source:valve, so m is UNTOUCHED while crowd folds to a valve stack. Pins manual+auto coexistence: the valve never auto-un-folds a hand stack.",
+  "fn": "valve",
+  "focused_leaf": null,
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "row",
+        "children": [
+          "m",
+          "crowd"
+        ]
+      },
+      "m": {
+        "id": "m",
+        "mode": "stack",
+        "stack_source": "manual",
+        "top": "x",
+        "children": [
+          "x",
+          "y"
+        ]
+      },
+      "crowd": {
+        "id": "crowd",
+        "mode": "row",
+        "children": [
+          "b",
+          "c"
+        ]
+      },
+      "x": {
+        "id": "x",
+        "window_id": 1
+      },
+      "y": {
+        "id": "y",
+        "window_id": 2
+      },
+      "b": {
+        "id": "b",
+        "window_id": 3,
+        "min_size": {
+          "w": 600,
+          "h": 50
+        }
+      },
+      "c": {
+        "id": "c",
+        "window_id": 4,
+        "min_size": {
+          "w": 600,
+          "h": 50
+        }
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ],
+        "usable": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "config": {},
+  "expect": {
+    "facts": [
+      {
+        "action": "fold",
+        "axis": "row",
+        "kind": "stack",
+        "node": "crowd",
+        "required": 1200,
+        "span": 500,
+        "surplus": [
+          "c"
+        ],
+        "top": "b"
+      }
+    ],
+    "tree": {
+      "nodes": {
+        "b": {
+          "id": "b",
+          "min_size": {
+            "h": 50,
+            "w": 600
+          },
+          "window_id": 3
+        },
+        "c": {
+          "id": "c",
+          "min_size": {
+            "h": 50,
+            "w": 600
+          },
+          "window_id": 4
+        },
+        "crowd": {
+          "children": [
+            "b",
+            "c"
+          ],
+          "id": "crowd",
+          "mode": "stack",
+          "stack_source": "valve",
+          "valve_from": "row"
+        },
+        "m": {
+          "children": [
+            "x",
+            "y"
+          ],
+          "id": "m",
+          "mode": "stack",
+          "stack_source": "manual",
+          "top": "x"
+        },
+        "root": {
+          "children": [
+            "m",
+            "crowd"
+          ],
+          "id": "root",
+          "mode": "row"
+        },
+        "x": {
+          "id": "x",
+          "window_id": 1
+        },
+        "y": {
+          "id": "y",
+          "window_id": 2
+        }
+      },
+      "root_id": "root"
+    }
+  }
+}

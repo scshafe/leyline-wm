@@ -1,0 +1,38 @@
+{
+  "note": "link(parent=B, child=r) would make r reachable from its own descendant → I1 reject.",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "children": [
+          "A"
+        ]
+      },
+      "A": {
+        "id": "A",
+        "children": [
+          "B",
+          "leaf"
+        ]
+      },
+      "B": {
+        "id": "B",
+        "children": []
+      },
+      "leaf": {
+        "id": "leaf",
+        "window_id": 1
+      }
+    }
+  },
+  "op": "link",
+  "args": {
+    "parent": "B",
+    "child": "r"
+  },
+  "expect": {
+    "ok": false,
+    "reason": "I1: would create a cycle"
+  }
+}

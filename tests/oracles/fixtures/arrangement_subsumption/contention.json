@@ -1,0 +1,102 @@
+{
+  "note": "SLICING scene (PASS): arrangement::valid(from_floorplan(tree;topology)) AGREES with floorplan::f1(tree;topology) — both ok:true, same (empty) violation kinds. This is the HARD requirement of the subsumption oracle: on every tree-EXPRESSIBLE (slicing) layout the line-primary valid() must reach the SAME ok verdict as F1; valid() is strictly STRONGER only because it ALSO catches gaps (which a BSP tree cannot produce), not because it disagrees here. Thin fixture: tree+topology lifted verbatim from f1/contention.json. RED-GREEN teeth: stubbing valid() to always-FAIL ({ok:false}) flips arr_ok false here and reddens this fixture (agree:true -> false), proving the oracle bites a broken valid that wrongly rejects a clean slicing layout. (Stubbing valid() to always-OK does NOT bite, because valid(from_floorplan(...)) is STRUCTURALLY always-ok on this surface — from_floorplan derives a clean idealized slicing bag — so always-FAIL is the honest teeth; see the F1-FAIL fixtures' note for why.)",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "mA",
+          "mB"
+        ]
+      },
+      "mA": {
+        "id": "mA",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "mode": "stack",
+        "children": [
+          "sharedPair",
+          "soloA"
+        ],
+        "top": "sharedPair"
+      },
+      "mB": {
+        "id": "mB",
+        "frame_source": "pinned",
+        "display_id": 2,
+        "mode": "stack",
+        "children": [
+          "sharedPair",
+          "soloB"
+        ],
+        "top": "sharedPair"
+      },
+      "sharedPair": {
+        "id": "sharedPair",
+        "mode": "row",
+        "children": [
+          "p",
+          "q"
+        ]
+      },
+      "p": {
+        "id": "p",
+        "window_id": 1,
+        "binding": {
+          "app": "P"
+        }
+      },
+      "q": {
+        "id": "q",
+        "window_id": 2,
+        "binding": {
+          "app": "Q"
+        }
+      },
+      "soloA": {
+        "id": "soloA",
+        "window_id": 3,
+        "binding": {
+          "app": "SA"
+        }
+      },
+      "soloB": {
+        "id": "soloB",
+        "window_id": 4,
+        "binding": {
+          "app": "SB"
+        }
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      },
+      {
+        "id": 2,
+        "frame": [
+          1000,
+          0,
+          2000,
+          1000
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "arr_ok": true,
+    "f1_ok": true,
+    "agree": true,
+    "kinds_match": true
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "note": "move_leaf rejects a non-leaf target — you can only warp INTO another leaf's slot, never onto an internal container.",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": { "id": "r", "mode": "row", "children": ["A", "b"] },
+      "A": { "id": "A", "mode": "col", "children": ["a"] },
+      "a": { "id": "a", "window_id": 1 },
+      "b": { "id": "b", "window_id": 2 }
+    }
+  },
+  "op": "move_leaf",
+  "args": { "focused": "b", "target": "A", "orientation": "row", "side": "after" },
+  "expect": { "ok": false, "reason": "not a leaf: A" }
+}

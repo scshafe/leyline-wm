@@ -1,0 +1,18 @@
+{
+  "note": "The mirror of sync-pin-leaves-unadopted: the SAME empty tree + observed window 30, but WITHOUT the float pin (rules empty). Now 30 is managed-live → sync builds the per-display scaffold and adopts it: root(region) → d:1(pinned mount, display 1) → w:30. The ONLY difference from the pinned fixture is the rule, and it flips adoption — the un-float (float off) direction.",
+  "fn": "sync",
+  "tree": {"root_id": null, "nodes": {}},
+  "observed": [
+    {"window_id": 30, "app": "A", "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true, "frame": [0, 0, 800, 600]}
+  ],
+  "rules": {"rules": []},
+  "topology": {"displays": [{"id": 1, "frame": [0, 0, 1600, 900]}]},
+  "expect": {
+    "root_id": "root",
+    "nodes": {
+      "root": {"id": "root", "mode": "region", "children": ["d:1"]},
+      "d:1": {"id": "d:1", "mode": "row", "frame_source": "pinned", "display_id": 1, "children": ["w:30"]},
+      "w:30": {"id": "w:30", "window_id": 30}
+    }
+  }
+}

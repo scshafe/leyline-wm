@@ -1,0 +1,66 @@
+{
+  "fn": "move_pinwheel_deferred",
+  "note": "S17.5 PINWHEEL arm (the TESTED deferral boundary, not a silent gap). The canonical hand-authored 5-cell pinwheel (the shape A::cells CAN derive but from_floorplan can NEVER bridge — the rollout's expressiveness justification): v@960 [0,1200] (id:1), v@1920 [600,1800] (id:2), h@600 [960,2880] (id:3), h@1200 [0,1920] (id:4) over 2880x1800. The anchored-on graph has a CYCLE through every line (v@960.hi->h@1200; h@1200.hi->v@1920; v@1920.lo->h@600; h@600.lo->v@960) — a non-slicing layout where a ridden line's far endpoint anchors on a THIRD interior line. Drag the pinwheel-INTERIOR line v@960 (id:1) by delta=-100. move_line returns ok:true + valid_rec:true (the SOUNDNESS FLOOR — the single-pass min is a valid lower bound, never over-shrinks; coord 960->860, h@600.lo rides 960->860, the partition stays a valid 5-cell pinwheel). FLAGGED pinwheel_deferred:true / closed_form:false: the travel is the conservative single-pass value, NOT asserted to reach the iterated LP fixpoint (the maximal pinwheel needs one fixpoint iteration — spec §10.3, confidence medium a closed form even exists — which S17 does NOT implement, see the // DEFER note in lineops.jq). This makes the pinwheel a TESTED boundary and tells S18 exactly what to iterate. DAG-from-L = closed-form (move_line_terminates GREEN arm); cycle-through-L = deferred (here).",
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          2880,
+          1800
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "line_id": 1,
+  "delta": -100,
+  "pinwheel_deferred": true,
+  "closed_form": false,
+  "arr": {
+    "segments": [
+      {
+        "axis": "v",
+        "coord": 960,
+        "lo": 0,
+        "hi": 1200,
+        "id": 1
+      },
+      {
+        "axis": "v",
+        "coord": 1920,
+        "lo": 600,
+        "hi": 1800,
+        "id": 2
+      },
+      {
+        "axis": "h",
+        "coord": 600,
+        "lo": 960,
+        "hi": 2880,
+        "id": 3
+      },
+      {
+        "axis": "h",
+        "coord": 1200,
+        "lo": 0,
+        "hi": 1920,
+        "id": 4
+      }
+    ],
+    "bindings": {},
+    "off_top": []
+  },
+  "expect": {
+    "closed_form": false,
+    "coord_after": 860,
+    "ncells_after": 5,
+    "ncells_before": 5,
+    "ok": true,
+    "pinwheel_deferred": true,
+    "segments_len_eq": true,
+    "valid": true
+  }
+}

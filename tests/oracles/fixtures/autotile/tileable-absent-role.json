@@ -1,0 +1,13 @@
+{
+  "note": "Flagged edge (conservative default): a window with subrole AXStandardWindow but NO role field. is_standard coalesces a missing role to null, null != AXWindow ⇒ not standard ⇒ NOT tileable. The role gate must hold even when subrole alone looks standard.",
+  "fn": "tileable",
+  "window": {
+    "window_id": 26,
+    "app": "SomeApp",
+    "title": "Untitled",
+    "subrole": "AXStandardWindow",
+    "resizable": true
+  },
+  "rules": [],
+  "expect": false
+}

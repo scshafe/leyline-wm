@@ -1,0 +1,98 @@
+{
+  "note": "P-SWAP (arrangement-native swap/move v1) — the CONTENTS-only binding exchange. Scene: a v-line at x=500 splits the 1000x800 canvas into two LEAF cells 1:0:0 (w201) and 1:1:0 (w202). swap(1:0:0; 1:1:0) trades the two bindings: 1:0:0 now holds w202, 1:1:0 holds w201 (windows trade cells). ASSERTS the load-bearing swap invariants: .segments BYTE-IDENTICAL (segments_byte_eq — the partition is untouched, the #1 golden-equiv hazard avoided by construction); .promotions byte-equal; contents[0].window_id == window_id for every cell (cell_consistent — what wm_parcel_arrangement_set gates at store.sh:136); valid_rec is INVARIANT (valid_rec_eq_before — it reads .segments/.nested only, never .contents). Each window inherits the OTHER cell's frame on the next settle's re-stamp; the swap itself keeps each cell's geometry (frame stays with the cell).",
+  "fn": "swap_check",
+  "cell_a": "1:0:0",
+  "cell_b": "1:1:0",
+  "arr": {
+    "segments": [
+      {
+        "axis": "v",
+        "coord": 500,
+        "lo": 0,
+        "hi": 800
+      }
+    ],
+    "bindings": {
+      "1:0:0": {
+        "window_id": 201,
+        "presented": true,
+        "frame": {
+          "x": 0,
+          "y": 0,
+          "w": 500,
+          "h": 800
+        },
+        "contents": [
+          {
+            "window_id": 201,
+            "presented": true,
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "w": 500,
+              "h": 800
+            }
+          }
+        ]
+      },
+      "1:1:0": {
+        "window_id": 202,
+        "presented": true,
+        "frame": {
+          "x": 500,
+          "y": 0,
+          "w": 500,
+          "h": 800
+        },
+        "contents": [
+          {
+            "window_id": 202,
+            "presented": true,
+            "frame": {
+              "x": 500,
+              "y": 0,
+              "w": 500,
+              "h": 800
+            }
+          }
+        ]
+      }
+    },
+    "off_top": [],
+    "promotions": []
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          800
+        ],
+        "usable": [
+          0,
+          0,
+          1000,
+          800
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "expect": {
+    "c_a_after": 202,
+    "c_b_after": 201,
+    "cell_consistent": true,
+    "ok": true,
+    "promotions_byte_eq": true,
+    "reason": null,
+    "segments_byte_eq": true,
+    "store_intact_on_reject": null,
+    "valid_rec_eq_before": true,
+    "valid_rec_ok": true,
+    "w_a_after": 202,
+    "w_b_after": 201
+  }
+}

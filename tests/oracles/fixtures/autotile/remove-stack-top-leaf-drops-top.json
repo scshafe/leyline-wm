@@ -1,0 +1,53 @@
+{
+  "note": "STACK top-child removal: a 3-child stack stk=[s1,s2,s3] with top:'s1' (manually authored; auto never makes stacks). Removing the leaf that IS the top ('s1') drops the now-dangling 'top' key entirely → stk stays a 3→2 stack [s2,s3] with NO top. child_slots then defaults selection to the first survivor (kids[0]='s2'). Asserts top is dropped (not left pointing at a deleted node, which would mis-gate presentation).",
+  "fn": "remove",
+  "tree": {
+    "root_id": "stk",
+    "nodes": {
+      "stk": {
+        "id": "stk",
+        "mode": "stack",
+        "top": "s1",
+        "children": [
+          "s1",
+          "s2",
+          "s3"
+        ]
+      },
+      "s1": {
+        "id": "s1",
+        "window_id": 1
+      },
+      "s2": {
+        "id": "s2",
+        "window_id": 2
+      },
+      "s3": {
+        "id": "s3",
+        "window_id": 3
+      }
+    }
+  },
+  "leaf": "s1",
+  "expect": {
+    "nodes": {
+      "s2": {
+        "id": "s2",
+        "window_id": 2
+      },
+      "s3": {
+        "id": "s3",
+        "window_id": 3
+      },
+      "stk": {
+        "children": [
+          "s2",
+          "s3"
+        ],
+        "id": "stk",
+        "mode": "stack"
+      }
+    },
+    "root_id": "stk"
+  }
+}

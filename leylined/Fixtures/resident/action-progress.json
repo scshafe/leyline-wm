@@ -1,0 +1,19 @@
+{
+  "entry_chord": "cmd + ctrl + alt + shift - r",
+  "entry_action": "resize.start",
+  "oldest_chord": "h",
+  "younger_chord": "l",
+  "entry_receipt": 1000000000,
+  "oldest_receipt": 1020000000,
+  "younger_receipt": 1040000000,
+  "unknown_receipt": 1060000000,
+  "initial_now": 1150000000,
+  "before_receipt": 1010000000,
+  "first_progress": 1100000000,
+  "regressed_progress": 1080000000,
+  "younger_progress": 1120000000,
+  "second_progress": 1140000000,
+  "future_progress": 1160000000,
+  "still_active_now": 1320000000,
+  "release_now": 1340000000
+}

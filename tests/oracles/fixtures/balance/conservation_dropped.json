@@ -1,0 +1,77 @@
+{
+  "note": "8.3 M1 SILENTLY-DROPPED detector: leaf z carries a window_id but is ORPHANED (no parent edge → unreachable from root). project gives it presented:false (no path); it is NOT under any stack → UNEXPLAINED. ok:false, unexplained:[z]. This is the case F1 alone is blind to (z contributes no cell, F1 green). a/b feasible + presented.",
+  "fn": "conservation",
+  "focused_leaf": null,
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "mode": "row",
+        "children": [
+          "a",
+          "b"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1,
+        "min_size": {
+          "w": 300,
+          "h": 100
+        }
+      },
+      "b": {
+        "id": "b",
+        "window_id": 2,
+        "min_size": {
+          "w": 300,
+          "h": 100
+        }
+      },
+      "z": {
+        "id": "z",
+        "window_id": 9
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ],
+        "usable": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "expect": {
+    "ok": false,
+    "managed": [
+      "a",
+      "b",
+      "z"
+    ],
+    "presented": [
+      "a",
+      "b"
+    ],
+    "hidden": [
+      "z"
+    ],
+    "unexplained": [
+      "z"
+    ],
+    "overflowing": []
+  }
+}

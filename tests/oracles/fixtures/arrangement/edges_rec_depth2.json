@@ -1,0 +1,83 @@
+{
+  "note": "S11.5 (R-lift) depth-2 derivation, HAND-COMPUTED (not regenerated). Single display 1 {0,0,1000,1000} gap 0. Top segment v@600 → LEFT cell {0,0,600,1000} (anchor 1:0:0) + RIGHT cell {600,0,400,1000}. The LEFT cell's binding carries .nested = a child bag of two crossing segments v@300 (y[0,1000]) and h@500 (x[0,600]) over the LEFT cell.frame, forming an interior crossing. edges_rec emits the TOP bag's segment v@600 as an edge, then descends the interior LEFT cell to contribute the CHILD parcel's own edges (v@300, h@500) and corner (the v×h crossing at {300,500}) WITHIN the child's frame — all tagged display_id:1 (the parent bag's display). Sorted edges by [display_id,axis,coord,lo] → h@500, v@300, v@600; corners by [display_id,x,y] → {300,500}. Proves a nested parcel contributes its interior edges/corners (the gesture grab-point set, recursed). HAND-VERIFIED against the recursion. | S11 HARDENING NOTE: a degenerate nested:{segments:[]} sibling is deliberately NOT added here — for edges_rec the length-vs-presence predicate drift is BEHAVIORALLY BENIGN (recursing into an empty child bag contributes no edges/corners, identical to a leaf). The interior predicate is pinned where the drift is OBSERVABLE: cells_rec (cells_rec_depth2), valid_rec (valid_rec_nested_ok), targets_rec (targets_rec_depth2).",
+  "fn": "edges_rec",
+  "arr": {
+    "segments": [
+      {
+        "axis": "v",
+        "coord": 600,
+        "lo": 0,
+        "hi": 1000
+      }
+    ],
+    "bindings": {
+      "1:0:0": {
+        "nested": {
+          "segments": [
+            {
+              "axis": "v",
+              "coord": 300,
+              "lo": 0,
+              "hi": 1000
+            },
+            {
+              "axis": "h",
+              "coord": 500,
+              "lo": 0,
+              "hi": 600
+            }
+          ],
+          "bindings": {},
+          "off_top": []
+        }
+      }
+    },
+    "off_top": []
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "expect": {
+    "edges": [
+      {
+        "axis": "h",
+        "coord": 500,
+        "lo": 0,
+        "hi": 600,
+        "display_id": 1
+      },
+      {
+        "axis": "v",
+        "coord": 300,
+        "lo": 0,
+        "hi": 1000,
+        "display_id": 1
+      },
+      {
+        "axis": "v",
+        "coord": 600,
+        "lo": 0,
+        "hi": 1000,
+        "display_id": 1
+      }
+    ],
+    "corners": [
+      {
+        "x": 300,
+        "y": 500,
+        "display_id": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "ignored_subrole": "AXDialog",
+  "unsafe_cases": ["duplicate", "pid", "space", "display", "visible_missing", "visible_retired_id", "inventory", "new_managed", "coverage", "unknown", "standard"]
+}

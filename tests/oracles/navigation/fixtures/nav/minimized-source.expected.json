@@ -1,0 +1,9 @@
+{
+  "_doc": "A minimized source resolves to noFocus in every direction.",
+  "results": {
+    "north": { "outcome": "noFocus", "winner": null, "ranked": [] },
+    "east":  { "outcome": "noFocus", "winner": null, "ranked": [] },
+    "south": { "outcome": "noFocus", "winner": null, "ranked": [] },
+    "west":  { "outcome": "noFocus", "winner": null, "ranked": [] }
+  }
+}

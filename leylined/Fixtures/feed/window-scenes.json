@@ -1,0 +1,318 @@
+{
+  "warm": [
+    {
+      "window_id": 101,
+      "pid": 111,
+      "frame": {
+        "x": 0.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-a",
+      "space_key": "space:uuid:fixture-a"
+    },
+    {
+      "window_id": 102,
+      "pid": 111,
+      "frame": {
+        "x": 20.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-b",
+      "space_key": "space:uuid:fixture-b"
+    },
+    {
+      "window_id": 103,
+      "pid": 111,
+      "frame": {
+        "x": 40.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-a",
+      "space_key": "space:uuid:fixture-a"
+    },
+    {
+      "window_id": 104,
+      "pid": 111,
+      "frame": {
+        "x": 60.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-b",
+      "space_key": "space:uuid:fixture-b"
+    },
+    {
+      "window_id": 105,
+      "pid": 111,
+      "frame": {
+        "x": 80.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-a",
+      "space_key": "space:uuid:fixture-a"
+    },
+    {
+      "window_id": 106,
+      "pid": 111,
+      "frame": {
+        "x": 100.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-b",
+      "space_key": "space:uuid:fixture-b"
+    }
+  ],
+  "stress": [
+    {
+      "window_id": 201,
+      "pid": 222,
+      "frame": {
+        "x": 0.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-a",
+      "space_key": "space:uuid:fixture-a"
+    },
+    {
+      "window_id": 202,
+      "pid": 222,
+      "frame": {
+        "x": 20.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-b",
+      "space_key": "space:uuid:fixture-b"
+    },
+    {
+      "window_id": 203,
+      "pid": 222,
+      "frame": {
+        "x": 40.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-a",
+      "space_key": "space:uuid:fixture-a"
+    },
+    {
+      "window_id": 204,
+      "pid": 222,
+      "frame": {
+        "x": 60.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-b",
+      "space_key": "space:uuid:fixture-b"
+    },
+    {
+      "window_id": 205,
+      "pid": 222,
+      "frame": {
+        "x": 80.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-a",
+      "space_key": "space:uuid:fixture-a"
+    },
+    {
+      "window_id": 206,
+      "pid": 222,
+      "frame": {
+        "x": 100.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-b",
+      "space_key": "space:uuid:fixture-b"
+    },
+    {
+      "window_id": 207,
+      "pid": 222,
+      "frame": {
+        "x": 120.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-a",
+      "space_key": "space:uuid:fixture-a"
+    },
+    {
+      "window_id": 208,
+      "pid": 222,
+      "frame": {
+        "x": 140.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-b",
+      "space_key": "space:uuid:fixture-b"
+    },
+    {
+      "window_id": 209,
+      "pid": 222,
+      "frame": {
+        "x": 160.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-a",
+      "space_key": "space:uuid:fixture-a"
+    },
+    {
+      "window_id": 210,
+      "pid": 222,
+      "frame": {
+        "x": 180.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-b",
+      "space_key": "space:uuid:fixture-b"
+    },
+    {
+      "window_id": 211,
+      "pid": 222,
+      "frame": {
+        "x": 200.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-a",
+      "space_key": "space:uuid:fixture-a"
+    },
+    {
+      "window_id": 212,
+      "pid": 222,
+      "frame": {
+        "x": 220.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-b",
+      "space_key": "space:uuid:fixture-b"
+    },
+    {
+      "window_id": 213,
+      "pid": 222,
+      "frame": {
+        "x": 240.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-a",
+      "space_key": "space:uuid:fixture-a"
+    },
+    {
+      "window_id": 214,
+      "pid": 222,
+      "frame": {
+        "x": 260.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-b",
+      "space_key": "space:uuid:fixture-b"
+    },
+    {
+      "window_id": 215,
+      "pid": 222,
+      "frame": {
+        "x": 280.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-a",
+      "space_key": "space:uuid:fixture-a"
+    },
+    {
+      "window_id": 216,
+      "pid": 222,
+      "frame": {
+        "x": 300.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-b",
+      "space_key": "space:uuid:fixture-b"
+    },
+    {
+      "window_id": 217,
+      "pid": 222,
+      "frame": {
+        "x": 320.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-a",
+      "space_key": "space:uuid:fixture-a"
+    },
+    {
+      "window_id": 218,
+      "pid": 222,
+      "frame": {
+        "x": 340.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-b",
+      "space_key": "space:uuid:fixture-b"
+    },
+    {
+      "window_id": 219,
+      "pid": 222,
+      "frame": {
+        "x": 360.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-a",
+      "space_key": "space:uuid:fixture-a"
+    },
+    {
+      "window_id": 220,
+      "pid": 222,
+      "frame": {
+        "x": 380.0,
+        "y": 20.0,
+        "w": 400.0,
+        "h": 300.0
+      },
+      "display_id": "display-b",
+      "space_key": "space:uuid:fixture-b"
+    }
+  ]
+}

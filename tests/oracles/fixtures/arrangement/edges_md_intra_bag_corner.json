@@ -1,0 +1,24 @@
+{
+  "note": "S4 step 6 (R5) — proves edges_md's corner detection is NON-TRIVIAL (so the corners==[] anti-thrash lock is meaningful, not vacuously empty). A v@500 and h@500 crossing WITHIN display 1 produce a corner at {500,500} tagged display_id:1. The corner is intra-bag (both segments homed to d1); it can NEVER be a cross-display corner because _bag_corners crosses only segments in the SAME bag. Display 2 has no segment → no edge, no corner. Contrast edges_md_flush_displays (no segments → []) and edges_md_zero_cross_gap (one segment per display → two per-display edges, no crossing).",
+  "fn": "edges_md",
+  "arr": [
+    { "axis": "v", "coord": 500, "lo": 8, "hi": 992 },
+    { "axis": "h", "coord": 500, "lo": 8, "hi": 992 }
+  ],
+  "topology": {
+    "displays": [
+      { "id": 1, "frame": [0, 0, 1000, 1000] },
+      { "id": 2, "frame": [1000, 0, 1000, 1000] }
+    ],
+    "gap": 8
+  },
+  "expect": {
+    "edges": [
+      { "axis": "h", "coord": 500, "lo": 8, "hi": 992, "display_id": 1 },
+      { "axis": "v", "coord": 500, "lo": 8, "hi": 992, "display_id": 1 }
+    ],
+    "corners": [
+      { "x": 500, "y": 500, "display_id": 1 }
+    ]
+  }
+}

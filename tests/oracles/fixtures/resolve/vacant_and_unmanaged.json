@@ -1,0 +1,54 @@
+{
+  "note": "descriptor whose app has no window → vacant (binding kept, window_id null). An observed window with no descriptor → unmanaged (not in the tree). §7.",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "children": [
+          "a"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "binding": {
+          "bundle_id": "gone"
+        }
+      }
+    }
+  },
+  "windows": [
+    {
+      "window_id": 5,
+      "bundle_id": "other",
+      "title": "x"
+    }
+  ],
+  "expect": {
+    "bound": [],
+    "tree": {
+      "nodes": {
+        "a": {
+          "binding": {
+            "bundle_id": "gone"
+          },
+          "id": "a",
+          "window_id": null
+        },
+        "r": {
+          "children": [
+            "a"
+          ],
+          "id": "r"
+        }
+      },
+      "root_id": "r"
+    },
+    "unmanaged": [
+      5
+    ],
+    "vacant": [
+      "a"
+    ]
+  }
+}

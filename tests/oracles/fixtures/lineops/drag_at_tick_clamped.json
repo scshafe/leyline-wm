@@ -1,0 +1,12 @@
+{ "fn": "drag_at_tick",
+  "note": "mouse-line-drag v2 (M3/F6): a tick pushing past the shrinking side's learned min CLAMPS — the line coord sticks at the floor (960-60=900 for min w=900 from 1920... here min 800 => coord 960+? shrink right cell 602 min w 800: room=160 => coord 1120) and the host draws the ghost THERE, not at the cursor.",
+  "arr": { "segments": [ { "axis": "v", "coord": 960, "lo": 0, "hi": 1080 } ],
+           "bindings": {
+             "1:0:0": { "window_id": 601, "presented": true, "frame": {"x":0,"y":0,"w":960,"h":1080} },
+             "1:1:0": { "window_id": 602, "presented": true, "frame": {"x":960,"y":0,"w":960,"h":1080}, "min_size": {"w":800,"h":0} } } },
+  "topology": { "displays": [ { "id": 1, "frame": [0,0,1920,1080], "usable": [0,0,1920,1080], "main": true } ], "gap": 0 },
+  "x": 958, "y": 300, "tol": 12, "dx": 500, "dy": 0,
+  "expect": { "ok": true, "stuck": false,
+              "lines": [ { "axis": "v", "coord": 1120 } ],
+              "reframe": [ { "window_id": 601, "frame": {"x":0,"y":0,"w":1120,"h":1080} },
+                           { "window_id": 602, "frame": {"x":1120,"y":0,"w":800,"h":1080} } ] } }

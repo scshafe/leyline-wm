@@ -1,0 +1,15 @@
+{
+  "note": "W=7 -> rows [3,2,2]; score 0.405465.",
+  "w": 7,
+  "expect": {
+    "cols": 3,
+    "orient": "rows",
+    "parts": [
+      3,
+      2,
+      2
+    ],
+    "rows": 3,
+    "score": 0.405465
+  }
+}

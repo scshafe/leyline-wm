@@ -1,0 +1,16 @@
+{
+  "note": "A1 regression: TREE store shape (legacy .nodes/.root_id) keeps the verbatim pre-port resolution - a leaf under a stack node -> stacked. Locks the tree branch so tree-seeded stores stay correct after the arrangement port.",
+  "store": {
+    "root_id": "r",
+    "nodes": {
+      "r": {"mode": "row", "children": ["s", "l2"]},
+      "s": {"mode": "stack", "children": ["l1", "l3"], "top": "l1"},
+      "l1": {"window_id": 101},
+      "l2": {"window_id": 102},
+      "l3": {"window_id": 103}
+    }
+  },
+  "window_id": 101,
+  "observed": [],
+  "expect": "stacked"
+}

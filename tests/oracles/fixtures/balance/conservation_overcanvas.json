@@ -1,0 +1,12 @@
+{
+  "note": "8.3 review regression (the SECOND F1-RED exemption — over-canvas containment): col[big,small], big.min.w 1300 > display width 1000. A col splits HEIGHT, so big gets the FULL canvas width → the bump grows it to 1300 > root → F1's CONTAINMENT arm REDs (the OVERLAP arm stays green: big is alone in its row, no sibling to intersect). The valve cannot fix it (stacking frees split-axis space among siblings, not a leaf below its own min — physics, also RED under bsp). conservation ok:true (no drop — big is PRESENTED) and surfaces big in `overflowing`, so the F1-RED is ATTRIBUTABLE, not a silent valve failure.",
+  "fn": "conservation",
+  "focused_leaf": null,
+  "tree": { "root_id": "r", "nodes": {
+    "r": {"id":"r","mode":"col","children":["big","small"]},
+    "big": {"id":"big","window_id":1,"min_size":{"w":1300,"h":50}},
+    "small": {"id":"small","window_id":2,"min_size":{"w":50,"h":50}} } },
+  "topology": { "displays": [{"id":1,"frame":[0,0,1000,1000],"usable":[0,0,1000,1000]}], "gap":0 },
+  "config": {},
+  "expect": {"ok":true,"managed":["big","small"],"presented":["big","small"],"hidden":[],"unexplained":[],"overflowing":["big"]}
+}

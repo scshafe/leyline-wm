@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Sign a build artifact; anonymous ad-hoc signing is the default.
+# Set LEYLINE_CODESIGN_IDENTITY for a deliberate local/publisher certificate.
+set -euo pipefail
+[[ $# -ge 1 && $# -le 2 && -e "$1" ]] || { printf 'Usage: leyline-codesign FILE [IDENTIFIER]\n' >&2; exit 64; }
+signing_identity="${LEYLINE_CODESIGN_IDENTITY:--}"
+signing_identifier="${2:-org.leyline}"
+signing_args=(--force --sign "$signing_identity" --identifier "$signing_identifier")
+if [[ "${LEYLINE_DISTRIBUTION_SIGNING:-0}" == 1 ]]; then
+  [[ "$signing_identity" != - ]] || { printf 'Distribution signing requires Developer ID.\n' >&2; exit 65; }
+  signing_args+=(--options runtime --timestamp)
+else
+  signing_args+=(--timestamp=none)
+fi
+codesign "${signing_args[@]}" "$1"
+codesign --verify --strict "$1"

@@ -1,0 +1,16 @@
+{
+  "note": "float_verdict edge: a matching rule that omits the manage key. Per the contract ($r.manage // \"off\"), a matching rule with no explicit manage defaults to 'off' (it is a float rule) ⇒ verdict 'off'. Pins the rule-level default direction.",
+  "fn": "float_verdict",
+  "window": {
+    "window_id": 42,
+    "app": "Stickies",
+    "title": "Note"
+  },
+  "rules": [
+    {
+      "id": "stickies_no_manage",
+      "app": "^Stickies$"
+    }
+  ],
+  "expect": "off"
+}

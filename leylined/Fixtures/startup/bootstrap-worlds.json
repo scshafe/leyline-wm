@@ -1,0 +1,45 @@
+{
+  "stage": "S3",
+  "blocked_worlds": [
+    {
+      "name": "six_window_bootstrap",
+      "world": {
+        "event": "world_seed",
+        "windows_onscreen": 6,
+        "focus": null,
+        "windows": [{"window_id": 101}, {"window_id": 102}, {"window_id": 103}, {"window_id": 104}, {"window_id": 105}, {"window_id": 106}],
+        "observation": {"world_complete": true, "reason": "world_seed"}
+      }
+    },
+    {
+      "name": "twenty_window_bootstrap",
+      "world": {
+        "event": "world_seed",
+        "windows_onscreen": 20,
+        "focus": null,
+        "windows": [{"window_id": 101}, {"window_id": 102}, {"window_id": 103}, {"window_id": 104}, {"window_id": 105}, {"window_id": 106}, {"window_id": 107}, {"window_id": 108}, {"window_id": 109}, {"window_id": 110}, {"window_id": 111}, {"window_id": 112}, {"window_id": 113}, {"window_id": 114}, {"window_id": 115}, {"window_id": 116}, {"window_id": 117}, {"window_id": 118}, {"window_id": 119}, {"window_id": 120}],
+        "observation": {"world_complete": true, "reason": "world_seed"}
+      }
+    }
+  ],
+  "empty_complete_world": {
+    "event": "world_seed",
+    "windows_onscreen": 0,
+    "focus": null,
+    "windows": [],
+    "observation": {"world_complete": true, "reason": "world_seed"}
+  },
+  "incomplete_world": {
+    "event": "world_seed",
+    "windows_onscreen": 0,
+    "focus": null,
+    "windows": [],
+    "observation": {"world_complete": false, "reason": "world_seed", "world_failure_code": "fixture_hostile_ax"}
+  },
+  "command": {"op": "act", "action_id": "fixture.startup", "request_id": "startup-fixture-command"},
+  "fresh_delta": {"event": "fixture_update", "fixture_sequence": 2},
+  "journal_failure_world": {"persistence_available": false, "journal_highwater_available": false, "resident_status": "Saved state unavailable", "resident_unavailable_reason": "journal_recovery_failed"},
+  "resume_delta": {"event": "global_start", "management_enabled": true, "resident_status": "Running"},
+  "stop_delta": {"event": "global_stop", "management_enabled": false, "resident_status": "Stopped"},
+  "restart_delta": {"event": "global_restart", "management_enabled": false, "resident_status": "Restarting"}
+}

@@ -1,0 +1,66 @@
+{
+  "note": "cells: a vacant leaf 'v' (binding kept, frame null) is NOT a cell (reserves tree geometry but has no frame to draw). Reuses project/vacant_reserves_slot → cells {a} only.",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "a",
+          "v"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1,
+        "binding": {
+          "app": "A"
+        }
+      },
+      "v": {
+        "id": "v",
+        "binding": {
+          "app": "Gone"
+        }
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          800
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "cells": [
+      {
+        "display_id": 1,
+        "frame": {
+          "h": 800,
+          "w": 500,
+          "x": 0,
+          "y": 0
+        },
+        "leaf_id": "a"
+      }
+    ],
+    "corners": [],
+    "edges": [],
+    "root": {
+      "h": 800,
+      "w": 1000,
+      "x": 0,
+      "y": 0
+    }
+  }
+}

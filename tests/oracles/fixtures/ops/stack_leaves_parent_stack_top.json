@@ -1,0 +1,90 @@
+{
+  "note": "8.5 review CRITICAL regression: the common parent is ITSELF a stack (s:x, top:a). Stacking [a,c] absorbs the presented top a → without the repair the parent's top dangles (no longer a child) and child_slots selects NOTHING → the whole subtree goes dark. op_stack_leaves retargets s:x.top to the new node s:a, so the freshly-stacked group stays presented. (validate is blind to a dangling top; the conservation oracle would catch the drop — this fixture + project pins the prevention.)",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "mode": "row",
+        "children": [
+          "s:x"
+        ]
+      },
+      "s:x": {
+        "id": "s:x",
+        "mode": "stack",
+        "top": "a",
+        "children": [
+          "a",
+          "b",
+          "c"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1
+      },
+      "b": {
+        "id": "b",
+        "window_id": 2
+      },
+      "c": {
+        "id": "c",
+        "window_id": 3
+      }
+    }
+  },
+  "op": "stack_leaves",
+  "args": {
+    "leaves": [
+      "a",
+      "c"
+    ]
+  },
+  "expect": {
+    "ok": true,
+    "tree": {
+      "nodes": {
+        "a": {
+          "id": "a",
+          "window_id": 1
+        },
+        "b": {
+          "id": "b",
+          "window_id": 2
+        },
+        "c": {
+          "id": "c",
+          "window_id": 3
+        },
+        "r": {
+          "children": [
+            "s:x"
+          ],
+          "id": "r",
+          "mode": "row"
+        },
+        "s:a": {
+          "children": [
+            "a",
+            "c"
+          ],
+          "id": "s:a",
+          "mode": "stack",
+          "stack_source": "manual",
+          "top": "a"
+        },
+        "s:x": {
+          "children": [
+            "s:a",
+            "b"
+          ],
+          "id": "s:x",
+          "mode": "stack",
+          "top": "s:a"
+        }
+      },
+      "root_id": "r"
+    }
+  }
+}

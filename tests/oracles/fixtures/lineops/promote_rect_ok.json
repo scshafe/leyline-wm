@@ -1,0 +1,33 @@
+{
+  "fn": "promote",
+  "note": "S14b.2 (P-PROMOTE) the happy path: a FLAT store [v@600(0,1000), h@500(0,600)] (a valid 3-cell partition: left column split by h@500 into two, plus the full-height right cell). promote the LEFT column via the cell-anchor set [1:0:0, 1:0:1] (the two left cells). The block tiles a FILLED rectangle {0,0,600,1000} (sum_area 2*600*500=600000 == bbox 600*1000=600000 → exact_cover; A::valid over the interior is ok), so {ok:true}. The promotions record is {id:1, region:[the anchors], line_set:[the interior h@500 — GEOMETRY not a line-ID, robust pre-S15], coord_map:{0,0,600,1000} the block bbox}. The segments/bindings/off_top are BYTE-UNTOUCHED (promote is a pure LABEL op — it only appends to .promotions). Does NOT assert binding survival (that is O3/S15) — cells are unbound. Post-op cells_rec(derive_nested) sees ONE LEFT cell encapsulating its two child leaves (proven in arrangement/derived_tree_2level).",
+  "topology": { "displays": [ { "id": 1, "frame": [0, 0, 1000, 1000] } ], "gap": 0 },
+  "arr": {
+    "segments": [
+      { "axis": "v", "coord": 600, "lo": 0, "hi": 1000 },
+      { "axis": "h", "coord": 500, "lo": 0, "hi": 600 }
+    ],
+    "bindings": {},
+    "off_top": []
+  },
+  "cells": ["1:0:0", "1:0:1"],
+  "expect": {
+    "ok": true,
+    "arr": {
+      "bindings": {},
+      "off_top": [],
+      "promotions": [
+        {
+          "coord_map": { "h": 1000, "w": 600, "x": 0, "y": 0 },
+          "id": 1,
+          "line_set": [ { "axis": "h", "coord": 500, "hi": 600, "lo": 0 } ],
+          "region": ["1:0:0", "1:0:1"]
+        }
+      ],
+      "segments": [
+        { "axis": "v", "coord": 600, "hi": 1000, "lo": 0 },
+        { "axis": "h", "coord": 500, "hi": 600, "lo": 0 }
+      ]
+    }
+  }
+}

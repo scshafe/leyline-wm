@@ -1,0 +1,97 @@
+{
+  "note": "cells: one window per display → display_id is assigned per cell (w:1→1, w:2→2) via G::assign_display. root spans the usable union {8,8,1984,984}. Reuses project/gap_multi_display.",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1",
+          "d:2"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "w:1"
+        ]
+      },
+      "d:2": {
+        "id": "d:2",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 2,
+        "children": [
+          "w:2"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      },
+      {
+        "id": 2,
+        "frame": [
+          1000,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 8
+  },
+  "expect": {
+    "cells": [
+      {
+        "display_id": 1,
+        "frame": {
+          "h": 984,
+          "w": 984,
+          "x": 8,
+          "y": 8
+        },
+        "leaf_id": "w:1"
+      },
+      {
+        "display_id": 2,
+        "frame": {
+          "h": 984,
+          "w": 984,
+          "x": 1008,
+          "y": 8
+        },
+        "leaf_id": "w:2"
+      }
+    ],
+    "corners": [],
+    "edges": [],
+    "root": {
+      "h": 984,
+      "w": 1984,
+      "x": 8,
+      "y": 8
+    }
+  }
+}

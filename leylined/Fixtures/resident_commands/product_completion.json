@@ -1,0 +1,23 @@
+{
+  "preview_actions": ["move.start", "move.cursor.east", "move.drop"],
+  "preview_commit": "move.execute.auto",
+  "stale_minimums": {"fixture-candidate-app": {"w": 100}},
+  "minimum_actions": ["resize.start", "resize.adjust.east"],
+  "minimum_application": "fixture-clamp-app",
+  "automatic_clamp_window_id": 2,
+  "manual_clamp_window_id": 1,
+  "history_depth": 10,
+  "history_seed": [
+    {"window_id": 11, "pid": 511, "window_generation": 1, "space_key": "display-A/space-A", "display_id": "display-A"},
+    {"window_id": 10, "pid": 510, "window_generation": 1, "space_key": "display-A/space-A", "display_id": "display-A"},
+    {"window_id": 9, "pid": 509, "window_generation": 1, "space_key": "display-A/space-A", "display_id": "display-A"},
+    {"window_id": 8, "pid": 508, "window_generation": 1, "space_key": "display-A/space-A", "display_id": "display-A"},
+    {"window_id": 7, "pid": 507, "window_generation": 1, "space_key": "display-A/space-A", "display_id": "display-A"},
+    {"window_id": 6, "pid": 506, "window_generation": 1, "space_key": "display-A/space-A", "display_id": "display-A"},
+    {"window_id": 5, "pid": 505, "window_generation": 1, "space_key": "display-A/space-A", "display_id": "display-A"},
+    {"window_id": 4, "pid": 504, "window_generation": 1, "space_key": "display-A/space-A", "display_id": "display-A"},
+    {"window_id": 3, "pid": 503, "window_generation": 1, "space_key": "display-B/space-B", "display_id": "display-B"},
+    {"window_id": 2, "pid": 502, "window_generation": 1, "space_key": "display-A/space-A", "display_id": "display-A"},
+    {"window_id": 1, "pid": 501, "window_generation": 1, "space_key": "display-A/space-A", "display_id": "display-A"}
+  ]
+}

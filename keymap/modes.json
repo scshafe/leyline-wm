@@ -1,0 +1,181 @@
+{
+  "_schema": "modes/v1",
+  "modes": [
+    {
+      "id": "move",
+      "enter": {
+        "chord": "cmd + ctrl + alt + shift - m",
+        "action_id": "move.start",
+        "on_done": "exit_on_any_nonzero"
+      },
+      "exit_keys": [
+        "0x5A"
+      ],
+      "bindings": [
+        {
+          "key": "cmd + ctrl + alt + shift - m",
+          "action_id": "move.off",
+          "on_done": "unconditional_exit",
+          "description": "in-mode Hyper+m toggles move OFF"
+        },
+        {
+          "key": "0x24",
+          "action_id": "move.execute.auto",
+          "on_done": "exit_unless_rc_in_1_3",
+          "description": "Return: execute the staged op (auto)"
+        },
+        {
+          "key": "0x35",
+          "action_id": "move.cancel",
+          "on_done": "exit_on_rc0",
+          "description": "Esc: cancel (rc3 un-stages a layer, stays)"
+        },
+        {
+          "key": "cmd + ctrl + alt + shift - h",
+          "action_id": "move.cursor.west",
+          "on_done": "exit_on_any_nonzero",
+          "description": "walk the cursor west"
+        },
+        {
+          "key": "h",
+          "action_id": "move.cursor.west",
+          "on_done": "exit_on_any_nonzero",
+          "description": "walk the cursor west (bare)"
+        },
+        {
+          "key": "cmd + ctrl + alt + shift - j",
+          "action_id": "move.cursor.south",
+          "on_done": "exit_on_any_nonzero",
+          "description": "walk the cursor south"
+        },
+        {
+          "key": "j",
+          "action_id": "move.cursor.south",
+          "on_done": "exit_on_any_nonzero",
+          "description": "walk the cursor south (bare)"
+        },
+        {
+          "key": "cmd + ctrl + alt + shift - k",
+          "action_id": "move.cursor.north",
+          "on_done": "exit_on_any_nonzero",
+          "description": "walk the cursor north"
+        },
+        {
+          "key": "k",
+          "action_id": "move.cursor.north",
+          "on_done": "exit_on_any_nonzero",
+          "description": "walk the cursor north (bare)"
+        },
+        {
+          "key": "cmd + ctrl + alt + shift - l",
+          "action_id": "move.cursor.east",
+          "on_done": "exit_on_any_nonzero",
+          "description": "walk the cursor east"
+        },
+        {
+          "key": "l",
+          "action_id": "move.cursor.east",
+          "on_done": "exit_on_any_nonzero",
+          "description": "walk the cursor east (bare)"
+        },
+        {
+          "key": "cmd + ctrl + alt + shift - s",
+          "action_id": "move.execute.swap",
+          "on_done": "exit_unless_rc_in_1_3",
+          "description": "execute swap (rc1 refused / rc3 partial stay)"
+        },
+        {
+          "key": "s",
+          "action_id": "move.execute.swap",
+          "on_done": "exit_unless_rc_in_1_3",
+          "description": "execute swap (bare)"
+        },
+        {
+          "key": "cmd + ctrl + alt + shift - d",
+          "action_id": "move.drop",
+          "on_done": "exit_unless_rc_in_1_3",
+          "description": "drop: first press stages (rc3), second confirms (rc0)"
+        },
+        {
+          "key": "d",
+          "action_id": "move.drop",
+          "on_done": "exit_unless_rc_in_1_3",
+          "description": "drop (bare)"
+        },
+        {
+          "key": "cmd + ctrl + alt + shift - c",
+          "action_id": "move.rotate",
+          "on_done": "exit_on_any_nonzero",
+          "description": "rotate the staged op"
+        },
+        {
+          "key": "c",
+          "action_id": "move.rotate",
+          "on_done": "exit_on_any_nonzero",
+          "description": "rotate (bare)"
+        },
+        {
+          "key": "u",
+          "action_id": "move.level.up",
+          "on_done": "exit_unless_rc_in_1_3",
+          "description": "widen target one level up"
+        },
+        {
+          "key": "i",
+          "action_id": "move.level.down",
+          "on_done": "exit_unless_rc_in_1_3",
+          "description": "narrow target one level down"
+        }
+      ]
+    },
+    {
+      "id": "resize",
+      "enter": {
+        "chord": "cmd + ctrl + alt + shift - r",
+        "action_id": "resize.start",
+        "on_done": "exit_on_any_nonzero"
+      },
+      "exit_keys": [
+        "0x5A"
+      ],
+      "bindings": [
+        {
+          "key": "cmd + ctrl + alt + shift - r",
+          "action_id": "resize.off",
+          "on_done": "unconditional_exit",
+          "description": "in-mode Hyper+r toggles resize OFF"
+        },
+        {
+          "key": "0x35",
+          "action_id": "resize.off",
+          "on_done": "unconditional_exit",
+          "description": "Esc: exit resize mode"
+        },
+        {
+          "key": "h",
+          "action_id": "resize.adjust.west",
+          "on_done": "no_exit",
+          "description": "adjust the source window's west gridline"
+        },
+        {
+          "key": "j",
+          "action_id": "resize.adjust.south",
+          "on_done": "no_exit",
+          "description": "adjust the source window's south gridline"
+        },
+        {
+          "key": "k",
+          "action_id": "resize.adjust.north",
+          "on_done": "no_exit",
+          "description": "adjust the source window's north gridline"
+        },
+        {
+          "key": "l",
+          "action_id": "resize.adjust.east",
+          "on_done": "no_exit",
+          "description": "adjust the source window's east gridline"
+        }
+      ]
+    }
+  ]
+}

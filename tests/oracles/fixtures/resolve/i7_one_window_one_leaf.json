@@ -1,0 +1,73 @@
+{
+  "note": "two descriptors of one app but only ONE window → exactly one leaf binds, the other goes vacant (I7: one window ↔ at most one leaf). Resolve produces an I7-valid tree by construction.",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "children": [
+          "a",
+          "b"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "binding": {
+          "bundle_id": "z"
+        }
+      },
+      "b": {
+        "id": "b",
+        "binding": {
+          "bundle_id": "z"
+        }
+      }
+    }
+  },
+  "windows": [
+    {
+      "window_id": 9,
+      "bundle_id": "z",
+      "title": "only"
+    }
+  ],
+  "expect": {
+    "bound": [
+      {
+        "leaf_id": "a",
+        "tier": "ordinal_auto",
+        "window_id": 9
+      }
+    ],
+    "tree": {
+      "nodes": {
+        "a": {
+          "binding": {
+            "bundle_id": "z"
+          },
+          "id": "a",
+          "window_id": 9
+        },
+        "b": {
+          "binding": {
+            "bundle_id": "z"
+          },
+          "id": "b",
+          "window_id": null
+        },
+        "r": {
+          "children": [
+            "a",
+            "b"
+          ],
+          "id": "r"
+        }
+      },
+      "root_id": "r"
+    },
+    "unmanaged": [],
+    "vacant": [
+      "b"
+    ]
+  }
+}

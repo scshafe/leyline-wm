@@ -1,0 +1,15 @@
+{
+  "note": "cursor_frame of the root is the display-union canvas (matches project_walk's seed).",
+  "fn": "frame",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": { "id": "r", "mode": "row", "children": ["a", "b"] },
+      "a": { "id": "a", "binding": { "app": "A" } },
+      "b": { "id": "b", "binding": { "app": "B" } }
+    }
+  },
+  "topology": { "displays": [ { "id": "D", "frame": [0, 0, 1000, 800] } ] },
+  "node": "r",
+  "expect": { "x": 0, "y": 0, "w": 1000, "h": 800 }
+}

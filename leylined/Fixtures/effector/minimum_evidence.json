@@ -1,0 +1,68 @@
+{
+  "app": "fixture.app",
+  "request_id": "minimum-proof",
+  "window_id": "11",
+  "pid": 101,
+  "lifetime": 1,
+  "epoch": "minimum-fixture-epoch",
+  "generation": 8,
+  "space": "display:1/space:A",
+  "display": "1",
+  "topology_revision": 4,
+  "receipt": 10,
+  "issue": 100,
+  "write": 110,
+  "read": 120,
+  "now": 130,
+  "before": [
+    0,
+    0,
+    900,
+    700
+  ],
+  "target": [
+    0,
+    0,
+    600,
+    700
+  ],
+  "clamp": [
+    0,
+    0,
+    750,
+    700
+  ],
+  "minimum_store": {
+    "fixture.app": {
+      "w": 800,
+      "h": 900
+    },
+    "other.app": {
+      "w": 400
+    }
+  },
+  "expected_store": {
+    "fixture.app": {
+      "w": 600,
+      "h": 900
+    },
+    "other.app": {
+      "w": 400
+    }
+  },
+  "confirmation": 125,
+  "expected_clamp_store": {
+    "fixture.app": {
+      "w": 750,
+      "h": 900
+    },
+    "other.app": {
+      "w": 400
+    }
+  },
+  "expected_unknown_clamp_store": {
+    "fixture.app": {
+      "w": 750
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "note": "move_leaf with focused == target is a no-op (ok:true, tree unchanged) — a directional wrap can resolve back onto the focused leaf; the caller need not special-case it.",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": { "id": "r", "mode": "row", "children": ["a", "b"] },
+      "a": { "id": "a", "window_id": 1 },
+      "b": { "id": "b", "window_id": 2 }
+    }
+  },
+  "op": "move_leaf",
+  "args": { "focused": "a", "target": "a", "orientation": "row", "side": "after" },
+  "expect": {
+    "ok": true,
+    "tree": {
+      "root_id": "r",
+      "nodes": {
+        "r": { "id": "r", "mode": "row", "children": ["a", "b"] },
+        "a": { "id": "a", "window_id": 1 },
+        "b": { "id": "b", "window_id": 2 }
+      }
+    }
+  }
+}

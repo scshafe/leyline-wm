@@ -1,0 +1,37 @@
+{
+  "note": "S4 step 3 (R5): cells_md with an INTERIOR gridline homed to ONE display. A v@500 segment (homed to d1, contained in d1's rect) splits d1 into TWO cells {8,8,492,984}+{500,8,492,984}, both tagged display_id:1; d2 has no homed segment so it stays ONE cell {1008,8,984,984} tagged display_id:2. NO cell straddles the x=1000 seam — the d1 split cannot reach into d2 because d2's atom grid is built over its OWN inset rect (the structural per-display partition). Proves the derivation works with real segments, not just empty bags.",
+  "fn": "cells_md",
+  "arr": [
+    { "axis": "v", "coord": 500, "lo": 8, "hi": 992 }
+  ],
+  "topology": {
+    "displays": [
+      { "id": 1, "frame": [0, 0, 1000, 1000] },
+      { "id": 2, "frame": [1000, 0, 1000, 1000] }
+    ],
+    "gap": 8
+  },
+  "expect": [
+    {
+      "atoms": [[0, 0]],
+      "i0": 0, "i1": 0, "j0": 0, "j1": 0,
+      "filled": true,
+      "frame": { "x": 8, "y": 8, "w": 492, "h": 984 },
+      "display_id": 1
+    },
+    {
+      "atoms": [[1, 0]],
+      "i0": 1, "i1": 1, "j0": 0, "j1": 0,
+      "filled": true,
+      "frame": { "x": 500, "y": 8, "w": 492, "h": 984 },
+      "display_id": 1
+    },
+    {
+      "atoms": [[0, 0]],
+      "i0": 0, "i1": 0, "j0": 0, "j1": 0,
+      "filled": true,
+      "frame": { "x": 1008, "y": 8, "w": 984, "h": 984 },
+      "display_id": 2
+    }
+  ]
+}

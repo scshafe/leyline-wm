@@ -1,0 +1,12 @@
+{
+  "_doc": "Two displays stacked vertically. Display 1 is the primary at y=0; display 2 sits above it in stitched space (negative y, AppKit/yabai convention). Source on the primary; window on the upper display. Tests north as direct and south as wrap.",
+  "displays": [
+    { "index": 1, "frame": { "x": 0, "y":    0, "w": 1000, "h": 800 } },
+    { "index": 2, "frame": { "x": 0, "y": -600, "w": 1200, "h": 600 } }
+  ],
+  "windows": [
+    { "id": 100, "display": 1, "frame": { "x": 100, "y":  100, "w": 400, "h": 300 }, "app": "Editor" },
+    { "id": 200, "display": 2, "frame": { "x": 200, "y": -500, "w": 400, "h": 400 }, "app": "Notes"  }
+  ],
+  "source": { "window_id": 100 }
+}

@@ -1,0 +1,135 @@
+{
+  "note": "P-SWAP interior reject — an INTERIOR parcel (nested.segments non-empty) is NOT a leaf z-stack, so swapping it is REFUSED (the EXACT (nested.segments|length)>0 predicate rebind/the *_rec ops use). Scene: a v-line at x=500 → a LEAF cell 1:0:0 (w101) and an INTERIOR parcel 1:1:0 (an h-split of its frame into w201/w202). swap(1:0:0; 1:1:0) rejects with the interior reason and leaves the store INTACT (arr==null on the false arm — jq purity). A swap cannot corrupt a nested parcel.",
+  "fn": "swap_check",
+  "cell_a": "1:0:0",
+  "cell_b": "1:1:0",
+  "arr": {
+    "segments": [
+      {
+        "axis": "v",
+        "coord": 500,
+        "lo": 0,
+        "hi": 800
+      }
+    ],
+    "bindings": {
+      "1:0:0": {
+        "window_id": 101,
+        "presented": true,
+        "frame": {
+          "x": 0,
+          "y": 0,
+          "w": 500,
+          "h": 800
+        },
+        "contents": [
+          {
+            "window_id": 101,
+            "presented": true,
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "w": 500,
+              "h": 800
+            }
+          }
+        ]
+      },
+      "1:1:0": {
+        "nested": {
+          "segments": [
+            {
+              "axis": "h",
+              "coord": 400,
+              "lo": 500,
+              "hi": 1000
+            }
+          ],
+          "bindings": {
+            "0:0:0": {
+              "window_id": 201,
+              "presented": true,
+              "frame": {
+                "x": 500,
+                "y": 0,
+                "w": 500,
+                "h": 400
+              },
+              "contents": [
+                {
+                  "window_id": 201,
+                  "presented": true,
+                  "frame": {
+                    "x": 500,
+                    "y": 0,
+                    "w": 500,
+                    "h": 400
+                  }
+                }
+              ]
+            },
+            "0:0:1": {
+              "window_id": 202,
+              "presented": true,
+              "frame": {
+                "x": 500,
+                "y": 400,
+                "w": 500,
+                "h": 400
+              },
+              "contents": [
+                {
+                  "window_id": 202,
+                  "presented": true,
+                  "frame": {
+                    "x": 500,
+                    "y": 400,
+                    "w": 500,
+                    "h": 400
+                  }
+                }
+              ]
+            }
+          },
+          "off_top": []
+        }
+      }
+    },
+    "off_top": [],
+    "promotions": []
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          800
+        ],
+        "usable": [
+          0,
+          0,
+          1000,
+          800
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "expect": {
+    "c_a_after": null,
+    "c_b_after": null,
+    "cell_consistent": null,
+    "ok": false,
+    "promotions_byte_eq": null,
+    "reason": "swap: 1:1:0 is an interior parcel, not a leaf z-stack",
+    "segments_byte_eq": null,
+    "store_intact_on_reject": true,
+    "valid_rec_eq_before": null,
+    "valid_rec_ok": null,
+    "w_a_after": null,
+    "w_b_after": null
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "note": "One px over the exact boundary: Σmin (501+500=1001) > span 1000 → candidate. The +1 partner of probe_boundary_exact.",
+  "fn": "probe",
+  "tree": { "root_id": "r", "nodes": {
+    "r": {"id":"r","mode":"row","children":["a","b"]},
+    "a": {"id":"a","window_id":1,"min_size":{"w":501,"h":100}},
+    "b": {"id":"b","window_id":2,"min_size":{"w":500,"h":100}} } },
+  "topology": { "displays": [{"id":1,"frame":[0,0,1000,1000],"usable":[0,0,1000,1000]}], "gap":0 },
+  "expect": [
+    {"kind":"stack","phase":"candidate","node":"r","axis":"row","required":1001,"span":1000,"surplus":["b"]}
+  ]
+}

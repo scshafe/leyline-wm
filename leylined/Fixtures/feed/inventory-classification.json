@@ -1,0 +1,19 @@
+{
+  "pid": 641,
+  "scenarios": [
+    {"name": "finder-desktop-scroll-area-without-cg-id-is-excluded", "role": "AXScrollArea", "expected": "excluded", "expected_attributes": ["AXRole"]},
+    {"name": "nonstandard-dialog-without-cg-id-is-excluded", "role": "AXWindow", "subrole": "AXDialog", "expected": "excluded", "expected_attributes": ["AXRole", "AXSubrole"]},
+    {"name": "standard-window-without-cg-id-fails-closed", "role": "AXWindow", "subrole": "AXStandardWindow", "expected": "ax_inventory_identity_unavailable:pid=641", "expected_attributes": ["AXRole", "AXSubrole"]},
+    {"name": "desktop-title-does-not-exclude-standard-window", "title": "Desktop", "role": "AXWindow", "subrole": "AXStandardWindow", "expected": "ax_inventory_identity_unavailable:pid=641", "expected_attributes": ["AXRole", "AXSubrole"]},
+    {"name": "unavailable-role-does-not-certify-exclusion", "expected": "fixture_attribute_unavailable:AXRole:pid=641", "expected_attributes": ["AXRole"]},
+    {"name": "unavailable-standard-window-subrole-fails-closed", "role": "AXWindow", "expected": "fixture_attribute_unavailable:AXSubrole:pid=641", "expected_attributes": ["AXRole", "AXSubrole"]},
+    {"name": "empty-role-does-not-certify-exclusion", "role": "", "expected": "ax_inventory_role_unknown:pid=641", "expected_attributes": ["AXRole"]},
+    {"name": "empty-subrole-does-not-certify-exclusion", "role": "AXWindow", "subrole": "", "expected": "ax_inventory_subrole_unknown:pid=641", "expected_attributes": ["AXRole", "AXSubrole"]},
+    {"name": "standard-window-with-exact-owner-and-cg-id-is-retained", "role": "AXWindow", "subrole": "AXStandardWindow", "identity_pid": 641, "window_id": 101, "expected": "retained", "expected_attributes": ["AXRole", "AXSubrole"]},
+    {"name": "nonmanaged-verified-window-remains-in-cg-completeness-inventory", "role": "AXWindow", "subrole": "AXDialog", "identity_pid": 641, "window_id": 103, "expected": "retained", "expected_attributes": ["AXRole", "AXSubrole"]},
+    {"name": "standard-window-foreign-pid-is-refused", "role": "AXWindow", "subrole": "AXStandardWindow", "identity_pid": 642, "window_id": 101, "expected": "ax_inventory_identity_mismatch:pid=641", "expected_attributes": ["AXRole", "AXSubrole"]},
+    {"name": "standard-window-zero-cg-id-is-refused", "role": "AXWindow", "subrole": "AXStandardWindow", "identity_pid": 641, "window_id": 0, "expected": "ax_inventory_identity_mismatch:pid=641", "expected_attributes": ["AXRole", "AXSubrole"]},
+    {"name": "role-read-over-total-budget-fails-before-identity", "role": "AXWindow", "subrole": "AXStandardWindow", "read_elapsed_ns": 200000000, "expected": "ax_inventory_classification_deadline_exceeded:pid=641", "expected_attributes": ["AXRole"]},
+    {"name": "timeout-configuration-failure-refuses-before-any-ax-read", "timeout_failure": true, "role": "AXScrollArea", "expected": "ax_inventory_timeout_configuration_failed:pid=641", "expected_attributes": []}
+  ]
+}

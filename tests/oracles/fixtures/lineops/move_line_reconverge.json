@@ -1,0 +1,101 @@
+{
+  "fn": "move_order_independent",
+  "note": "S17.2 (the CLAMP as ONE order-independent solve, the determinism proof). Two anchored chains re-converging on the shrinking side: v@600 full-span (id:1) + h@500 spanning x in [600,1000] (id:2) splits the RIGHT region into a top-right cell (1:1:0, bound to a min w=350 window) and a bottom-right cell (1:1:1, min w=300), each currently w=400. Drag v@600 by delta=+200 (coord pushes RIGHT, shrinking both right cells — a large over-shrink). For delta>0 the clamp filters A::incident to the frame_min_x==600 (far) side = BOTH right cells; room = min over the SET of (size - cell_min) = min(400-350, 400-300) = min(50,100) = 50, so cd = +50 and L lands at coord 650 (the tighter w=350 floor binds). The harness computes the clamp TWO ways (the bag's segment order forward + reversed, and move_line over both) and asserts byte-equal cd (cd_byte_eq) AND byte-equal final segment SET (arr_segs_seteq): A::incident dedups by cell so a re-converging shared cell contributes its (size-min) term ONCE — min is commutative/associative/idempotent → the realized geometry is independent of evaluation order. A greedy per-chain cascade would over-clamp (subtract chain-A's allocation then re-clamp B against the residual); the min-over-set never does.",
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "arr": {
+    "segments": [
+      {
+        "axis": "v",
+        "coord": 600,
+        "lo": 0,
+        "hi": 1000,
+        "id": 1
+      },
+      {
+        "axis": "h",
+        "coord": 500,
+        "lo": 600,
+        "hi": 1000,
+        "id": 2
+      }
+    ],
+    "bindings": {
+      "1:1:0": {
+        "window_id": 10,
+        "presented": true,
+        "frame": {
+          "x": 600,
+          "y": 0,
+          "w": 400,
+          "h": 500
+        },
+        "contents": [
+          {
+            "window_id": 10,
+            "presented": true,
+            "frame": {
+              "x": 600,
+              "y": 0,
+              "w": 400,
+              "h": 500
+            },
+            "min_size": {
+              "w": 350,
+              "h": 0
+            }
+          }
+        ]
+      },
+      "1:1:1": {
+        "window_id": 11,
+        "presented": true,
+        "frame": {
+          "x": 600,
+          "y": 500,
+          "w": 400,
+          "h": 500
+        },
+        "contents": [
+          {
+            "window_id": 11,
+            "presented": true,
+            "frame": {
+              "x": 600,
+              "y": 500,
+              "w": 400,
+              "h": 500
+            },
+            "min_size": {
+              "w": 300,
+              "h": 0
+            }
+          }
+        ]
+      }
+    },
+    "off_top": []
+  },
+  "line_id": 1,
+  "delta": 200,
+  "expect": {
+    "arr_segs_seteq": true,
+    "cd_byte_eq": true,
+    "cd_forward": 50,
+    "cd_reversed": 50,
+    "coord_after": 650,
+    "valid": true
+  }
+}

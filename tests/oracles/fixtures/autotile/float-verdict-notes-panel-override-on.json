@@ -1,0 +1,26 @@
+{
+  "note": "float_verdict LAST-MATCH-WINS (the production override, real parcel/float-rules.json rules): a WezTerm window titled 'wm.surface.notes-panel' matches BOTH surface_transient (wm\\.surface\\..* → off) AND the later surface_notes_panel (wm\\.surface\\.notes-panel → on). The later manage:on rule wins ⇒ verdict 'on' (re-managed). This is THE place last-match-wins is exercised in production.",
+  "fn": "float_verdict",
+  "window": {
+    "window_id": 46,
+    "app": "WezTerm",
+    "title": "wm.surface.notes-panel"
+  },
+  "rules": {
+    "rules": [
+      {
+        "id": "surface_transient",
+        "app": "^WezTerm$",
+        "title": "wm\\.surface\\..*",
+        "manage": "off"
+      },
+      {
+        "id": "surface_notes_panel",
+        "app": "^WezTerm$",
+        "title": "wm\\.surface\\.notes-panel",
+        "manage": "on"
+      }
+    ]
+  },
+  "expect": "on"
+}

@@ -1,0 +1,105 @@
+{
+  "note": "edges (Fix D — band invariant): two authored cells overlapping 3px (<=TOL, accepted as a touch) under a row → the v-edge's band is normalized lo<=hi ({500,503}, not the inverted {503,500}); coord stays the midpoint 501.5.",
+  "tree": {
+    "root_id": "m",
+    "nodes": {
+      "m": {
+        "id": "m",
+        "mode": "row",
+        "children": [
+          "A",
+          "B"
+        ]
+      },
+      "A": {
+        "id": "A",
+        "frame_source": "authored",
+        "frame": [
+          0,
+          0,
+          503,
+          500
+        ],
+        "window_id": 1
+      },
+      "B": {
+        "id": "B",
+        "frame_source": "authored",
+        "frame": [
+          500,
+          0,
+          500,
+          500
+        ],
+        "window_id": 2
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          500
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "cells": [
+      {
+        "display_id": 1,
+        "frame": {
+          "h": 500,
+          "w": 503,
+          "x": 0,
+          "y": 0
+        },
+        "leaf_id": "A"
+      },
+      {
+        "display_id": 1,
+        "frame": {
+          "h": 500,
+          "w": 500,
+          "x": 500,
+          "y": 0
+        },
+        "leaf_id": "B"
+      }
+    ],
+    "corners": [],
+    "edges": [
+      {
+        "axis": "v",
+        "band": {
+          "hi": 503,
+          "lo": 500
+        },
+        "coord": 501.5,
+        "dividers": [
+          "m"
+        ],
+        "high_cells": [
+          "B"
+        ],
+        "low_cells": [
+          "A"
+        ],
+        "span": {
+          "hi": 500,
+          "lo": 0
+        }
+      }
+    ],
+    "root": {
+      "h": 500,
+      "w": 1000,
+      "x": 0,
+      "y": 0
+    }
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "note": "8.3 no-op: a feasible row (a/b min w 300, fit in span 1000) → valve does nothing; tree byte-identical to input, facts []. This is why a balanced tree with no crowding is byte-identical to bsp.",
+  "fn": "valve",
+  "focused_leaf": null,
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "mode": "row",
+        "children": [
+          "a",
+          "b"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1,
+        "min_size": {
+          "w": 300,
+          "h": 100
+        }
+      },
+      "b": {
+        "id": "b",
+        "window_id": 2,
+        "min_size": {
+          "w": 300,
+          "h": 100
+        }
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ],
+        "usable": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "config": {},
+  "expect": {
+    "facts": [],
+    "tree": {
+      "nodes": {
+        "a": {
+          "id": "a",
+          "min_size": {
+            "h": 100,
+            "w": 300
+          },
+          "window_id": 1
+        },
+        "b": {
+          "id": "b",
+          "min_size": {
+            "h": 100,
+            "w": 300
+          },
+          "window_id": 2
+        },
+        "r": {
+          "children": [
+            "a",
+            "b"
+          ],
+          "id": "r",
+          "mode": "row"
+        }
+      },
+      "root_id": "r"
+    }
+  }
+}

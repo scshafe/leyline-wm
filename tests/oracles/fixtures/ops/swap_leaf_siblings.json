@@ -1,0 +1,24 @@
+{
+  "note": "swap_leaf(a, b) with a,b siblings under one row parent → children order flips; leaves untouched, ratios (positional) trade by trading slots.",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": { "id": "r", "mode": "row", "children": ["a", "b"] },
+      "a": { "id": "a", "window_id": 1 },
+      "b": { "id": "b", "window_id": 2 }
+    }
+  },
+  "op": "swap_leaf",
+  "args": { "a": "a", "b": "b" },
+  "expect": {
+    "ok": true,
+    "tree": {
+      "root_id": "r",
+      "nodes": {
+        "r": { "id": "r", "mode": "row", "children": ["b", "a"] },
+        "a": { "id": "a", "window_id": 1 },
+        "b": { "id": "b", "window_id": 2 }
+      }
+    }
+  }
+}

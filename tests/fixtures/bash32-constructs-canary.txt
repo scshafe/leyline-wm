@@ -1,0 +1,23 @@
+# Non-vacuity fixture for the bash-4-construct lint in `ley test syntax`.
+#
+# Every uncommented line below uses a construct that bash 3.2 (macOS /bin/bash,
+# this repo's stated shell floor) accepts at PARSE time and then fails on at
+# RUNTIME. That asymmetry is why the lint is textual rather than a `bash -n`
+# sweep, and why this fixture exists: the lint must produce a hit for EVERY
+# line here, or it is checking nothing.
+#
+# Deliberately NOT named *.sh — the syntax sweep must never try to parse it,
+# and nothing must ever source it.
+lower="${value,,}"
+upper="${value^^}"
+initial_cap="${value^}"
+declare -A associative_map
+local -A scoped_map
+typeset -A typeset_map
+local -n reference=$1
+declare -n global_reference=$1
+mapfile -t lines < input
+readarray -t rows < input
+appended &>> combined.log
+if [[ -v maybe_unset ]]; then :; fi
+coproc worker { cat; }

@@ -1,0 +1,35 @@
+{
+  "schema": "leyline/resident-maintenance-fixture/v1",
+  "production_deadline_milliseconds": 2000,
+  "test_deadline_milliseconds": 35,
+  "participants": [
+    "tap_teardown",
+    "observer_stop",
+    "effector_io",
+    "native_ax_io",
+    "projection_clear"
+  ],
+  "reset_result": {
+    "checkpoint_reset_verified": true,
+    "quarantine_preserved": true,
+    "fresh_seed_required": true
+  },
+  "reset_error": "fixture_quarantine_rename_failed",
+  "scenarios": [
+    "all_participants_ack_before_reset",
+    "partial_ack_timeout_stays_stopped",
+    "unreturned_ack_timeout_never_resets",
+    "late_or_duplicate_ack_cannot_start_reset",
+    "duplicate_request_rejected",
+    "overlapping_request_rejected",
+    "reset_io_failure_explicit_no_activation",
+    "one_success_callback_only",
+    "old_timeout_cannot_complete_new_epoch",
+    "blocked_reset_timeout_retains_exclusivity",
+    "expired_permit_refuses_destructive_phase",
+    "late_blocked_reset_failure_cannot_activate",
+    "cancellation_fences_running_reset",
+    "bounded_recent_request_registry"
+  ],
+  "quarantine_source": "{\"corrupt\":true}\n"
+}

@@ -1,0 +1,14 @@
+{
+  "scenarios": [
+    {"name": "one-exact-raw-id-returns-only-requested-description", "window_id": 101, "descriptions": [{"kCGWindowNumber": 101, "fixture_marker": "requested-record"}], "expected": "success", "reader_calls": 1},
+    {"name": "maximum-positive-cg-id-is-encoded-as-raw-integer", "window_id": 4294967295, "descriptions": [{"kCGWindowNumber": 4294967295, "fixture_marker": "maximum-id-record"}], "expected": "success", "reader_calls": 1},
+    {"name": "zero-id-refuses-before-any-description-read", "window_id": 0, "descriptions": [], "expected": "cg_target_window_id_invalid", "reader_calls": 0},
+    {"name": "unavailable-description-refuses-without-fallback", "window_id": 101, "descriptions": null, "expected": "cg_target_description_unavailable_or_mismatched", "reader_calls": 1},
+    {"name": "empty-description-array-refuses-without-fallback", "window_id": 101, "descriptions": [], "expected": "cg_target_description_unavailable_or_mismatched", "reader_calls": 1},
+    {"name": "duplicate-matching-descriptions-are-not-single-window-evidence", "window_id": 101, "descriptions": [{"kCGWindowNumber": 101}, {"kCGWindowNumber": 101}], "expected": "cg_target_description_unavailable_or_mismatched", "reader_calls": 1},
+    {"name": "foreign-window-description-cannot-authorize-requested-id", "window_id": 101, "descriptions": [{"kCGWindowNumber": 103}], "expected": "cg_target_description_unavailable_or_mismatched", "reader_calls": 1},
+    {"name": "description-without-window-id-is-unknown", "window_id": 101, "descriptions": [{"kCGWindowOwnerPID": 111}], "expected": "cg_target_description_unavailable_or_mismatched", "reader_calls": 1},
+    {"name": "string-window-id-is-not-a-cg-number", "window_id": 101, "descriptions": [{"kCGWindowNumber": "101"}], "expected": "cg_target_description_unavailable_or_mismatched", "reader_calls": 1},
+    {"name": "malformed-description-array-is-not-a-window-record", "window_id": 101, "descriptions": ["not-a-window-record"], "expected": "cg_target_description_unavailable_or_mismatched", "reader_calls": 1}
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "note": "3-child crowding: min w 400×3 = 1200 > span 1000 → candidate. surplus = all-but-first = [b,c], pinning the children[1:] slice beyond the degenerate 2-child (single-element) case.",
+  "fn": "probe",
+  "tree": { "root_id": "r", "nodes": {
+    "r": {"id":"r","mode":"row","children":["a","b","c"]},
+    "a": {"id":"a","window_id":1,"min_size":{"w":400,"h":100}},
+    "b": {"id":"b","window_id":2,"min_size":{"w":400,"h":100}},
+    "c": {"id":"c","window_id":3,"min_size":{"w":400,"h":100}} } },
+  "topology": { "displays": [{"id":1,"frame":[0,0,1000,1000],"usable":[0,0,1000,1000]}], "gap":0 },
+  "expect": [
+    {"kind":"stack","phase":"candidate","node":"r","axis":"row","required":1200,"span":1000,"surplus":["b","c"]}
+  ]
+}

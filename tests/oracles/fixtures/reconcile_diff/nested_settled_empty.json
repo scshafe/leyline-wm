@@ -1,0 +1,86 @@
+{
+  "note": "S13.2 (O2 — the I6 fixpoint THROUGH nesting at depth-2). The SHIPPED reconcile_diff arm shape {targets, observed, expect:{diff,stable}} (tests.sh:151-152; NO fn, NO harness edit — diff = R::reconcile_diff(targets;observed), stable = a re-diff after R::simulate_apply is empty). .targets is the EXACT byte-identical window-keyed map arrangement_targets_rec emits on the canonical depth-2 nested bridge (parcel/fixtures/arrangement_targets/targets_rec_depth2.json): 102 {610,10,380,980}, 201 {5,5,590,490}, 202 {5,505,590,490}, each presented:true — the DEEPEST-enclosing-parcel nested frames (carried verbatim, distinct from a raw flat partition), so this genuinely exercises depth-2 frame-threading. .observed is a window list whose frames EXACTLY equal those targets (minimized:false). The reconcile layer is itself DEPTH-AGNOSTIC: the R4 window-keyed map shape is invariant at every depth (a nested window resolves to one binding, frame carried verbatim) — which is exactly O2's point. So a settled nested arrangement re-diffs to EMPTY: expect.diff all-noop (show/reframe/hide empty, noop sorted by window_id), expect.stable:true. HAND-VERIFIED + harness-confirmed: diff_counts {show:0,reframe:0,hide:0,noop:3}, stable:true. | TOL NOTE: the re-diff classifies an observed frame within G::frame_eq TOL of its target as noop (shipped reconcile behavior, lib/jq/reconcile.jq) — so a sub-TOL jitter stays noop, but a MEANINGFUL drift reframes (verified: a +50px perturbation on window 201 yields exactly one reframe). The fixture has genuine teeth against real drift, not a tautology.",
+  "targets": {
+    "102": {
+      "window_id": 102,
+      "presented": true,
+      "frame": {
+        "x": 610,
+        "y": 10,
+        "w": 380,
+        "h": 980
+      }
+    },
+    "201": {
+      "window_id": 201,
+      "presented": true,
+      "frame": {
+        "x": 5,
+        "y": 5,
+        "w": 590,
+        "h": 490
+      }
+    },
+    "202": {
+      "window_id": 202,
+      "presented": true,
+      "frame": {
+        "x": 5,
+        "y": 505,
+        "w": 590,
+        "h": 490
+      }
+    }
+  },
+  "observed": [
+    {
+      "window_id": 102,
+      "frame": {
+        "x": 610,
+        "y": 10,
+        "w": 380,
+        "h": 980
+      },
+      "minimized": false
+    },
+    {
+      "window_id": 201,
+      "frame": {
+        "x": 5,
+        "y": 5,
+        "w": 590,
+        "h": 490
+      },
+      "minimized": false
+    },
+    {
+      "window_id": 202,
+      "frame": {
+        "x": 5,
+        "y": 505,
+        "w": 590,
+        "h": 490
+      },
+      "minimized": false
+    }
+  ],
+  "expect": {
+    "diff": {
+      "hide": [],
+      "noop": [
+        {
+          "window_id": 102
+        },
+        {
+          "window_id": 201
+        },
+        {
+          "window_id": 202
+        }
+      ],
+      "reframe": [],
+      "show": []
+    },
+    "stable": true
+  }
+}

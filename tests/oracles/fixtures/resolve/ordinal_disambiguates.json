@@ -1,0 +1,85 @@
+{
+  "note": "two indistinguishable (untitled) windows of one app are disambiguated by stable ordinal (input/launch order), NOT frame-proximity. ordinal 0→first window, 1→second. §7.",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "children": [
+          "a",
+          "b"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "binding": {
+          "bundle_id": "u",
+          "ordinal": 1
+        }
+      },
+      "b": {
+        "id": "b",
+        "binding": {
+          "bundle_id": "u",
+          "ordinal": 0
+        }
+      }
+    }
+  },
+  "windows": [
+    {
+      "window_id": 100,
+      "bundle_id": "u",
+      "title": ""
+    },
+    {
+      "window_id": 101,
+      "bundle_id": "u",
+      "title": ""
+    }
+  ],
+  "expect": {
+    "bound": [
+      {
+        "leaf_id": "a",
+        "tier": "ordinal",
+        "window_id": 101
+      },
+      {
+        "leaf_id": "b",
+        "tier": "ordinal",
+        "window_id": 100
+      }
+    ],
+    "tree": {
+      "nodes": {
+        "a": {
+          "binding": {
+            "bundle_id": "u",
+            "ordinal": 1
+          },
+          "id": "a",
+          "window_id": 101
+        },
+        "b": {
+          "binding": {
+            "bundle_id": "u",
+            "ordinal": 0
+          },
+          "id": "b",
+          "window_id": 100
+        },
+        "r": {
+          "children": [
+            "a",
+            "b"
+          ],
+          "id": "r"
+        }
+      },
+      "root_id": "r"
+    },
+    "unmanaged": [],
+    "vacant": []
+  }
+}

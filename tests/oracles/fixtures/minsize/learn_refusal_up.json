@@ -1,0 +1,12 @@
+{
+  "note": "Chrome asked to shrink to 360w, settled at 500w → refused → learn min w:500 (learn-up from empty store). Height hit target, no h floor learned.",
+  "fn": "learn",
+  "targets": {
+    "6389": { "window_id": 6389, "presented": true, "frame": { "x": 0, "y": 0, "w": 360, "h": 600 } }
+  },
+  "observed": [
+    { "window_id": 6389, "bundle_id": "com.google.Chrome", "app": "Google Chrome", "frame": { "x": 0, "y": 0, "w": 500, "h": 600 } }
+  ],
+  "store": {},
+  "expect": { "com.google.Chrome": { "w": 500 } }
+}

@@ -1,0 +1,136 @@
+{
+  "note": "partition end-to-end over the full edge taxonomy against a REPRESENTATIVE SUBSET of the ported rules (the four rules the observed windows can match — embedded inline; this fixture is hermetic and does NOT load parcel/float-rules.json, which is pinned separately by partition-real-rules-override). One managed standard window (Safari), and every un-adopted reason represented — dialog subrole, sheet role, floating-panel subrole, absent subrole, absent role, non-resizable standard, app-allowlisted (Calculator), title-allowlisted (Finder copy), a floated wm.surface.scratch, and the re-managed wm.surface.notes-panel (override → managed). Verifies the partition routes each window to the correct bucket and both id-lists come back sorted.",
+  "fn": "partition",
+  "observed": [
+    {
+      "window_id": 50,
+      "app": "Safari",
+      "title": "Anthropic",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 51,
+      "app": "Safari",
+      "title": "Save",
+      "role": "AXWindow",
+      "subrole": "AXDialog",
+      "resizable": true
+    },
+    {
+      "window_id": 52,
+      "app": "TextEdit",
+      "title": "",
+      "role": "AXSheet",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 53,
+      "app": "Pixelmator",
+      "title": "Tools",
+      "role": "AXWindow",
+      "subrole": "AXFloatingWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 54,
+      "app": "SomeApp",
+      "title": "Untitled",
+      "role": "AXWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 55,
+      "app": "SomeApp",
+      "title": "Untitled",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 56,
+      "app": "SomeApp",
+      "title": "About",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": false
+    },
+    {
+      "window_id": 57,
+      "app": "Calculator",
+      "title": "",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 58,
+      "app": "Finder",
+      "title": "Copying 3 items",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 59,
+      "app": "WezTerm",
+      "title": "wm.surface.scratch",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 60,
+      "app": "WezTerm",
+      "title": "wm.surface.notes-panel",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    }
+  ],
+  "rules": {
+    "rules": [
+      {
+        "id": "calculator",
+        "app": "^Calculator$",
+        "manage": "off"
+      },
+      {
+        "id": "finder_dialogs",
+        "app": "^Finder$",
+        "title": "(Copy|Bin|Move|Info|Preferences)",
+        "manage": "off"
+      },
+      {
+        "id": "surface_transient",
+        "app": "^WezTerm$",
+        "title": "wm\\.surface\\..*",
+        "manage": "off"
+      },
+      {
+        "id": "surface_notes_panel",
+        "app": "^WezTerm$",
+        "title": "wm\\.surface\\.notes-panel",
+        "manage": "on"
+      }
+    ]
+  },
+  "expect": {
+    "float": [
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59
+    ],
+    "managed": [
+      50,
+      60
+    ]
+  }
+}

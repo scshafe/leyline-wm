@@ -1,0 +1,55 @@
+{
+  "note": "orientation=\"col\" arm: warp b NORTH relative to a (col/before) → fresh node i:b=[b,a], mode col (a vertical split). Orientation is direction-driven (passed by the caller), not aspect-ratio-driven.",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "mode": "col",
+        "children": [
+          "a",
+          "b"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1
+      },
+      "b": {
+        "id": "b",
+        "window_id": 2
+      }
+    }
+  },
+  "op": "move_leaf",
+  "args": {
+    "focused": "b",
+    "target": "a",
+    "orientation": "col",
+    "side": "before"
+  },
+  "expect": {
+    "ok": true,
+    "tree": {
+      "nodes": {
+        "a": {
+          "id": "a",
+          "window_id": 1
+        },
+        "b": {
+          "id": "b",
+          "window_id": 2
+        },
+        "i:b": {
+          "children": [
+            "b",
+            "a"
+          ],
+          "id": "i:b",
+          "mode": "col"
+        }
+      },
+      "root_id": "i:b"
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "fn": "move_lines_check",
+  "note": "J1 (junction drag) — slide along the wall: one axis stuck is a FEATURE, not a failure. The right column's windows carry stamped floors w=500 == their width, so the v-line's clamp exhausts (room 0 → cdelta 0) while the h-line moves freely (-50). ok:true with applied [{v,0},{h,-50}] — the junction slides along the min-wall (the FEEL prototype behavior). Only EVERY-axis-stuck refuses (the both_stuck fixture).",
+  "topology": {
+    "displays": [
+      {"id": 1, "frame": [0, 0, 1000, 1000]}
+    ],
+    "gap": 0
+  },
+  "moves": [
+    {"line_id": 1, "delta": 50},
+    {"line_id": 2, "delta": -50}
+  ],
+  "arr": {
+    "segments": [
+      {"axis": "v", "coord": 500, "lo": 0, "hi": 1000, "id": 1},
+      {"axis": "h", "coord": 500, "lo": 0, "hi": 1000, "id": 2}
+    ],
+    "bindings": {
+      "1:0:0": {"window_id": 10, "presented": true, "frame": {"x": 0, "y": 0, "w": 500, "h": 500}},
+      "1:1:0": {"window_id": 11, "presented": true, "frame": {"x": 500, "y": 0, "w": 500, "h": 500}, "min_size": {"w": 500}},
+      "1:0:1": {"window_id": 12, "presented": true, "frame": {"x": 0, "y": 500, "w": 500, "h": 500}},
+      "1:1:1": {"window_id": 13, "presented": true, "frame": {"x": 500, "y": 500, "w": 500, "h": 500}, "min_size": {"w": 500}}
+    },
+    "off_top": []
+  },
+  "expect": {
+    "ok": true,
+    "reason": null,
+    "applied": [
+      {"line_id": 1, "cdelta": 0},
+      {"line_id": 2, "cdelta": -50}
+    ],
+    "coords_after": [500, 450],
+    "order_independent": true,
+    "valid": true,
+    "ncells_before": 4,
+    "ncells_after": 4,
+    "bindings_byte_eq": true,
+    "store_intact_on_reject": null,
+    "ride_endpoints": null
+  }
+}

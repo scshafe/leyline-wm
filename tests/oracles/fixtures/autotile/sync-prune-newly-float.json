@@ -1,0 +1,115 @@
+{
+  "note": "PRUNE a newly-floating window — the behavior prune_dead missed (mount-shape). root(region) → d:1(pinned mount) → i:w:2(row)=[w:1,w:2] where w:2 is bound to a Calculator window. Observed still contains BOTH windows (present, non-minimized, standard+resizable), but a float rule {app:'^Calculator$', manage:'off'} now matches window 2. partition drops window 2 from managed-live, so sync prunes its leaf even though it is alive and on screen. i:w:2 collapses, w:1 inherits the mount slot, the pinned mount d:1 is kept by the collapse-guard. Proves managed-live re-runs the float predicate every pass, not just on first sight — now inside the display mount.",
+  "fn": "sync",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "i:w:2"
+        ]
+      },
+      "i:w:2": {
+        "id": "i:w:2",
+        "mode": "row",
+        "children": [
+          "w:1",
+          "w:2"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      }
+    }
+  },
+  "observed": [
+    {
+      "window_id": 1,
+      "app": "Safari",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        0,
+        0,
+        600,
+        800
+      ]
+    },
+    {
+      "window_id": 2,
+      "app": "Calculator",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        600,
+        0,
+        600,
+        800
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "id": "calculator",
+      "app": "^Calculator$",
+      "manage": "off"
+    }
+  ],
+  "focused_leaf": null,
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1200,
+          800
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "nodes": {
+      "d:1": {
+        "children": [
+          "w:1"
+        ],
+        "display_id": 1,
+        "frame_source": "pinned",
+        "id": "d:1",
+        "mode": "row"
+      },
+      "root": {
+        "children": [
+          "d:1"
+        ],
+        "id": "root",
+        "mode": "region"
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      }
+    },
+    "root_id": "root"
+  }
+}

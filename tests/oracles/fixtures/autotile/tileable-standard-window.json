@@ -1,0 +1,14 @@
+{
+  "note": "Happy path: a resizable standard window (role AXWindow, subrole AXStandardWindow) with no float rules is tileable → true. The baseline the predicate adopts.",
+  "fn": "tileable",
+  "window": {
+    "window_id": 1,
+    "app": "Safari",
+    "title": "Anthropic",
+    "role": "AXWindow",
+    "subrole": "AXStandardWindow",
+    "resizable": true
+  },
+  "rules": [],
+  "expect": true
+}

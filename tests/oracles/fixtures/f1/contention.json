@@ -1,0 +1,100 @@
+{
+  "note": "F1 PASS (contention-blind): p,q are project-CONTENDED (reached by both displays' stacks) yet each yields ONE cell with one frame → disjoint → ok:true. F1 is blind to contention BY CONSTRUCTION; contention is project's contention[] concern (I3), not F1's.",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "mA",
+          "mB"
+        ]
+      },
+      "mA": {
+        "id": "mA",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "mode": "stack",
+        "children": [
+          "sharedPair",
+          "soloA"
+        ],
+        "top": "sharedPair"
+      },
+      "mB": {
+        "id": "mB",
+        "frame_source": "pinned",
+        "display_id": 2,
+        "mode": "stack",
+        "children": [
+          "sharedPair",
+          "soloB"
+        ],
+        "top": "sharedPair"
+      },
+      "sharedPair": {
+        "id": "sharedPair",
+        "mode": "row",
+        "children": [
+          "p",
+          "q"
+        ]
+      },
+      "p": {
+        "id": "p",
+        "window_id": 1,
+        "binding": {
+          "app": "P"
+        }
+      },
+      "q": {
+        "id": "q",
+        "window_id": 2,
+        "binding": {
+          "app": "Q"
+        }
+      },
+      "soloA": {
+        "id": "soloA",
+        "window_id": 3,
+        "binding": {
+          "app": "SA"
+        }
+      },
+      "soloB": {
+        "id": "soloB",
+        "window_id": 4,
+        "binding": {
+          "app": "SB"
+        }
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      },
+      {
+        "id": 2,
+        "frame": [
+          1000,
+          0,
+          2000,
+          1000
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "ok": true,
+    "violations": []
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "fn": "half_select",
+  "note": "fork-2 tier 1 (origin offset): an east/west tuck splits the neighbor cell perpendicular (halves north/south). The focused window's ORIGIN y=0 is above the neighbor cell midpoint (y=540), so it takes the LEADING (north) half. This is the live T51(b) geometry as a pure oracle (602 origin y0, 601 cell mid 540).",
+  "target_cell": {"frame": {"x": 0, "y": 0, "w": 480, "h": 1080}},
+  "focused_frame": {"x": 480, "y": 0, "w": 480, "h": 1080},
+  "display": {"frame": {"x": 0, "y": 0, "w": 1920, "h": 1080}},
+  "dir": "west",
+  "tol": 4,
+  "expect": "north"
+}

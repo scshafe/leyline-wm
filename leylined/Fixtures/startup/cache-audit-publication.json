@@ -1,0 +1,92 @@
+{
+  "session_generation": 7,
+  "rows": [
+    {
+      "name": "ordinary-current-session",
+      "delta": {
+        "observation": {
+          "session_generation": 7
+        }
+      },
+      "admitted": true
+    },
+    {
+      "name": "ordinary-missing-session",
+      "delta": {
+        "observation": {}
+      },
+      "admitted": false
+    },
+    {
+      "name": "ordinary-departed-session",
+      "delta": {
+        "observation": {
+          "session_generation": 6
+        }
+      },
+      "admitted": false
+    },
+    {
+      "name": "clean-audit-without-world-read",
+      "delta": {
+        "event": "cache_audit_completed",
+        "cache_integrity": {
+          "session_generation": 7,
+          "observation_epoch": 0,
+          "status": "clean"
+        }
+      },
+      "admitted": true,
+      "required_epoch": 0
+    },
+    {
+      "name": "audit-missing-epoch",
+      "delta": {
+        "observation": {
+          "session_generation": 7
+        },
+        "cache_integrity": {
+          "session_generation": 7
+        }
+      },
+      "admitted": false
+    },
+    {
+      "name": "audit-contradictory-session",
+      "delta": {
+        "observation": {
+          "session_generation": 7
+        },
+        "cache_integrity": {
+          "session_generation": 6,
+          "observation_epoch": 0
+        }
+      },
+      "admitted": false
+    },
+    {
+      "name": "audit-negative-epoch",
+      "delta": {
+        "cache_integrity": {
+          "session_generation": 7,
+          "observation_epoch": -1
+        }
+      },
+      "admitted": false
+    },
+    {
+      "name": "audit-departed-global-epoch",
+      "delta": {
+        "event": "cache_audit_completed",
+        "cache_integrity": {
+          "session_generation": 7,
+          "observation_epoch": 0,
+          "status": "clean"
+        }
+      },
+      "admitted": true,
+      "required_epoch": 0,
+      "stop_before_publish": true
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "note": "Named gate / the conservative substrate: a window carrying ONLY identity (window_id/app/title), no caps at all — exactly how every window reads before ax-reframe query is enriched in Step 7. All three gates default-fail (resizable missing ⇒ false; role/subrole missing ⇒ not standard) ⇒ NOT tileable. Until caps land, every window floats — the deliberate safe baseline.",
+  "fn": "tileable",
+  "window": {
+    "window_id": 28,
+    "app": "Safari",
+    "title": "Anthropic"
+  },
+  "rules": [],
+  "expect": false
+}

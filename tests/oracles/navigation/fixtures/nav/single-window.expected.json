@@ -1,0 +1,9 @@
+{
+  "_doc": "All four directions return noCandidate.",
+  "results": {
+    "north": { "outcome": "noCandidate", "winner": null },
+    "east":  { "outcome": "noCandidate", "winner": null },
+    "south": { "outcome": "noCandidate", "winner": null },
+    "west":  { "outcome": "noCandidate", "winner": null }
+  }
+}

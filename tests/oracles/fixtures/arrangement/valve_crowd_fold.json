@@ -1,0 +1,36 @@
+{
+  "note": "S5 step 5 — the arrangement valve is balance::valve COMPOSED through the lens (NOT a forked fold). Peer of balance/valve_crowded_fold: a crowded row (a/b min w 600, span 1000) → B::valve flips row→stack (stack_source:valve, valve_from:row, surplus b). arrangement::valve (a) maps the arrangement→bridge tree (here the input tree IS the bridge tree on the slicing subset), (b) calls B::valve VERBATIM, (c) re-derives cells_stack from the FOLDED tree → ONE stacked cell carrying stack.source:valve, depth 2, members [a,b], top a, (d) returns {arrangement, facts} preserving B::valve's facts (fold, node r, required 1200, span 1000, top a, surplus [b]) byte-for-byte. ZERO feasibility math in arrangement.jq — the fold decision is balance::'s. The unfold-first sweep + focus reveal + idempotence are inherited free.",
+  "fn": "valve",
+  "focused_leaf": null,
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": { "id": "r", "mode": "row", "children": ["a", "b"] },
+      "a": { "id": "a", "window_id": 1, "min_size": { "w": 600, "h": 100 } },
+      "b": { "id": "b", "window_id": 2, "min_size": { "w": 600, "h": 100 } }
+    }
+  },
+  "topology": {
+    "displays": [{ "id": 1, "frame": [0, 0, 1000, 1000], "usable": [0, 0, 1000, 1000] }],
+    "gap": 0
+  },
+  "config": {},
+  "expect": {
+    "arrangement": [
+      {
+        "atoms": [[0, 0]],
+        "display_id": 1,
+        "filled": true,
+        "frame": { "h": 1000, "w": 1000, "x": 0, "y": 0 },
+        "i0": 0,
+        "i1": 0,
+        "j0": 0,
+        "j1": 0,
+        "stack": { "depth": 2, "members": ["a", "b"], "source": "valve", "top": "a" }
+      }
+    ],
+    "facts": [
+      { "action": "fold", "axis": "row", "kind": "stack", "node": "r", "required": 1200, "span": 1000, "surplus": ["b"], "top": "a" }
+    ]
+  }
+}

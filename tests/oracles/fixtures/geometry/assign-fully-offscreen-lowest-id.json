@@ -1,0 +1,10 @@
+{
+  "note": "assign_display: a window fully in a dead zone (overlapping NO usable AND no frame) is never null -> lowest display id. Displays listed D3-first to prove the tie-break sorts by id, not input order.",
+  "fn": "assign_display",
+  "win": {"x": 100, "y": -1400, "w": 800, "h": 300},
+  "displays": [
+    {"id": 3, "frame": {"x": 1930, "y": -1440, "w": 3440, "h": 1440}, "usable": {"x": 1930, "y": -1440, "w": 3440, "h": 1440}},
+    {"id": 1, "frame": {"x": 0, "y": 0, "w": 2880, "h": 1864}, "usable": {"x": 0, "y": 57, "w": 2880, "h": 1807}}
+  ],
+  "expect": 1
+}

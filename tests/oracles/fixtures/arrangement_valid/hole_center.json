@@ -1,0 +1,18 @@
+{
+  "note": "FAIL fixture (HAND-AUTHORED ok:false — NEVER regenerated). The no-gap RED->GREEN proof of S1 step 3 (R1). FOUR segments frame an interior courtyard on a 2880x1800 canvas — left wall v@960 over y[600,1200], right wall v@1920 over y[600,1200], top wall h@600 over x[960,1920], bottom wall h@1200 over x[960,1920] — sealing the centre atom (960,600,960,600) as its OWN filled 1x1 cell while the EIGHT surrounding atoms union into one ring component whose index box is 3x3=9 (non_rectangular: atoms 8, box 9). The ring's 8 atoms are claimed by NO filled cell (claimed_atoms 1 != nx*ny 9) -> the no-gap clause fires: kind 'gap', missing_area = 8 atoms * (areas) = 4608000, frame = the bbox of the unclaimed ring (the whole canvas, since the ring spans corner to corner).\n\nWHY BOTH KINDS (honest divergence from the plan's literal '[\"gap\"] only' text, resolved EMPIRICALLY exactly as S0 resolved incident=4-not-2): in this atom-grid model a gap ALWAYS coincides with a non_rectangular component. Union-find assigns EVERY atom to a component, so the no-gap defect can only surface as 'some filled cell fails to cover an atom' — which is precisely a non-rectangular (short-count) component leaving its box atoms unclaimed. An exhaustive small-bag search (2026-05-30) found NO scene with a gap but no nonrect. So gap and non_rectangular are DUAL views of one defect and CO-OCCUR; the gap clause is still load-bearing because it names WHERE the canvas is unclaimed (the locator) which the nonrect half (which names the broken COMPONENT) does not. The expect is hand-authored, cross-checked in experiments/line-model/arrangement.py, so a BROKEN valid() (always-ok, or one that DROPS the gap clause) cannot self-certify: stashing the gap clause removes the gap violation and reddens this fixture.",
+  "fn": "valid",
+  "arrangement": [
+    {"axis": "v", "coord": 960, "lo": 600, "hi": 1200},
+    {"axis": "v", "coord": 1920, "lo": 600, "hi": 1200},
+    {"axis": "h", "coord": 600, "lo": 960, "hi": 1920},
+    {"axis": "h", "coord": 1200, "lo": 960, "hi": 1920}
+  ],
+  "canvas": {"x": 0, "y": 0, "w": 2880, "h": 1800},
+  "expect": {
+    "ok": false,
+    "violations": [
+      {"kind": "non_rectangular", "frame": {"x": 0, "y": 0, "w": 2880, "h": 1800}, "atoms": 8, "box": 9},
+      {"kind": "gap", "missing_area": 4608000, "frame": {"x": 0, "y": 0, "w": 2880, "h": 1800}}
+    ]
+  }
+}

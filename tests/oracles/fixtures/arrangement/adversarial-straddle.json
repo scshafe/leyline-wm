@@ -1,0 +1,23 @@
+{
+  "note": "ADVERSARIAL straddle for the carry-gate re-key tolerance fix (Fork A, 2026-06-14, Step 3). A clean 2x2 partition (v@1024 spanning y[49,1318], h@683.5 spanning x[8,2040]) over the operator's display-1 topology — cells (RAW centreline rects): TL 1:0:0 x[8,1024]/y[49,683.5], TR 1:1:0 x[1024,2040]/y[49,683.5], BL 1:0:1 x[8,1024]/y[683.5,1318], BR 1:1:1 x[1024,2040]/y[683.5,1318]. ALL FOUR bindings are keyed OFF the partition (1:0:5 / 1:0:6 / 1:1:5 / 1:1:6) so the EXACT-anchor lookup misses every cell and the geometric re-key arm (_rekey_resolve) must recover the whole partition. THE STRADDLE: the left column carries a MUTUAL straddle. Window 100 (P) frame y[400,800] straddles the seam y=683.5 with overlap TL=1016*283.5=288036 > BL=1016*116.5=118364, so P SHOULD win TL. Window 110 (Q) frame y[567,1100] straddles with overlap BL=1016*416.5=423164 > TL=1016*116.5=118364, so Q SHOULD win BL. Greedy over pairs sorted [area DESC, wid ASC, ck ASC]: Q_BL(423164) claims BL, then P_TL(288036) claims TL, then P_BL/Q_TL are both skipped (windows already claimed) — so the loser overlaps fall to nothing and there is NO double-assign. Windows 200/210 fill the clean right column. GROUND TRUTH (hand-derived, then code-confirmed via direct A::_rekey_resolve probe: 1:0:0->100, 1:0:1->110, 1:1:0->200, 1:1:1->210): all 4 windows resolve, each to exactly ONE cell, greater-overlap wins, collision-free. carryable == bound == {100,110,200,210}, flat=true -> the gate PERMITS. Pins the no-double-assign + greater-overlap-wins + deterministic-under-straddle contract. If the fallback were removed (exact-key only), carried would be [] and the gate would refuse — so this fixture is load-bearing on the new geometric arm.",
+  "fn": "carryable",
+  "arr": {
+    "segments": [
+      {"axis": "v", "coord": 1024,  "lo": 49, "hi": 1318, "id": 10, "relation": "pinned"},
+      {"axis": "h", "coord": 683.5, "lo": 8,  "hi": 2040, "id": 11, "relation": "pinned"}
+    ],
+    "bindings": {
+      "1:0:5": {"window_id": 100, "presented": true, "frame": {"x": 8,    "y": 400,   "w": 1016, "h": 400}},
+      "1:0:6": {"window_id": 110, "presented": true, "frame": {"x": 8,    "y": 567,   "w": 1016, "h": 533}},
+      "1:1:5": {"window_id": 200, "presented": true, "frame": {"x": 1024, "y": 49,    "w": 1016, "h": 634.5}},
+      "1:1:6": {"window_id": 210, "presented": true, "frame": {"x": 1024, "y": 683.5, "w": 1016, "h": 634.5}}
+    },
+    "off_top": [],
+    "promotions": []
+  },
+  "topology": {"displays": [{"id": 1, "frame": {"x": 0, "y": 0, "w": 2048, "h": 1326}, "usable": {"x": 0, "y": 41, "w": 2048, "h": 1285}}], "dead_zones": [], "gap": 8},
+  "expect": {
+    "carried": [100, 110, 200, 210],
+    "flat": true
+  }
+}

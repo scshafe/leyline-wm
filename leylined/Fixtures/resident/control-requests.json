@@ -1,0 +1,86 @@
+{
+  "revision": 2,
+  "completed_revision": 3,
+  "soft": {
+    "op": "control",
+    "request_id": "control-soft",
+    "action_id": "reset",
+    "expected_revision": 2,
+    "args": {
+      "mode": "soft"
+    }
+  },
+  "hard": {
+    "op": "control",
+    "request_id": "control-hard",
+    "action_id": "reset",
+    "args": {
+      "mode": "hard",
+      "resume": false
+    }
+  },
+  "conflict": {
+    "op": "control",
+    "request_id": "control-soft",
+    "action_id": "reset",
+    "args": {
+      "mode": "hard"
+    }
+  },
+  "stale": {
+    "op": "control",
+    "request_id": "control-stale",
+    "action_id": "reset",
+    "expected_revision": 1,
+    "args": {
+      "mode": "soft"
+    }
+  },
+  "off": {
+    "op": "control",
+    "request_id": "control-off",
+    "action_id": "reset",
+    "args": {
+      "mode": "soft",
+      "resume": false
+    }
+  },
+  "stop": {
+    "op": "control",
+    "request_id": "control-stop",
+    "action_id": "stop"
+  },
+  "bad_mode": {
+    "op": "control",
+    "request_id": "control-bad-mode",
+    "action_id": "reset",
+    "args": {
+      "mode": 1
+    }
+  },
+  "bad_resume": {
+    "op": "control",
+    "request_id": "control-bad-resume",
+    "action_id": "reset",
+    "args": {
+      "resume": "false"
+    }
+  },
+  "bad_revision": {
+    "op": "control",
+    "request_id": "control-bad-revision",
+    "action_id": "reset",
+    "expected_revision": 1.5
+  },
+  "completed": {
+    "baseline_ready": true,
+    "readiness_verified": true,
+    "journal_preserved": true
+  },
+  "hard_completed": {
+    "journal_reset": true,
+    "quarantined_journal": "fixture-audit-archive",
+    "management_enabled": false,
+    "readiness_verified": false
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "note": "cells: a stack contributes ONE cell (its top); the off-top branch 'back' (presented:false, frame null) is NOT a cell. Reuses project/stack_selects_top → cells {x,y} only.",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "fill",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "s"
+        ]
+      },
+      "s": {
+        "id": "s",
+        "mode": "stack",
+        "children": [
+          "front",
+          "back"
+        ],
+        "top": "front"
+      },
+      "front": {
+        "id": "front",
+        "mode": "row",
+        "children": [
+          "x",
+          "y"
+        ]
+      },
+      "back": {
+        "id": "back",
+        "window_id": 200,
+        "binding": {
+          "app": "Back"
+        }
+      },
+      "x": {
+        "id": "x",
+        "window_id": 201,
+        "binding": {
+          "app": "X"
+        }
+      },
+      "y": {
+        "id": "y",
+        "window_id": 202,
+        "binding": {
+          "app": "Y"
+        }
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          600
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "cells": [
+      {
+        "display_id": 1,
+        "frame": {
+          "h": 600,
+          "w": 500,
+          "x": 0,
+          "y": 0
+        },
+        "leaf_id": "x"
+      },
+      {
+        "display_id": 1,
+        "frame": {
+          "h": 600,
+          "w": 500,
+          "x": 500,
+          "y": 0
+        },
+        "leaf_id": "y"
+      }
+    ],
+    "corners": [],
+    "edges": [
+      {
+        "axis": "v",
+        "band": {
+          "hi": 500,
+          "lo": 500
+        },
+        "coord": 500,
+        "dividers": [
+          "front"
+        ],
+        "high_cells": [
+          "y"
+        ],
+        "low_cells": [
+          "x"
+        ],
+        "span": {
+          "hi": 600,
+          "lo": 0
+        }
+      }
+    ],
+    "root": {
+      "h": 600,
+      "w": 1000,
+      "x": 0,
+      "y": 0
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "fn": "promote",
+  "note": "S14b.2 the §10.9 reject: a 2x2 grid [v@500 full, h@500 full] (cells 1:0:0 TL, 1:1:0 TR, 1:0:1 BL, 1:1:1 BR). promote an L-block [1:0:0, 1:1:0, 1:0:1] — 3 of the 4 cells (the top row + bottom-left), missing the bottom-right. The block's bbox is the full 1000x1000 (area 1000000) but sum_area is 3*250000=750000 != 1000000 → NOT a filled rectangle. The STRUCTURAL area-tile guard (TOOTH 1, load-bearing) rejects it: a pinwheel/L cannot be partially encapsulated (a proper subset of a pinwheel never has area_sum == bbox area). {ok:false} with the §10.9 reason, store INTACT (no candidate formed — jq purity), promotions still absent. valid_rec alone is INSUFFICIENT here (an un-encapsulated block silently leaves a coarser-but-valid partition), so the structural guard is the teeth.",
+  "topology": { "displays": [ { "id": 1, "frame": [0, 0, 1000, 1000] } ], "gap": 0 },
+  "arr": {
+    "segments": [
+      { "axis": "v", "coord": 500, "lo": 0, "hi": 1000 },
+      { "axis": "h", "coord": 500, "lo": 0, "hi": 1000 }
+    ],
+    "bindings": {},
+    "off_top": []
+  },
+  "cells": ["1:0:0", "1:1:0", "1:0:1"],
+  "expect": {
+    "ok": false,
+    "reason": "promote: block [\"1:0:0\",\"1:1:0\",\"1:0:1\"] is not a filled rectangle (sum_area != bbox_area → non-rectangular / pinwheel cannot be partially encapsulated, §10.9)"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "initial_cases": [
+    {"name": "active-console", "locked": false, "on_console": true, "login_done": true, "loginwindow_foreground": false, "expected_available": true},
+    {"name": "locked-console", "locked": true, "on_console": true, "login_done": true, "loginwindow_foreground": false, "expected_available": false},
+    {"name": "loginwindow-foreground", "locked": false, "on_console": true, "login_done": true, "loginwindow_foreground": true, "expected_available": false},
+    {"name": "inactive-console", "locked": false, "on_console": false, "login_done": true, "loginwindow_foreground": false, "expected_available": false},
+    {"name": "login-incomplete", "locked": false, "on_console": true, "login_done": false, "loginwindow_foreground": false, "expected_available": false},
+    {"name": "unknown-console", "locked": false, "on_console": null, "login_done": true, "loginwindow_foreground": false, "expected_available": false},
+    {"name": "unknown-login", "locked": false, "on_console": true, "login_done": null, "loginwindow_foreground": false, "expected_available": false},
+    {"name": "known-active-with-absent-lock-flag", "locked": null, "on_console": true, "login_done": true, "loginwindow_foreground": false, "expected_available": true}
+  ]
+}

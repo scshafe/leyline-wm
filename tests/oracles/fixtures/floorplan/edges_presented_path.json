@@ -1,0 +1,166 @@
+{
+  "note": "edges (Fix A — presented-path provenance): leaves L,R are shared (multi-parent) under pair (in aStk, whose top=filler → pair is HIDDEN) and pair2 (in bStk, top=pair2 → SHOWN). project lays L,R from the presented pair2 path; so the L|R gridline's dividers MUST be [pair2], NOT [pair] (the lex-first-but-unpresented path). _lca filters to presentable paths to agree with project's winner (parcel.jq:292-294).",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "aStk",
+          "bStk"
+        ]
+      },
+      "aStk": {
+        "id": "aStk",
+        "mode": "stack",
+        "top": "filler",
+        "children": [
+          "pair",
+          "filler"
+        ]
+      },
+      "bStk": {
+        "id": "bStk",
+        "mode": "stack",
+        "top": "pair2",
+        "children": [
+          "pair2",
+          "fillerB"
+        ]
+      },
+      "pair": {
+        "id": "pair",
+        "mode": "row",
+        "children": [
+          "L",
+          "R"
+        ]
+      },
+      "pair2": {
+        "id": "pair2",
+        "mode": "row",
+        "children": [
+          "L",
+          "R"
+        ]
+      },
+      "filler": {
+        "id": "filler",
+        "window_id": 9
+      },
+      "fillerB": {
+        "id": "fillerB",
+        "window_id": 8
+      },
+      "L": {
+        "id": "L",
+        "window_id": 1
+      },
+      "R": {
+        "id": "R",
+        "window_id": 2
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "cells": [
+      {
+        "display_id": 1,
+        "frame": {
+          "h": 1000,
+          "w": 500,
+          "x": 0,
+          "y": 0
+        },
+        "leaf_id": "filler"
+      },
+      {
+        "display_id": 1,
+        "frame": {
+          "h": 1000,
+          "w": 250,
+          "x": 500,
+          "y": 0
+        },
+        "leaf_id": "L"
+      },
+      {
+        "display_id": 1,
+        "frame": {
+          "h": 1000,
+          "w": 250,
+          "x": 750,
+          "y": 0
+        },
+        "leaf_id": "R"
+      }
+    ],
+    "corners": [],
+    "edges": [
+      {
+        "axis": "v",
+        "band": {
+          "hi": 500,
+          "lo": 500
+        },
+        "coord": 500,
+        "dividers": [
+          "root"
+        ],
+        "high_cells": [
+          "L"
+        ],
+        "low_cells": [
+          "filler"
+        ],
+        "span": {
+          "hi": 1000,
+          "lo": 0
+        }
+      },
+      {
+        "axis": "v",
+        "band": {
+          "hi": 750,
+          "lo": 750
+        },
+        "coord": 750,
+        "dividers": [
+          "pair2"
+        ],
+        "high_cells": [
+          "R"
+        ],
+        "low_cells": [
+          "L"
+        ],
+        "span": {
+          "hi": 1000,
+          "lo": 0
+        }
+      }
+    ],
+    "root": {
+      "h": 1000,
+      "w": 1000,
+      "x": 0,
+      "y": 0
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "_doc": "Must be identical to two-up-horizontal. Any divergence is a bug in the algorithm's point/pixel discipline.",
+  "results": {
+    "north": { "outcome": "noCandidate", "winner": null },
+    "east":  { "outcome": "direct",      "winner": 200, "ranked": [200] },
+    "south": { "outcome": "noCandidate", "winner": null },
+    "west":  { "outcome": "wrap",        "winner": 200, "ranked": [200] }
+  }
+}

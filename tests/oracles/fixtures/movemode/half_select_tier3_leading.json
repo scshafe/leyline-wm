@@ -1,0 +1,10 @@
+{
+  "fn": "half_select",
+  "note": "fork-2 tier 3 (perfectly symmetric -> leading): the focused origin y=540 ties the neighbor cell midpoint (y=540) AND the display midpoint (y=540), both within tol, so neither tier 1 nor tier 2 decides. The fallback is the LEADING (north) half — preserving the historical default.",
+  "target_cell": {"frame": {"x": 0, "y": 340, "w": 480, "h": 400}},
+  "focused_frame": {"x": 480, "y": 540, "w": 480, "h": 200},
+  "display": {"frame": {"x": 0, "y": 0, "w": 1920, "h": 1080}},
+  "dir": "west",
+  "tol": 4,
+  "expect": "north"
+}

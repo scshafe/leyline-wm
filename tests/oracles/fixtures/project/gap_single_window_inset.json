@@ -1,0 +1,61 @@
+{
+  "note": "GAP (outer): a lone window in a 1-display pinned mount, gap:8, is inset 8px on ALL sides from the display's usable rect (1000x1000 → {8,8,984,984}). The single-child split adds no inner gutter; the outer margin comes from inset_frame on the pinned mount. Proves a window never sits flush to the display edge so its focus border isn't clipped there.",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "w:1"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 8
+  },
+  "expect": {
+    "contention": [],
+    "dead_zone_hits": [],
+    "leaves": {
+      "w:1": {
+        "conformance": "conforming",
+        "desired_frame": {
+          "h": 984,
+          "w": 984,
+          "x": 8,
+          "y": 8
+        },
+        "overflow": false,
+        "presented": true,
+        "vacant": false
+      }
+    },
+    "vacant": []
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "note": "An unconstrained window that hits its target teaches nothing — empty store stays empty (behaviour-preserving: no spurious floors).",
+  "fn": "learn",
+  "targets": {
+    "257": { "window_id": 257, "presented": true, "frame": { "x": 0, "y": 0, "w": 800, "h": 600 } }
+  },
+  "observed": [
+    { "window_id": 257, "bundle_id": "com.apple.TextEdit", "frame": { "x": 0, "y": 0, "w": 800, "h": 600 } }
+  ],
+  "store": {},
+  "expect": {}
+}

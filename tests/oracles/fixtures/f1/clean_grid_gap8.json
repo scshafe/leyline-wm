@@ -1,0 +1,75 @@
+{
+  "note": "F1 PASS: a clean 2x2 grid (gap 8) — all 4 cells pairwise-disjoint and contained → ok:true. The base case the Stage-4 valve must keep green.",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "c1",
+          "c2"
+        ]
+      },
+      "c1": {
+        "id": "c1",
+        "mode": "col",
+        "children": [
+          "w:1",
+          "w:3"
+        ]
+      },
+      "c2": {
+        "id": "c2",
+        "mode": "col",
+        "children": [
+          "w:2",
+          "w:4"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:3": {
+        "id": "w:3",
+        "window_id": 3
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      },
+      "w:4": {
+        "id": "w:4",
+        "window_id": 4
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 8
+  },
+  "expect": {
+    "ok": true,
+    "violations": []
+  }
+}

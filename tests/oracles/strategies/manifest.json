@@ -1,0 +1,19 @@
+{
+  "id": "tiling_strategies",
+  "description": "Registered tiling strategies. `arrangement` is the sole store; its module is a pure jq program evaluated by the proposal adapter under the exclusive transaction lease against checkpoint state and one trusted world. The manifest remains an explicit extension seam: a future strategy adds one sibling module, one entry, and its config. The arrangement config owns re-equalization, newcomer homing/classification, crowding, and reclaim policy. Lifecycle and membership proposals own newcomer decisions, float pins, and removal reclaim before the strategy runs. `LEYLINE_PARCEL_FLOAT_FRAC` is a legacy hydration input, default 0.6, imported once into the checkpoint-owned `float_fraction`. That fraction and `front_center_on_manual_float` affect only an interactive manual toggle from tiled to floated; programmatic `float on` preserves caller-owned placement. A strategy declares only the knobs it consumes.",
+  "strategies": [
+    {
+      "id": "arrangement",
+      "title": "Arrangement (line store)",
+      "module": "arrangement.jq",
+      "default": true,
+      "capabilities": ["layout.decide", "arrangement.read"],
+      "config": {
+        "reequalize_policy": "always",
+        "homing": "focus",
+        "newcomer_policy": "tile-all",
+        "reclaim_policy": "even"
+      }
+    }
+  ]
+}

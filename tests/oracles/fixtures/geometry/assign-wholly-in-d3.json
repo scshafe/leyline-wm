@@ -1,0 +1,10 @@
+{
+  "note": "assign_display: a window fully inside D3's usable rect homes to D3 (the upper-right display with negative y).",
+  "fn": "assign_display",
+  "win": {"x": 2500, "y": -1000, "w": 800, "h": 600},
+  "displays": [
+    {"id": 1, "frame": {"x": 0, "y": 0, "w": 2880, "h": 1864}, "usable": {"x": 0, "y": 57, "w": 2880, "h": 1807}},
+    {"id": 3, "frame": {"x": 1930, "y": -1440, "w": 3440, "h": 1440}, "usable": {"x": 1930, "y": -1440, "w": 3440, "h": 1440}}
+  ],
+  "expect": 3
+}

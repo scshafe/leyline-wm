@@ -1,0 +1,51 @@
+{
+  "fn": "move_check",
+  "note": "S17.1 (P-MOVE, the common slicing case). A 2-cell slicing scene (v@600 full-span, id:1, over 1000x1000) dragged delta=-100. L.coord translates 600->500 (the only segment edit); A::incident reflows BOTH cells (left 600->500 wide, right 400->500 wide); NO anchored endpoint rides (the perpendicular neighbours anchor at the canvas y-faces, not on a third interior line — perp_endpoints_after is empty); valid_rec stays ok; ncells unchanged 2->2; |segments| unchanged (the INV-by-construction scalar edit). Proves the depth-1 closed-form translate. The unbound cells have min {0,0} so the clamp does not bite (room=400 > |delta|=100, cd=-100).",
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "arr": {
+    "segments": [
+      {
+        "axis": "v",
+        "coord": 600,
+        "lo": 0,
+        "hi": 1000,
+        "id": 1
+      }
+    ],
+    "bindings": {},
+    "off_top": []
+  },
+  "line_id": 1,
+  "delta": -100,
+  "expect": {
+    "coord_after": 500,
+    "ncells_after": 2,
+    "ncells_before": 2,
+    "ok": true,
+    "perp_endpoints_after": [],
+    "segments_after": [
+      {
+        "axis": "v",
+        "coord": 500,
+        "hi": 1000,
+        "id": 1,
+        "lo": 0
+      }
+    ],
+    "segments_len_eq": true,
+    "valid": true
+  }
+}

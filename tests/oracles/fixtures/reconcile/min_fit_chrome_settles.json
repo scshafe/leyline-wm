@@ -1,0 +1,77 @@
+{
+  "note": "The fix, end to end: w:1 is Chrome (min_size 1200w, as the stamp would set it). project's min-fit gives it 1200 and shrinks w:2 to 720; the windows are observed already at those frames → the diff is ALL NOOP (settled). Before min-fit the tree targeted w:1 at its 960 half, Chrome clamped to 1200, and reconcile reframed it forever (i6:diverged → circuit-breaker latch). Now observed == desired → it never enters the rediff signature, so E never latches.",
+  "tree": {
+    "root_id": "d:1",
+    "nodes": {
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "w:1",
+          "w:2"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1,
+        "min_size": {
+          "w": 1200
+        }
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1920,
+          1080
+        ]
+      }
+    ]
+  },
+  "observed": [
+    {
+      "window_id": 1,
+      "frame": [
+        0,
+        0,
+        1200,
+        1080
+      ],
+      "minimized": false
+    },
+    {
+      "window_id": 2,
+      "frame": [
+        1200,
+        0,
+        720,
+        1080
+      ],
+      "minimized": false
+    }
+  ],
+  "expect": {
+    "hide": [],
+    "noop": [
+      {
+        "window_id": 1
+      },
+      {
+        "window_id": 2
+      }
+    ],
+    "reframe": [],
+    "show": []
+  }
+}

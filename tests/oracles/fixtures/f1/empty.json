@@ -1,0 +1,24 @@
+{
+  "note": "F1 PASS (degenerate): empty tree → cells [] → vacuously ok:true. Guards min/sort_by over an empty cell set.",
+  "tree": {
+    "root_id": null,
+    "nodes": {}
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          800
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "ok": true,
+    "violations": []
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "note": "node_frames over a realistic mount-shaped tree (2 displays, gap 8): root region (canvas) → pinned mounts d:1/d:2 (inset display usable) → BSP leaves. Pins the pinned-mount inset + per-display homing + gap gutters. This tree is FEASIBLE (no mins), so node_frames LEAF frames equal project desired_frames here (cross-checked) — that equality holds ONLY on feasible trees; node_frames_overflow pins the infeasible divergence.",
+  "fn": "node_frames",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1",
+          "d:2"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "w1"
+        ]
+      },
+      "d:2": {
+        "id": "d:2",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 2,
+        "children": [
+          "w2",
+          "w3"
+        ]
+      },
+      "w1": {
+        "id": "w1",
+        "window_id": 10
+      },
+      "w2": {
+        "id": "w2",
+        "window_id": 11
+      },
+      "w3": {
+        "id": "w3",
+        "window_id": 12
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ],
+        "usable": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      },
+      {
+        "id": 2,
+        "frame": [
+          1000,
+          0,
+          1000,
+          1000
+        ],
+        "usable": [
+          1000,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 8
+  },
+  "expect": {
+    "d:1": {
+      "h": 984,
+      "w": 984,
+      "x": 8,
+      "y": 8
+    },
+    "d:2": {
+      "h": 984,
+      "w": 984,
+      "x": 1008,
+      "y": 8
+    },
+    "root": {
+      "h": 984,
+      "w": 1984,
+      "x": 8,
+      "y": 8
+    },
+    "w1": {
+      "h": 984,
+      "w": 984,
+      "x": 8,
+      "y": 8
+    },
+    "w2": {
+      "h": 984,
+      "w": 488,
+      "x": 1008,
+      "y": 8
+    },
+    "w3": {
+      "h": 984,
+      "w": 488,
+      "x": 1504,
+      "y": 8
+    }
+  }
+}

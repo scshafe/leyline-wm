@@ -1,0 +1,16 @@
+{
+  "note": "B1 (reachable authoring, 2026-06-10) — refusal learn-DOWN: the live episode's exact numbers. Chrome stored floor h:441 (stale-high); asked to shrink to h:289, it REFUSED but landed at h:375 — BELOW the stored floor (target 289 < landed 375 < stored 441). The landing is direct evidence the real min ≤ 375: heal the floor down to 375 on the FIRST refusal (the old max() kept 441 forever, and the at-target self-heal can never fire during a refusal since landed != target). Width sits at target (800) with no stored w floor → no w learn. A second window (com.test.B) refuses ABOVE its stored floor (stored 300, landed 350 > 300) → plain learn-up to 350 (unchanged behavior). A third (com.test.C) sits at target with no store entry → untouched (no-refusal scene).",
+  "fn": "learn",
+  "targets": {
+    "11945": { "window_id": 11945, "presented": true, "frame": { "x": 0, "y": 0, "w": 800, "h": 289 } },
+    "501":   { "window_id": 501,   "presented": true, "frame": { "x": 0, "y": 300, "w": 800, "h": 300 } },
+    "502":   { "window_id": 502,   "presented": true, "frame": { "x": 0, "y": 650, "w": 800, "h": 300 } }
+  },
+  "observed": [
+    { "window_id": 11945, "bundle_id": "com.google.Chrome", "frame": { "x": 0, "y": 0, "w": 800, "h": 375 } },
+    { "window_id": 501,   "bundle_id": "com.test.B",        "frame": { "x": 0, "y": 300, "w": 800, "h": 350 } },
+    { "window_id": 502,   "bundle_id": "com.test.C",        "frame": { "x": 0, "y": 650, "w": 800, "h": 300 } }
+  ],
+  "store": { "com.google.Chrome": { "h": 441 }, "com.test.B": { "h": 300 } },
+  "expect": { "com.google.Chrome": { "h": 375 }, "com.test.B": { "h": 350 } }
+}

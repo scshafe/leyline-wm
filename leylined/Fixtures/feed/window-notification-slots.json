@@ -1,0 +1,14 @@
+{
+  "scenarios": [
+    {"name": "standard-window-keeps-five-real-slots", "role": "AXWindow", "subrole": "AXStandardWindow", "expected": "success", "slots": ["AXMoved", "AXResized", "AXUIElementDestroyed", "AXWindowMiniaturized", "AXWindowDeminiaturized"], "notification": "AXMoved", "delivered": true},
+    {"name": "dialog-has-lifecycle-only-and-late-move-is-not-admitted", "role": "AXWindow", "subrole": "AXDialog", "expected": "success", "slots": ["AXUIElementDestroyed", "AXWindowMiniaturized", "AXWindowDeminiaturized"], "notification": "AXMoved", "delivered": false},
+    {"name": "help-tag-has-lifecycle-only-and-late-resize-is-not-admitted", "role": "AXWindow", "subrole": "AXHelpTag", "expected": "success", "slots": ["AXUIElementDestroyed", "AXWindowMiniaturized", "AXWindowDeminiaturized"], "notification": "AXResized", "delivered": false},
+    {"name": "dialog-destruction-retains-an-actual-slot", "role": "AXWindow", "subrole": "AXDialog", "expected": "success", "slots": ["AXUIElementDestroyed", "AXWindowMiniaturized", "AXWindowDeminiaturized"], "notification": "AXUIElementDestroyed", "delivered": true},
+    {"name": "missing-role-is-typed-unknown-and-installs-zero-slots", "subrole": "AXStandardWindow", "expected": "ax_window_notification_structure_unknown", "slots": []},
+    {"name": "missing-subrole-is-typed-unknown-and-installs-zero-slots", "role": "AXWindow", "expected": "ax_window_notification_structure_unknown", "slots": []},
+    {"name": "empty-role-is-typed-unknown-and-installs-zero-slots", "role": "", "subrole": "AXDialog", "expected": "ax_window_notification_structure_unknown", "slots": []},
+    {"name": "empty-subrole-is-typed-unknown-and-installs-zero-slots", "role": "AXWindow", "subrole": "", "expected": "ax_window_notification_structure_unknown", "slots": []},
+    {"name": "numeric-role-is-not-positive-classification", "role": 1, "subrole": "AXDialog", "expected": "ax_window_notification_structure_unknown", "slots": []},
+    {"name": "partial-standard-registration-rolls-back-installed-slots", "role": "AXWindow", "subrole": "AXStandardWindow", "fail_slot": "AXResized", "expected": "ax_window_registration_failed:AXResized:-25204", "slots": ["AXMoved", "AXResized"], "removed": ["AXMoved"]}
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "note": "cells: the empty tree (root_id null) → cells [] (degenerate; pins min/sort_by over []). root still derived from topology.",
+  "tree": {
+    "root_id": null,
+    "nodes": {}
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          800
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "cells": [],
+    "corners": [],
+    "edges": [],
+    "root": {
+      "h": 800,
+      "w": 1000,
+      "x": 0,
+      "y": 0
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "note": "Reserve branch (Stage-7 lock/solidify shape; DORMANT in Stage 4): a COMPUTED row with one computed child (min w 300) + one AUTHORED-frame child (current width 750). required = subtree_min(a).w(300) + node_frames(b).w(750) = 1050 > span 1000 → candidate. NOTE _required DIVERGES from fit_sizes for authored/pinned children: fit_sizes uses the proportional slot size, _required uses the child's actual FOOTPRINT. So the threshold-0↔fit_sizes identity is exact only for ALL-COMPUTED nodes; here probe may flag a node whose siblings do not actually overlap (b just spills off-canvas). The false-fold-vs-fit_sizes question is a Stage-7 decision.",
+  "fn": "probe",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "mode": "row",
+        "children": [
+          "a",
+          "b"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1,
+        "min_size": {
+          "w": 300,
+          "h": 100
+        }
+      },
+      "b": {
+        "id": "b",
+        "window_id": 2,
+        "frame_source": "authored",
+        "frame": [
+          600,
+          0,
+          750,
+          1000
+        ]
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ],
+        "usable": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "expect": [
+    {
+      "kind": "stack",
+      "phase": "candidate",
+      "node": "r",
+      "axis": "row",
+      "required": 1050,
+      "span": 1000,
+      "surplus": [
+        "b"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "note": "S13.3 — CONSERVATION CLEAN AT DEPTH (the M1 silent-drop net holds under the nested fold). The SAME deep cascading tree as nested_valve_fixpoint (root[A, mid[B, deep[c,d]]]) where deep folds then mid folds in ONE bottom-up sweep. Rides the EXISTING fn:\"conservation\" arm (tests.sh:169 — A::conservation composing B::conservation VERBATIM, arrangement.jq:871). Proves NO window is silently dropped under the two-level cascade: presented ∪ stacked ∪ vacant == bound IS balance's presented ∪ hidden == managed (M1) re-expressed, NOT a fresh oracle. bound = every window-carrying leaf [A,B,c,d]; presented = the top each presented cell shows [A,B] (root stays a row so A is visible; mid folds so its top B shows); stacked = the surplus members the stacked cells route away from [c,d] (deep's c,d are hidden under the mid stack — the OUTER fold's surplus subsumes the inner's, but conservation reads project not the facts, so the leaf is counted once); vacant = []. ok/unexplained pass through B::conservation UNCHANGED — the routing-away-from-a-real-top 'explained' logic (balance.jq:326-338) is the authority; S13 re-derives nothing. Verified live on the depth-3 cascade: ok:true, unexplained:[]. HAND-VERIFIED.",
+  "fn": "conservation",
+  "focused_leaf": null,
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": { "id": "root", "mode": "row", "children": ["A", "mid"] },
+      "mid":  { "id": "mid",  "mode": "row", "children": ["B", "deep"] },
+      "deep": { "id": "deep", "mode": "row", "children": ["c", "d"] },
+      "A": { "id": "A", "window_id": 1, "min_size": { "w": 200, "h": 100 } },
+      "B": { "id": "B", "window_id": 2, "min_size": { "w": 200, "h": 100 } },
+      "c": { "id": "c", "window_id": 3, "min_size": { "w": 600, "h": 100 } },
+      "d": { "id": "d", "window_id": 4, "min_size": { "w": 600, "h": 100 } }
+    }
+  },
+  "topology": {
+    "displays": [{ "id": 1, "frame": [0, 0, 1000, 1000], "usable": [0, 0, 1000, 1000] }],
+    "gap": 0
+  },
+  "config": {},
+  "expect": {
+    "ok": true,
+    "bound": ["A", "B", "c", "d"],
+    "presented": ["A", "B"],
+    "stacked": ["c", "d"],
+    "vacant": [],
+    "unexplained": [],
+    "overflowing": []
+  }
+}

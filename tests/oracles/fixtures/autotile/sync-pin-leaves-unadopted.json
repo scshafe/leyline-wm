@@ -1,0 +1,11 @@
+{
+  "note": "sync leaves a manual-float-PINNED window UN-adopted even though it is tileable. Empty tree; one observed window 30 (standard+resizable → normally adopted as the root seed). The rules carry the runtime pin {window_id:30, manage:\"off\"} — so 30 is NOT in the managed-live set, sync's adopt pass has no newcomers, and the result stays the empty tree {root_id:null,nodes:{}}. The force-FLOAT half of the S5 verb, proven at the sync level. Pair: sync-unpin-readopts (identical scene, pin removed → adopted).",
+  "fn": "sync",
+  "tree": {"root_id": null, "nodes": {}},
+  "observed": [
+    {"window_id": 30, "app": "A", "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true, "frame": [0, 0, 800, 600]}
+  ],
+  "rules": {"rules": [{"window_id": 30, "manage": "off"}]},
+  "topology": {"displays": [{"id": 1, "frame": [0, 0, 1600, 900]}]},
+  "expect": {"root_id": null, "nodes": {}}
+}

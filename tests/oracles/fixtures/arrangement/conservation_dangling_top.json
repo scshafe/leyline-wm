@@ -1,0 +1,27 @@
+{
+  "note": "S5 step 9 (RED-GREEN, HAND-AUTHORED ok:false — NEVER regenerated). The R2-retirement proof: the arrangement catches a silent drop EXACTLY as the tree does. Peer of balance/conservation_dangling_top: a MANUAL stack s whose top='GHOST' is NOT a child → project drops ALL its children (parcel.jq:250, no child == top) → the stack presents NOTHING. cells_stack homes this stack to NO cell (it has no presented top region). arrangement::conservation composes B::conservation verbatim: x,y are bound but hidden, and NO stack ancestor presents a real child routing away from them → they are UNEXPLAINED → ok:false. (The valve leaves a manual stack untouched, so the danger persists into the partition.) The expect is HAND-WRITTEN so a broken oracle cannot self-certify ok:true on a dropped window — the same discipline as floorplan.jq's FAIL fixtures. presented=[], stacked (=B's hidden)=[x,y], unexplained=[x,y], bound=[x,y]; presented∪stacked∪vacant==bound still holds, but unexplained != [] → NOT ok.",
+  "fn": "conservation",
+  "focused_leaf": null,
+  "tree": {
+    "root_id": "s",
+    "nodes": {
+      "s": { "id": "s", "mode": "stack", "stack_source": "manual", "top": "GHOST", "children": ["x", "y"] },
+      "x": { "id": "x", "window_id": 1 },
+      "y": { "id": "y", "window_id": 2 }
+    }
+  },
+  "topology": {
+    "displays": [{ "id": 1, "frame": [0, 0, 1000, 1000], "usable": [0, 0, 1000, 1000] }],
+    "gap": 0
+  },
+  "config": {},
+  "expect": {
+    "ok": false,
+    "bound": ["x", "y"],
+    "presented": [],
+    "stacked": ["x", "y"],
+    "vacant": [],
+    "unexplained": ["x", "y"],
+    "overflowing": []
+  }
+}

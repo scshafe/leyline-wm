@@ -1,0 +1,56 @@
+{
+  "note": "F1 PASS (gapless): two cells touching at x=500 (gap 0) — overlap_x=0 on the shared edge → disjoint → ok:true. A touch is not an overlap.",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d1"
+        ]
+      },
+      "d1": {
+        "id": "d1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "a",
+          "b"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 101,
+        "binding": {
+          "app": "A"
+        }
+      },
+      "b": {
+        "id": "b",
+        "window_id": 102,
+        "binding": {
+          "app": "B"
+        }
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          800
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "ok": true,
+    "violations": []
+  }
+}

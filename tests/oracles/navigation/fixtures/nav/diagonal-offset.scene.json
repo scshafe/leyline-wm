@@ -1,0 +1,14 @@
+{
+  "_doc": "Canonical regression scene for the display-graph gate. Three displays: primary on the left, two small displays stacked on the right (touching at y=600). Source on D1; decoy on D2 (touches source y at 400 → perp_overlap = 0, not viable); target on D3 (perp_overlap = 100, viable). New aggregate model: east → 300 direct. Current code: same-display empty, graph picks D2 (larger y-overlap with D1 than D3), ranker on D2 finds nothing, returns no candidate. See fixture-catalog.md §4.",
+  "displays": [
+    { "index": 1, "frame": { "x": 0,    "y":   0, "w": 1512, "h": 982 } },
+    { "index": 2, "frame": { "x": 1512, "y":   0, "w": 1000, "h": 600 } },
+    { "index": 3, "frame": { "x": 1512, "y": 600, "w": 1000, "h": 900 } }
+  ],
+  "windows": [
+    { "id": 100, "display": 1, "frame": { "x":  100, "y": 400, "w": 600, "h": 500 }, "app": "Source"    },
+    { "id": 200, "display": 2, "frame": { "x": 1700, "y": 100, "w": 600, "h": 300 }, "app": "DecoyTop"  },
+    { "id": 300, "display": 3, "frame": { "x": 1700, "y": 800, "w": 600, "h": 400 }, "app": "Target"    }
+  ],
+  "source": { "window_id": 100 }
+}

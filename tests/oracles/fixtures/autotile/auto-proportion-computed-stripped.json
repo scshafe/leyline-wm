@@ -1,0 +1,50 @@
+{
+  "note": "auto_proportion strips explicit ratios from a COMPUTED row node → the no-ratios default-equal shape (same as adopt produces). children unchanged.",
+  "fn": "auto_proportion",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "mode": "row",
+        "children": [
+          "a",
+          "b"
+        ],
+        "ratios": [
+          3,
+          1
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1
+      },
+      "b": {
+        "id": "b",
+        "window_id": 2
+      }
+    }
+  },
+  "expect": {
+    "nodes": {
+      "a": {
+        "id": "a",
+        "window_id": 1
+      },
+      "b": {
+        "id": "b",
+        "window_id": 2
+      },
+      "r": {
+        "children": [
+          "a",
+          "b"
+        ],
+        "id": "r",
+        "mode": "row"
+      }
+    },
+    "root_id": "r"
+  }
+}

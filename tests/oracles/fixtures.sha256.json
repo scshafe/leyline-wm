@@ -1,0 +1,2253 @@
+{
+  "schema": "leyline/frozen-regression-fixtures/v1",
+  "files": [
+    {
+      "path": "tests/oracles/fixtures/topology-joined-2026-05-25.json",
+      "sha256": "1daa435bb11f9e82d0b8951603d3b282af4bf6071725aa92906125d363a7b9fe"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/equiv_stack_top.json",
+      "sha256": "69b946b7dc613f5ea0d226d6937c4b3ee90bf663739fd2591854ecbcac54d1ab"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/canvas_per_display.json",
+      "sha256": "e0466bce0993792ae91a2a8bf09a925425c2fe7a3e3fa939d8a98c2f48517713"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/equiv_staggered_double_t.json",
+      "sha256": "6837b734140f548fcd307671a97bb7ce2aeafdfaf1f8cda0a470c39c494bba5e"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/equiv_single_window.json",
+      "sha256": "ab5bc731512e8c11d63b8eb6bc5ee77bbe4d320115fffc031ece674da3a02bad"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/cells_md_2disp.json",
+      "sha256": "5fc62d4fbb6481b60c56855a14fe0324a87a9e0ef2d40678626e5709df10e675"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/equiv_l_shape_invalid.json",
+      "sha256": "dd11ec2513e25445abd8dc9ec88b6f657ca0961994238a1d6cc7818b3a2cabf8"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/f1_stack_dangling_overlaps.json",
+      "sha256": "a7a116a05515756dbe0ded77ec0b034ccc51c06aecab28fb0c75f365693e6799"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/cutover_adopt_3win.json",
+      "sha256": "4f54903cd5f90f6e732973b045e6d95a066970abd8831c2b132bb65065650a53"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/targets_stack_top_hidden.json",
+      "sha256": "aa6c32cf88e3adf2de18cdad12b3106a02faf37d096c5216faedc3fb5f64ee54"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/valid_md_empty_display.json",
+      "sha256": "bc430868087e2f77cd6a3a9b75b1b4abf25c9dd4d5dabb946bfed0a285f7245e"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/derived_tree_2level.json",
+      "sha256": "01f4e68881db0765221fcdb89f863e8baac09d97516bc53a0baf41ca1a2cab61"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/stack_attr_3deep.json",
+      "sha256": "f39063702da78d4b80c7e5ac11207051ff96d6bc6f3a0f497d887cdf14e8c3aa"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/bags_partition_2disp.json",
+      "sha256": "321486f526bbc463c1051d4c3c25424b406f235f2c6b1e509e6783b15d913e82"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/cutover_adopt_2win.json",
+      "sha256": "c04a6551ad2719c64ab098977f79a7dc877699436de232ac7956178f24dd7ae1"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/equiv_gapless_grid.json",
+      "sha256": "f757c777fddb00c9813a5af9c7ba4383f7807d6c7a5fcf76ddef38002cd6a2ec"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/cells_rec_depth2.json",
+      "sha256": "307f8d18bbb8c2b21451e9bc0e4ed7f14ecbef821a3c15dd13842a55fb22e5db"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/cells_rec_flat_eq.json",
+      "sha256": "f68a639e58b052beca2b80e5aa44076614d7b1f2af96c2beff2464fd93826697"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/nested_valve_conservation.json",
+      "sha256": "05920a1abdd67fd5aad50a3fb27bb970969e018ea57a00f60a5f00a1008becf0"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/valve-on-crowded-folds-stack.json",
+      "sha256": "bd2767de90e2ab2b49f76be9d7112c36e871ed0463e013b8345eac0000fc706f"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/f1_stack_is_one_cell.json",
+      "sha256": "69095382530f2b1c3cc88763eb5cc8cc946d7ff40d4887996fa9a9d692e25453"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/edges_md_zero_cross_gap.json",
+      "sha256": "5d87afd4825cc96019d63ce7240b26a40966ffc7c4ae9af886b275d3a1b8172f"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/cells_md_split_one_display.json",
+      "sha256": "a96346e074fda19a62ad6f8e3805de87c21d22c8422fee8645ba63d04360cff5"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/store_contents_1stack.json",
+      "sha256": "eaaf383594b9deecad1d3556123db580c041cd77d8d493d47c0dfb63ad42dc11"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/equiv_multi_display.json",
+      "sha256": "e0edec7fbe314d27cc823c10a117ae8fc568caa27444165439b1e51e9670eaea"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/edges_rec_flat_eq.json",
+      "sha256": "666d2281553ced7182d9867948205da2c77600d100a9545a2319548c5f5b9231"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/valve_idempotent.json",
+      "sha256": "276c6ab67b5bdf75a22ba460a6cd8dc8fdb265ba624fa68aeb9999911e1fddf1"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/derive_nested_flat_eq.json",
+      "sha256": "a0227dcc30e0d9198c8133f21dd6457fc7471b05b34a34f6da89ea7b79bfb28b"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/valve-off-crowded-shrinks.json",
+      "sha256": "47337341a1cbae6f4c5e107da59f5f6473585ebe620181c33837725fb374db70"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/adversarial-4way-x915.json",
+      "sha256": "a0a79c96a972b2c03a7224b973e697f4f6a47fabb1d964a330b6226a60c76e23"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/equiv_t_junction.json",
+      "sha256": "75c642053e8a206436d2654fd5121d0f79d37c57b06243e2168507d4bb856886"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/nested_valve_fixpoint.json",
+      "sha256": "ff8f733e26d42910a4db460331f6a40556c4afefe662c578be9a2a743d0adc12"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/pinwheel_cells.json",
+      "sha256": "521a928dbfb840054bb8ccdef5d202445c109f6e124b07f1ac47dcf6d7e1bcb7"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/edges_md_intra_bag_corner.json",
+      "sha256": "5bf84371e3185a206ea05d3e31eb9f4c8a7931ad735f5dc7241bde76e4312f0c"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/valve_via_rebind_parity.json",
+      "sha256": "72eb46fc2f1e8c7ff3640da3218629c387c9737d54fcc9145b82f50f165b1d5a"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/adversarial-symmetric-east.json",
+      "sha256": "2b3665fbd81a993d32161aa4c2b4bacd63e1b8eec907b02a9645f29bb71cfea1"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/adversarial-nearwall-refuses.json",
+      "sha256": "2e29240321e41cdd109f3a8e1ea4a6f6ed248c80c0bd31eefe3d37ec4bacc4fb"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/equiv_grid_2x2.json",
+      "sha256": "850532183d76307b10e3d346151e06db35cd27b084ed01a4e5def162fc5bb85d"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/carryable-cross-seam.json",
+      "sha256": "812aee43d781034d9bafd569ac9934c2ab1369840370f97acaf6a3607ce2fe2c"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/targets_contents_top_hidden.json",
+      "sha256": "2256e8dd1837400acc60460e3c6c5eff6ba24a4c81fe770a54da9c1e7c61d60c"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/conservation_ok.json",
+      "sha256": "ef3ade060047f6e9f9593186e82e4c10f178c651ea62633d420e6fb161321575"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/cells_md_single_display_degenerate.json",
+      "sha256": "bc192d9c5675a4ec60d508734392ca5f7e8153a8c9dde30f9bbdf8498557d0d1"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/conservation_dangling_top.json",
+      "sha256": "b24cfae676f2956ff29c49f375e7fb4db04cb7644bba4b966a87bc4a0ccec982"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/bridge_md_equiv.json",
+      "sha256": "8822b85b5268cd020add707f89aa49a6ace3c6f924f712a2cea92979611dc40f"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/edges_md_flush_displays.json",
+      "sha256": "8e49236c5360ed878600225d5afc53b387c0b3311b31819599b5897168b8edcb"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/incident_t_junction_stem.json",
+      "sha256": "6aeabd5db34c54543fd2ba80ee2c3b5bb692e0df03b30e1a5d7f9e71fdb7e818"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/edges_rec_depth2.json",
+      "sha256": "ef53e07e6a34fa4182baf3d8dfea24ca53851b1fb8ed1a0628268f0912ef8639"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/incident_grid_centre_v.json",
+      "sha256": "bf3430184b9982fa12a27aeec4c709036c8c8a00ab4a7a1b6bd1339218417d3c"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/valve_keeps_manual_stack.json",
+      "sha256": "26a76d078d6054dc43a95e3abb25e6b9ee3808c7a172cac7aabf700e96500ad4"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/cutover_multi_display.json",
+      "sha256": "6178b950069833ac1aebc8ef9f3a11cea1a38684e90f6dce56a6bf7e21224c11"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/adversarial-straddle.json",
+      "sha256": "e5ad110a605099c0e8efc5e65fc00d4edbf3d4376342539672e7a8eaa7d0ac9a"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/derived_nesting_depth3.json",
+      "sha256": "a73e968ae3ffeff9387c62106ab2977283aa21489bbb301def9bc44272cda8cb"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/valve_noop_feasible.json",
+      "sha256": "9b7bc8bad143fcec749d58691b300c3065def578b25d61cd5d450a6971e7b56f"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/valve_crowd_fold.json",
+      "sha256": "a818655b62bde91bc746da0aaef32d57eff29eacbf94b3ec8fe449cd448c0c8f"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/derived_targets_rec_deterministic.json",
+      "sha256": "13694ce0b1e91ca0d8c9d738cb0f4bc6ec13227cfb922b227da2170b9df527d5"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/anchor_path_depth2.json",
+      "sha256": "56566114812f72c687e06c8c80e33ba8eaeeef3c1b0ffca8a18c9fe9d12b4eb6"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/valve_matches_tree_slicing.json",
+      "sha256": "5cfdd89af9cd9c0dfa566952adc27265fa4ca5409073b431e9a7fc892364de4d"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/valid_md_isolation.json",
+      "sha256": "0569b3629e7a1356d501659f311790e26c49b0f453f02e36c247da3efdfcba8e"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/replay-corpus/capture-000001.json",
+      "sha256": "d645b75944eca2a5e7ca7913b5a7ca3637df0ce242995dddab74b1aea3afd4b6"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/adopt-roundtrip/store_adopt_seam_newcomer.json",
+      "sha256": "d5111d62e84b3d886a209759e9a8a69a999c4ae1aaa16e05d19946e4b361b5f3"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/adopt-roundtrip/store_newcomer_fills_hole.json",
+      "sha256": "a725150eeca530e2f36051443e93dc1980ff10db516f8a2064966db8a90f6292"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/adopt-roundtrip/store_newcomer_grows_grid.json",
+      "sha256": "f74a776d6dc30cdea16c40db6660a16d48cac6e8b4e9aaf8ea7b2d510b8b0acd"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/adopt-roundtrip/store_adopt_multidisplay.json",
+      "sha256": "6af29e30032031b44155cbe992e75adea053627f3f2243fedf72af67d9e59c07"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/prune-roundtrip/store_goner_leaves_3stack_mid.json",
+      "sha256": "fd6ab198d288aac852f16728c9abd3ece6670cc51baf677e8ded33e35a3a649b"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/prune-roundtrip/store_goner_leaves_grid_roundtrip.json",
+      "sha256": "14f31544e512eea64ade02346d563ee9cece8b52d8808b770f8c2216bf588cdb"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/prune-roundtrip/store_prune_multigoner_to_cold.json",
+      "sha256": "761145a5243fb0a084ab48fef8ef8d62d0a89f2fbefa06661a50297e5de5118c"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/prune-roundtrip/store_prune_multidisplay_flat_grid.json",
+      "sha256": "4e9c21d68e479a5c81af511336b360377b7030958914360e2109f314d03fb57a"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/roundtrip/store_roundtrip_byte_lock.json",
+      "sha256": "748930e0233f92d6afe71c059fdabc1d34e54b2c391a97adaff85e1230c39a23"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/roundtrip/store_grid_roundtrip.json",
+      "sha256": "ea94fa3d63978cf41a245bdb32e6a7c3e48286f8bb857b5e9d5b629fc1174fc5"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/roundtrip/store_sticky_roundtrip.json",
+      "sha256": "1e47761baba5eb062282135f7b6dc08d8a837152f0803b29914b7c085d083f86"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/reclaim-even-roundtrip/even_col_run_3stack_mid.json",
+      "sha256": "61c9e293726e18f8c20926ee13f7b153b22767b1384bd1523d340fa0a5ed1fad"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/reclaim-even-roundtrip/even_row_run_toprow3.json",
+      "sha256": "1481a46a29b2a5d69cf25843a608c735c45d5f6a1162ef8fca8485d95c7a4011"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement/prune-scenes/close-no-hole.json",
+      "sha256": "f0185183f326b579a8a55010c383f4b6ae50b5fa7cad0b58044b2b0b934182b7"
+    },
+    {
+      "path": "tests/oracles/fixtures/reconcile_diff/reframe_drift.json",
+      "sha256": "1679d91bb4ee3389b2c1064c3b92383f7909720777c233c2cbd8be4bfbf82022"
+    },
+    {
+      "path": "tests/oracles/fixtures/reconcile_diff/demoted_covered_noop.json",
+      "sha256": "357a928e391cbc0b11dc4388755dfb56ad5c4dfae19054b2fc457b3f45cc0218"
+    },
+    {
+      "path": "tests/oracles/fixtures/reconcile_diff/noop_already_placed.json",
+      "sha256": "fdccb3c64206653493293be7aa18675497676b99e730633b1ba148aab743b317"
+    },
+    {
+      "path": "tests/oracles/fixtures/reconcile_diff/show_from_minimized.json",
+      "sha256": "d0fc012f4d893df80052b524e64888e18d8eb2ece38cec9477d572b66360d89b"
+    },
+    {
+      "path": "tests/oracles/fixtures/reconcile_diff/reframe_within_tol_noop.json",
+      "sha256": "f024949b92de6f0c781559e7d7a38c5b953b317f4dc55c281c7f7e701444c919"
+    },
+    {
+      "path": "tests/oracles/fixtures/reconcile_diff/nested_settled_empty.json",
+      "sha256": "a436d3f1f8428021c06f92bd9322eab08eacb3c451671262d691c2d3030c1a1a"
+    },
+    {
+      "path": "tests/oracles/fixtures/reconcile_diff/all_matched_empty.json",
+      "sha256": "c482438808f4ad0168e7d24ee657efdf98dce673258383a3f99e9ae14b8c5d35"
+    },
+    {
+      "path": "tests/oracles/fixtures/reconcile_diff/hide_visible_window.json",
+      "sha256": "648521a4dcd6ee7b41bad3f575ed6161697762cdea6832fa0e001dad0a2e1c37"
+    },
+    {
+      "path": "tests/oracles/fixtures/reconcile_diff/unmanaged_untouched.json",
+      "sha256": "5cfbb44228d0a51d8560dd39f4e6e1f6b125c72685323d229cfdd1f3c1165eec"
+    },
+    {
+      "path": "tests/oracles/fixtures/reconcile_diff/stack_switch_mixed.json",
+      "sha256": "891c52a1b848d75f375a8b610d66366613da69fbca85d12c5e4ab499920890be"
+    },
+    {
+      "path": "tests/oracles/fixtures/reconcile_diff/noop_already_hidden.json",
+      "sha256": "e25a95b71ad74d23430b940c4c39051c0366c4c1836ca6aaa750fb399ea4a192"
+    },
+    {
+      "path": "tests/oracles/fixtures/reconcile_diff/demoted_genuine_minimize_shows.json",
+      "sha256": "a4f9f177cf312889ca139aa61b758c2938af336edbb20ca8499bfa9dfd1b8908"
+    },
+    {
+      "path": "tests/oracles/fixtures/reconcile_diff/multi_display_per_display_settles.json",
+      "sha256": "19d64d50fb76afde26a63b081ec61a15e41efdb6f5eb558ded0cab1daed3e19c"
+    },
+    {
+      "path": "tests/oracles/fixtures/validate/leaf_multiparent_i2.json",
+      "sha256": "05891f9132e9c65a2566e399a331ab723d6b512000e7c4eaffa19cb4c0cd8ca6"
+    },
+    {
+      "path": "tests/oracles/fixtures/validate/cycle_i1.json",
+      "sha256": "fe0d3482f685b6eae10943134641f476df3c93606e7780163b2e6099e9ea4631"
+    },
+    {
+      "path": "tests/oracles/fixtures/validate/duplicate_edge_i8.json",
+      "sha256": "47809bcee4e05225f4605461225f550818e417b6e53c716eb763f2d727e45261"
+    },
+    {
+      "path": "tests/oracles/fixtures/validate/shared_internal_ok.json",
+      "sha256": "bf17a48117c1311f5d1397809711010d5b3f75f2a7bf0921d96badb5acbf74af"
+    },
+    {
+      "path": "tests/oracles/fixtures/validate/window_collision_i7.json",
+      "sha256": "e91339b9dfc4dd9ece8ae0443419203862714edb6585cfc656b50e7a5d0be884"
+    },
+    {
+      "path": "tests/oracles/fixtures/validate/orphan_i9.json",
+      "sha256": "fd685c566bb285f7e72a8662bafeb68daa5ab780ad5ce840abc9033e6995df9a"
+    },
+    {
+      "path": "tests/oracles/fixtures/validate/clean.json",
+      "sha256": "e68cba6df53e6b421a0419c643b03ff97412eba5ffbb93770033d5fb2fe1d324"
+    },
+    {
+      "path": "tests/oracles/fixtures/largest-first/gutter-24.json",
+      "sha256": "99a9358db7a02a109eaf0b7094cc2e962a96485b0c9a0692ade7f3c7a789903e"
+    },
+    {
+      "path": "tests/oracles/fixtures/largest-first/square.json",
+      "sha256": "105b6cfaf7e1f3aca89e178d26c770f293ebb993538f8ede7ab76c93b6946821"
+    },
+    {
+      "path": "tests/oracles/fixtures/largest-first/display-isolation.json",
+      "sha256": "bf794bcc387551c7f39e68f22ad0fb25bb19c5d17b0b924aacee495e1df7395f"
+    },
+    {
+      "path": "tests/oracles/fixtures/largest-first/unequal-largest-over-focused.json",
+      "sha256": "02e404414e3f6c76eb83f8c5abb1c3ae0bd2013230fa65f335f02a60ba41dc0b"
+    },
+    {
+      "path": "tests/oracles/fixtures/largest-first/refusals.json",
+      "sha256": "1735bd9222ffa53170ad1599ceb1d88dd720230d6737c754eac6e7cca9424fa1"
+    },
+    {
+      "path": "tests/oracles/fixtures/largest-first/odd-dimensions-negative-origin.json",
+      "sha256": "4cc00362c0601e140e6cfca976cfbce51ddb1d3f31be47caa6c8777b36d9429d"
+    },
+    {
+      "path": "tests/oracles/fixtures/largest-first/portrait.json",
+      "sha256": "a8ca5bd08d89c55cbcff95e548cedee08e6358340183d6b2d0f0d65353386a28"
+    },
+    {
+      "path": "tests/oracles/fixtures/largest-first/landscape-one-through-eight.json",
+      "sha256": "e38fdc891fef689bfb204527990005949fff415c1c816636aff84f662c639bd9"
+    },
+    {
+      "path": "tests/oracles/fixtures/largest-first/gutter-8.json",
+      "sha256": "00fe756375b0ae4f0fad45ef24061695346f38f5e5c8afb5a255739f5580764f"
+    },
+    {
+      "path": "tests/oracles/fixtures/largest-first/ultrawide.json",
+      "sha256": "7da4614fb8b7ae4698edbdb0c824923aadc8369da3732f3049eeaf1375497387"
+    },
+    {
+      "path": "tests/oracles/fixtures/largest-first/feasible-minimum-equal-halves.json",
+      "sha256": "e0d6f032dd650e46d8e6c189ad8d42eb1c6427903bf68a2c42f171d1e2f8d3e9"
+    },
+    {
+      "path": "tests/oracles/fixtures/reconcile/reframe_drift_row.json",
+      "sha256": "c4415aa43e9039df9704fdfa4cc1182b88ddb1b495c1d47598f2f84b1a19af03"
+    },
+    {
+      "path": "tests/oracles/fixtures/reconcile/min_fit_chrome_settles.json",
+      "sha256": "d9af9767544183b6a6dcce4e2237bda4698fe057b4874191bcd7b3609e6bae45"
+    },
+    {
+      "path": "tests/oracles/fixtures/reconcile/context_switch.json",
+      "sha256": "4b2a21957af6078bc6fe1f40ab5e001f547bac050fb4f78359e6f81507d93ea8"
+    },
+    {
+      "path": "tests/oracles/fixtures/reconcile/all_conformant_empty.json",
+      "sha256": "10d0945dc0e6ce7bb16531984b96fb2e52615c4dac405dfa6b07f51d0458afb8"
+    },
+    {
+      "path": "tests/oracles/fixtures/reconcile/multi_display_per_display_reachable.json",
+      "sha256": "7d9c38cd9c994239be627fb1ccda2ed09e4f923b61b05550486da17f2eed9cc9"
+    },
+    {
+      "path": "tests/oracles/fixtures/reconcile/vacant_contributes_nothing.json",
+      "sha256": "99417a8c7b7d09ca1585cce3afd3c5c1c1c279f25090d97e42e6320edb2b7d27"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-homing-empty-first-newcomer-only.json",
+      "sha256": "cc353acbb131d1c647567f5bd5f2225f256b3677d5d068b8376eaba2e7573dd6"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-bootstrap-multi-orientation.json",
+      "sha256": "6b0d3d95287d4cac0165e7615bcd03935cdc03ebd281edc8a141262d1d141776"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-reproportion-after-remove.json",
+      "sha256": "e0f73f0ab0b4e1e2059ae9e0b3511edf756637c7c91ea302f0506ed405097520"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/remove-stack-top-leaf-drops-top.json",
+      "sha256": "e8e57348a19a563601750f3cc371ec583657b785d06aaa6d485847c16c4bc6ae"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/partition-mixed.json",
+      "sha256": "210309602ff5766199330b2805ff929c8ea3dac0c8b8c65541bc9bc71da78001"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/tileable-caps-absent-conservative.json",
+      "sha256": "85d1992e3a796963f37552ef2e6c37077089fc35988042ac58dce2c36068f1ad"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-facts-prune-floated.json",
+      "sha256": "0300c0237e70512e306915b249f0e0c65f54f65797a3456d23751349f9c005df"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/adopt-invalid-focused-fallback-first-leaf.json",
+      "sha256": "9651ac1181f73a1d19c1b8b05618916bd41d90614be4449b627e81f445861e8d"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/tileable-nonresizable-standard.json",
+      "sha256": "e2367d23c8f4353e01bc4d626691f50102bcfd0383a8e67afe13928ff14f6ba9"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-prune-closed.json",
+      "sha256": "194e5f8e7dfd8acdbd46959a72cd89b7e90806a77e46448db9fe027310ad7438"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-mixed-prune-adopt-reproportion.json",
+      "sha256": "41ccedf4c1c370b557d9244a81ac905af96b0f854f5ed8e629945a3e26e973d8"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-prune-newly-float.json",
+      "sha256": "0dd9a6dc0c6078fbccd50c5f025e355b969e412ad2ef40f8e180336481b9058c"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/tileable-dialog-subrole.json",
+      "sha256": "37ffd5af1794e05d69c2211bd0ac67d09a1f6d458677af65c4e99f70469da08c"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/partition-all-edges-subset.json",
+      "sha256": "052cfd23448025d32b4c1440b73ae84e1b4b05d632ec28a716efafaea5cecbff"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-collapse-guard-mount-survives.json",
+      "sha256": "457766ea58ded40734bddcc34764f75b095d66f5774d0d0a9861cd4acf2bf799"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/tileable-removed-preference-now-tiles.json",
+      "sha256": "f4d82ee0168aefeb035aedc5491ce4748ac0c7ed0e33127b319a5a7ab55b2dd3"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-facts-m4-covered-not-pruned.json",
+      "sha256": "f65d2c95a61c460b7ba9b85555d44da4655515940a1ab175a08114c328c6da92"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/tileable-removed-app-nonstandard-still-floats.json",
+      "sha256": "76867dccbbd3c657bedd80fa49f7fbd0a523659a3270db0ca200b33bfa211e5f"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-facts-config-nonobject.json",
+      "sha256": "560d5b39be45890f609fae9f0f2bd9f3fcdc460e7390f3df301e7bdea13aab45"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/tileable-real-rules-wm-surface-still-floats.json",
+      "sha256": "7191f5f9527f68cbfdc78bfcdd867ceaba2f12636a54c6d962ea2cd8a0fb8f62"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/tileable-allowlisted-by-app.json",
+      "sha256": "dcbe554df6750aebdd651b586bd9f756f268f6cb55b05218b463894347d0dfe1"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/adopt-internal-id-collision-disambiguates.json",
+      "sha256": "c604258688cb9fc9ce9b344ea0c4231c488caae8ea600fe484fe4244916078fc"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/split-orientation-square-row.json",
+      "sha256": "88db1e0c7da0cb273b432a012524bd603975f719e2a5ad746a767c161122ccbb"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/remove-stack-two-child-collapse-to-survivor.json",
+      "sha256": "c0ed89fdda5a6845ef62c7733d7a0243cf28af724812c281a2b9021094d1fa91"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/remove-collapse-sibling-inherits-root.json",
+      "sha256": "af12fdc00a350b33e8208538fdd28f2124e05282d320cb6a771ba975f13ca592"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/partition-pin-floats-tileable.json",
+      "sha256": "2df7cb601784d29c0e1e7089a9b7260b63d1945ab5ef508a0fb085e7a7825734"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-facts-seed-then-adopt.json",
+      "sha256": "6e0977bf8668dbca052fa675b7a1c17633c5d544bfd1d3d98da7d497223219cd"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/auto-proportion-stack-ratios-untouched.json",
+      "sha256": "b2988a4c518982c49dbfda8d5b455e1477386e7263569df06287327fed00f19c"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-idempotent.json",
+      "sha256": "5990a87debe07c89996408a83f51cc72ab8c2fafbe8f4df697c0cb5dab455bc6"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/tileable-absent-role.json",
+      "sha256": "2b0aa2e36b1e4b6cd1fa4a7e0eb1d0711bbdace7b077e4a5bd8d7b88d4ac0cdf"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/float-verdict-default-on-no-rules.json",
+      "sha256": "8b46d48e92e43c9982d17ed45fd31c8f091ce4e1fc06173bd15f269cef7bcd05"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/adopt-empty-seeds-root.json",
+      "sha256": "4e407bfdbf44ed74fc65a2ee97e42a0c0d8a8bcf64ecf69bba1f56a2c42b1ca4"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/remove-last-leaf-empties-tree.json",
+      "sha256": "976a669bee137ea0d1d73bbaa09c8800d0d1cc8e85a2b3e20b93e7c0c7dde49f"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/remove-not-present-leaf-noop.json",
+      "sha256": "0472bd32279377f0222bdc2f380b155197a0ffec9cb7e3a324f1abf8ca7dff74"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-facts-config-reequalize-on-remove-noprune.json",
+      "sha256": "70374f9ef44e9109e0975433073e98649797490d77780b5bb9ea05e40e96d1e9"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/tileable-standard-window.json",
+      "sha256": "3c1f983b8f035d83d74792dfe0ae0e68f44db3b6edb404efc58add86ce3ebf78"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/float-verdict-rule-no-manage-defaults-off.json",
+      "sha256": "80e7540c270c326955aaeec8ce57dd7d99c69594b304dee49d511bf744b839fe"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-homing-geometric-not-empty-display.json",
+      "sha256": "17e1efddf71c3b595b04bdb73ed6e957c466965de87ca20a3d325f8e26900238"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/remove-orphan-unreachable-bare-delete.json",
+      "sha256": "d91fedd6fb4c31c37ad3fe76ec06e76d8b21de58c93635e72bd74282464c7cec"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/partition-real-rules-override.json",
+      "sha256": "9d4ff886420588f30e34d600deee5f16d8ef6a04c183ed6be53aedcf940cfff0"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-rehome-cross-display.json",
+      "sha256": "ac0ecd303024b8f2be0ccebae095588a4dca89d747ff9b47f6498095d642ba83"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/remove-computed-ratio-survivors-stay-equal.json",
+      "sha256": "42a5e35577ea1ed76798300181c8a6e21a7fe701c1b954acbd15596737aaa8ba"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/adopt-orphan-focus-falls-back-to-reachable.json",
+      "sha256": "707313cc79f9b035618b58168ba36ca7e7e4c535ebbb11a700cfe8ecfb5d241a"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/float-verdict-app-no-match-stays-on.json",
+      "sha256": "7f13c8f96ed3eeb68614cff63bc24747608efc9d50476611520e05c40ef02072"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-adopt-newcomer-at-focused.json",
+      "sha256": "93aa05dcffe6e24fccc95f582ac62b1bb2881f8e463b09095f578c4b4a88d63f"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/remove-cascade-collapse-to-fixpoint.json",
+      "sha256": "a2053aaa2f3111925240f80dccb45820cc553d6eb2a66845cfcffe7e54af38b3"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/remove-deep-subtree-parent-survives.json",
+      "sha256": "edec98a1321dc0800ff6a273449f085417d49fda23a842280b88c9fb89c0539b"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/remove-pinned-ratio-edge-survivors-keep-proportion.json",
+      "sha256": "f0c5f798251e15d144f1d2b908ffacdb98087687dcd3dc0f71c2bd4618681326"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-facts-config-reequalize-always.json",
+      "sha256": "e4b9c4e2fd70f4183476bafcaa05e60ff9500e0d2d22b6301aeddff7e24d3b99"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/adopt-root-leaf-wide-row.json",
+      "sha256": "2049d2bad3f78c5503e72fe82ef1b848b745e2dadf396f30da0f5a3e45f2a236"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/tileable-floating-panel-subrole.json",
+      "sha256": "79a93bb1ff1e5a26f0536eeaf5d30a300d8e27fdc4b2ee900589017d15025377"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-facts-config-reequalize-on-remove.json",
+      "sha256": "e1bdb9c72c198e9289d7b2e5bad73c63d348416646befba8897a9c1ac8eca476"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-empty.json",
+      "sha256": "2ed13734f76b96e007770cd431255d6554f9c0e7392c8786f62aaba6400dc24d"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/split-orientation-wide-row.json",
+      "sha256": "f436bdb31415ecf9849965258dbb74eadd688671623b7795049a038a3418c73a"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/remove-deep-subtree-parent-collapses-grandparent-survives.json",
+      "sha256": "022b85f557a61f5f2eec8ed0018d73420543a80e37023c396e630fa0b66a9b5e"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/tileable-absent-subrole.json",
+      "sha256": "d5061cf2e139c6ddfdf680c401b27af6d592994e692500d0403b36b06bf8df94"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/remove-parent-keeps-two-children-no-collapse.json",
+      "sha256": "d7992b9515aced2805642291522b8fc34bd606e83057ca58dfc59383e3695e03"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/remove-stack-non-top-leaf-preserves-top.json",
+      "sha256": "c0869a6976acfd12d1388c343815ad6971e89052ba8d831d608ca2c630d24abb"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-facts-prune-departed-minimized.json",
+      "sha256": "d0c634ba500c6f50a8d6ff5957bf67b5b9e86a1bcdfec6bd570cfd5767f7e1d7"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-empty-mount-dropped.json",
+      "sha256": "db7e4b9553ee8b9c7f5d8588373aab218c617232b4d6d870e28e39ddbb53733d"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/tileable-real-rules-notes-panel-still-tiles.json",
+      "sha256": "458ae70eb494646b7f97ca56dbd66aa67d48f94aeb7ae343f585233fb01d4165"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/float-verdict-notes-panel-override-on.json",
+      "sha256": "1898b2079b88e62777ab3308195bc3b374a244741604375456b81f22b711af9d"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/float-verdict-app-match-off.json",
+      "sha256": "16087c074d846b052a27787258b0f79dcf47e76bfb18b8afc6b40a81453c5518"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-facts-adopt-tall-col.json",
+      "sha256": "edcffb5ea7d80c91dbb56c1b98ae57627b2ecd9a9cb37e88f16639888fd6babf"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/float-verdict-other-surface-floated.json",
+      "sha256": "7a19dcac2691a262bac61650c86126276edded623df39feeeda54b68e19dd698"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/tileable-system-dialog-subrole.json",
+      "sha256": "a6e9440945aacd17658a50c2baec7ff07539939b25908aa0f6a34bc9eba1b921"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/float-verdict-omitted-app-facet-title-only.json",
+      "sha256": "3fcc546e69c368219b2e12c05b7e5089fc99b1c0148c920fb0cc4cf74ab479c4"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/auto-proportion-no-ratios-noop.json",
+      "sha256": "f2c2e2d7c88e4c362a6f10c016e6a1041036d8d12f08322c4b3c4460bd4bb3d5"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/adopt-root-leaf-tall-col.json",
+      "sha256": "02e37c151451d4a7299201d6add300211d7220e66a49cadb767473c40ec54007"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/adopt-under-stack-no-autostack.json",
+      "sha256": "32221644316576913a8762ac1a58ea74c815b358505e82c768895e160804460f"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/auto-proportion-pinned-survives.json",
+      "sha256": "2204c71cb3ba67211a86ef600f7c6333b382baa92661dfb7c133ff961bb46e17"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/remove-pinned-collapse-survivor-keeps-no-ratio.json",
+      "sha256": "ce0fd9333ac6015fea2452ef57fa60de97ca80117bcab07128af3df278e4e4b8"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-focused-leaf-pruned-falls-back.json",
+      "sha256": "30116ea0f001f7583bf625c9f2627d3ffcaa754d7b5bda73a95d6b8d44f49d3d"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/tileable-removed-app-nonresizable-still-floats.json",
+      "sha256": "6d0b74df6201843a1d21893006e4f00aa0292eba9f395086c0ac47c97c231915"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/remove-pinned-parent-survives-three-to-two-realigned.json",
+      "sha256": "1b449cbf535bf682ed0bff2e8e62dfc526e7a797d6c2a1ce4343967befb33814"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/split-orientation-tall-col.json",
+      "sha256": "277adbd0f201e91248eb518f3e5f3a82bd0b8d9cdb801c03828d6badf06f8bb4"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/tileable-allowlisted-by-title-finder-dialog.json",
+      "sha256": "290404eafc0260f6739304707c078091c12a9af865629cabaeafacdf98b4f72c"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-facts-config-reequalize-off.json",
+      "sha256": "2036567eb981a580f1f174fdae4e18831499be5f79ca28c1cd35a4835db34b81"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-unpin-readopts.json",
+      "sha256": "58d00bdc7cb951c40c26298ea73ffe1230700761a127ef9bd3325ad0a072bcdf"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/float-verdict-missing-facets-no-crash.json",
+      "sha256": "b107e5d18f69a03028dd93d9f34dd8c864123b2f698b2e331e88a3659ea46a46"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/split-orientation-null-row.json",
+      "sha256": "f569d9c3b7bd81fb3d51145e7132bb09994854138388c9056817c42952e2ec91"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-homing-focus-piles-on-occupied.json",
+      "sha256": "ecc8c3118cd38cc5cbbcb20f53dea795fc74ee17bd9c019c8a350a56763ddb6d"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/tileable-sheet-role.json",
+      "sha256": "f2585cb9a555f44a9b79593e1d986c4959b3a067a00191582e736b2a6717a9aa"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-pin-leaves-unadopted.json",
+      "sha256": "9f70f8081e0da95323a1d13499da7b8e4d0d121db0d30e5631e88f4f4ce1f37c"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-homing-empty-first-fills-empty-display.json",
+      "sha256": "4a330b36918fb2e4019ab6bb858e3cdec0466cdc1e9ae362fd0ceba3603aefc6"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-bootstrap-multi-display.json",
+      "sha256": "06c3b57c89a8274fc044bca27ba10f2728d4db0170dd4c18de7a83738824f034"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-prune-minimized.json",
+      "sha256": "58ebe2ce2e8339a77c3d06dbda610bdb8d085ca6e3e104595ffacb1f7b60a11d"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/auto-proportion-computed-stripped.json",
+      "sha256": "f899a5dfad5c863aecb0a744ac72196f34b96c716155853a1d953d5715a7d822"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/tileable-finder-non-dialog-title-managed.json",
+      "sha256": "ff994774ff13bab1f37cbc7f96b607c8fef1f105e2e69fb22d9bec0151e1fea9"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/tileable-system-floating-panel-subrole.json",
+      "sha256": "31daed948c66434aee112208bc2df3ff517cd6a8565036a0bb1ad01204564696"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/auto-proportion-mixed-computed-and-pinned.json",
+      "sha256": "d787e700c8dedce63f40d0e008f4a83f45e1bc827993faf14b531c3872a9b903"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/partition-empty-observed.json",
+      "sha256": "5c0b3787397b54d1daba9f42d8c8b530e681b222f5791a43af4fa230f0871ca9"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/sync-config-reequalize-off.json",
+      "sha256": "5caf99456cae25442199a854e8b06d779154d0067d33c70f77d5b64179a23813"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/remove-pinned-ratio-middle-survivors-keep-proportion.json",
+      "sha256": "d46ff506bffd75b4e227d9f9aef3f19c4f16f10c90ed37c8095dec72920d80f0"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/tileable-notes-panel-override-managed.json",
+      "sha256": "c973d95d92111e7ee0fc2ebdd84a2b4478a085cc3ab38dd313c30b095e73720d"
+    },
+    {
+      "path": "tests/oracles/fixtures/autotile/adopt-nested-leaf-splits-in-place.json",
+      "sha256": "5c7db11d297d08520335a853b2d774bb226496c7d2a335ab6faf07ba293582e5"
+    },
+    {
+      "path": "tests/oracles/fixtures/stacks/nested_valve_and_manual.json",
+      "sha256": "3b59f4b086d6ee71ab0ae1ed9115b1866b216cc428f2ccc6bd2df3e0414f03ed"
+    },
+    {
+      "path": "tests/oracles/fixtures/stacks/none.json",
+      "sha256": "8a0bbbafb2faf8e7a8d9b362f13c1269737bbf23e472d5fa0708198fbd4c295b"
+    },
+    {
+      "path": "tests/oracles/fixtures/stacks/valve_pinwheel_crowd.json",
+      "sha256": "fac873ac4efb9fb0ab06f3af1d4838c10ec9be33e9aa0f64c0f1c13d2b944b0c"
+    },
+    {
+      "path": "tests/oracles/fixtures/stacks/depth3_manual.json",
+      "sha256": "ad7ea8b9b22721975a61533037300cc9f03ee34e96845ae5c79d24b3b83aa0e2"
+    },
+    {
+      "path": "tests/oracles/fixtures/stacks/valve_fold_integration.json",
+      "sha256": "d6c42b96e7477e1c4e638476e5274ebb0ca8911d50a60a96a93790a17b0c6468"
+    },
+    {
+      "path": "tests/oracles/fixtures/movemode/half_select_tier1_south.json",
+      "sha256": "ab8ba942051a40fa58a8984a19b60be22f06d8fc5d8eedde0a35d86bec17c364"
+    },
+    {
+      "path": "tests/oracles/fixtures/movemode/half_select_tier2_edge_north.json",
+      "sha256": "759ab3850ad2c6226c4c35e754ff8c90fbff9fa13395000322ffe7410bedfdc1"
+    },
+    {
+      "path": "tests/oracles/fixtures/movemode/half_select_tier1_origin_north.json",
+      "sha256": "f8bf2e463c4395caf454a2e1f1d5651a8fcfaf657c7ef1627eec9123d099d300"
+    },
+    {
+      "path": "tests/oracles/fixtures/movemode/half_select_ns_axis_west.json",
+      "sha256": "9264ac8790027772f4eee39a9e95448a957315524e11dcb5f694844118fde886"
+    },
+    {
+      "path": "tests/oracles/fixtures/movemode/drop_side_tall_cell_hsplit.json",
+      "sha256": "9d2de02a46ebc08b987ab6d84d074264f41893bfefef7231e5b5e35503ce6e8b"
+    },
+    {
+      "path": "tests/oracles/fixtures/movemode/half_select_tier3_leading.json",
+      "sha256": "44fda8fe5f55cfae3a2763dbf54756947be75438964a6053d7b9b455edff390f"
+    },
+    {
+      "path": "tests/oracles/fixtures/movemode/half_select_tier2_edge_south.json",
+      "sha256": "f85b018e7e8f2902796cdb089d737c0b410c17d8f62ed73c54f4dd049829a8f8"
+    },
+    {
+      "path": "tests/oracles/fixtures/movemode/drop_side_wide_cell_east_half.json",
+      "sha256": "3fd9f4023146b4cdc16830eb9b1e7a6a9f006a3418b6b11decf484ed3691814e"
+    },
+    {
+      "path": "tests/oracles/fixtures/movemode/rotate_side_cycle.json",
+      "sha256": "264effc1f139a7667e87d69dcbacdb90e0fea1f98e68590ac1abfe49bb4a7e5c"
+    },
+    {
+      "path": "tests/oracles/fixtures/movemode/drop_side_wide_cell_vsplit.json",
+      "sha256": "719a51038465c1171d77272eed05da7944daa73972de6d85dc9e304b68651b81"
+    },
+    {
+      "path": "tests/oracles/fixtures/movemode/rotate_side_wraps.json",
+      "sha256": "e3b524f499d5eb73f810963529efb9b1c6c7acc3b8f9ab09d7d616e24dca5ceb"
+    },
+    {
+      "path": "tests/oracles/fixtures/movemode/drop_side_null_moved_origin_near.json",
+      "sha256": "adcc7f60031ae9c200995b111248e8a4e02b7c2505e05a7b493bd9f96d3b187b"
+    },
+    {
+      "path": "tests/oracles/fixtures/movemode/drop_side_tie_pins_vsplit.json",
+      "sha256": "55390b6694093a76ee7d96432484c7c7d54e39404a2e6b0fb6cf3b8ed0bdf1c4"
+    },
+    {
+      "path": "tests/oracles/fixtures/movemode/drop_side_fixed_policy.json",
+      "sha256": "01eecf3fc1d0b1826a7538cc1eba12d59726276219dfe2b412453ddf4676bc82"
+    },
+    {
+      "path": "tests/oracles/fixtures/resolve/stale_id_rebinds.json",
+      "sha256": "c9d0143a959384e290d1b226ffabb9de83982486d6e32a68a3cd7c721000be26"
+    },
+    {
+      "path": "tests/oracles/fixtures/resolve/document_path.json",
+      "sha256": "3ba5af51d20819cc6694be118be86c22091408b7a86e4b2a20b8c6231a94cce6"
+    },
+    {
+      "path": "tests/oracles/fixtures/resolve/i7_one_window_one_leaf.json",
+      "sha256": "31169b7f120f20a03302a5dee757e7e09c97c6067fe7b21735445339ae04a4a4"
+    },
+    {
+      "path": "tests/oracles/fixtures/resolve/title_pattern.json",
+      "sha256": "cd20399e3500990858dc0969be3673209169b054e26e3ed76c0f38aa6cc280f2"
+    },
+    {
+      "path": "tests/oracles/fixtures/resolve/sticky_keeps_binding.json",
+      "sha256": "003b33799cf18d5744a89fd46d258d0bf9109806e80bae359fa2e4c8e35200da"
+    },
+    {
+      "path": "tests/oracles/fixtures/resolve/vacant_and_unmanaged.json",
+      "sha256": "ccbb3de5c36fcc888f739f9682e05b0950cf7292a65d1c9bc224d38477392eb3"
+    },
+    {
+      "path": "tests/oracles/fixtures/resolve/basic_ordinal_auto.json",
+      "sha256": "e6a1e4838dfa61fc035440792caeee5edf3ba119f194e73229ff91c9aab53efa"
+    },
+    {
+      "path": "tests/oracles/fixtures/resolve/precedence_ordering.json",
+      "sha256": "94399bae35ab5aa7b3178a44a97d6f628e419fc83b65732d8360e5320079e19f"
+    },
+    {
+      "path": "tests/oracles/fixtures/resolve/ordinal_disambiguates.json",
+      "sha256": "c4f48425923a688a0241d666490cd5592c87cf45092a8590734791650ec14ab3"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_strategy/active_display_rehome.json",
+      "sha256": "8b8ca62d883dd0be4c26d8253c0bc4e66f16c0bac074b68630bbb2e21045eb27"
+    },
+    {
+      "path": "tests/oracles/fixtures/atomgrid/compress_2x2.json",
+      "sha256": "9781a0271d8edcb1f46d189dc6dbaa4c1ad0dead5aaaf791b5bef3eee63c3538"
+    },
+    {
+      "path": "tests/oracles/fixtures/atomgrid/components_l_shape.json",
+      "sha256": "441a224d1fb8da5ffb884ef44674b35ba943826d4a78265d5f13eb5a03f50608"
+    },
+    {
+      "path": "tests/oracles/fixtures/atomgrid/covered_border_hit.json",
+      "sha256": "755233fb05cb40fd83bf9a5ff332635c352e8e7e83880bfe1493c70e88a95a77"
+    },
+    {
+      "path": "tests/oracles/fixtures/atomgrid/covered_border_miss.json",
+      "sha256": "369a2d59951794d2eb7d2d6648b2d2476693b6fd05b4d0416e5385dd51114da5"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/parent-nested-leaf.json",
+      "sha256": "c4ecdd235f59f82fbfa1d3e9f7b24f892a4e6f00865af6d645c24e404d989e3b"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/stack-ancestor-nearest-not-highest.json",
+      "sha256": "fb2b9f08278f1d6ddff0b5cd2a513a92d42ebbd52dd0791c50eac954d34fbbe1"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/frame-root-canvas.json",
+      "sha256": "a66e2914b6bb9f33cea8035f8ec82de466eec926777ebb6e05ad19dbbe8bbf11"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/descend-stack-default-first.json",
+      "sha256": "d6f587c08fc94f0fe93b8bdfc0253e830c91513d4ffbd7860a207f7bcd2c4b6b"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/descend-stack-top.json",
+      "sha256": "ed508a953ad559100dbe58348e2ffabcb612af54703c8f1de26006a7c27e20ff"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/descend-stack-ignores-origin.json",
+      "sha256": "0f74012cfe40ed5616989aab5b950dd04d5d0e87f889784b4376d94b5033b5fa"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/rep-leaf-stack.json",
+      "sha256": "9a1ffde3d18acc0db3ebe887360b3bff31475954ee5472507a997ced37712483"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/descend-toward-origin-nested.json",
+      "sha256": "149e54c482a8a1ea04ae7c2f4ede9916090db4460496ba36e78c736c70b809d2"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/descend-leaf-noop.json",
+      "sha256": "837e3b239e85cf8a66a717b67422f727a19295f54691526d31eb27ac71325dce"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/parent-leaf-to-parent.json",
+      "sha256": "6a0b47d628fc3166ba8eb6f9665aaefd9db1d30ed1d10fb3f1e62ef6d1ea73fb"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/descend-region-toward-origin.json",
+      "sha256": "fbcb566d6cff3df572e808e07cb77789d8a685526221b7ac180facd31ee99303"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/frame-stack-hidden-null.json",
+      "sha256": "63c890a3f4b8d664cd46134725d7e4740f4bdfb2aa218fbe48427a2e601d7d92"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/descend-region-first.json",
+      "sha256": "2aeebe8edd82e6dbfcbcaa5257ddf8bdbbac514c9d78ad3ba013c82972fe63c2"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/stack-ancestor-self.json",
+      "sha256": "879acc085a0be7d8b916d98231353cc5556b296cae42f4bfa1ef5de1007676c9"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/parent-root-noop.json",
+      "sha256": "9d6f50d31693bea9d46f77904bfc68450beb089b7b07d1b516986c90c30f99e9"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/frame-col-nested.json",
+      "sha256": "ac066d9fd842ffe6bbdd96bb9d776fd21d7892c7661d8d54406703bd7cdad995"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/stack-ancestor-of-leaf.json",
+      "sha256": "51b567e393de3436a60eb48d8f5ffe8cf5b8e3fef46e57511579ed28e86dd5ef"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/frame-row-child.json",
+      "sha256": "8ab8e47bdb9256c0d689b2904ae1ac74d178294ed3c7f3f32902696dc4d8d8d8"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/stack-ancestor-none-null.json",
+      "sha256": "a25d3d568686178b7698d7972675820884f7d755d09167ad4bf7ecfc8e4e9233"
+    },
+    {
+      "path": "tests/oracles/fixtures/cursor/rep-leaf-nested-origin.json",
+      "sha256": "239ffdf6e7f1fb26d3f191fb4de9466ad85c429846837bc6ace38bfc3b81403a"
+    },
+    {
+      "path": "leylined/Fixtures/keytap/decode-us.frozen.json",
+      "sha256": "bc5e9d71a8f9dc94aa6cb2e8b7e6748fd7310335d02500a12e4e7b970ad2f536"
+    },
+    {
+      "path": "tests/oracles/fixtures/golden/author_multi_display.json",
+      "sha256": "aba726406e23bac45d08e892790b3806b80341151d67f9819e6618abf85a6e9b"
+    },
+    {
+      "path": "tests/oracles/fixtures/golden/author_2win.json",
+      "sha256": "19bb06e63719c20e2bef91ef031afe16a1e7cafe15834b669dcb4984456f55bb"
+    },
+    {
+      "path": "tests/oracles/fixtures/golden/bridge_min_chrome.json",
+      "sha256": "4c90b35948c35837ae3f791dda23915c0eac5dfc5ff137a88172c99e39002d2c"
+    },
+    {
+      "path": "tests/oracles/fixtures/golden/author_3win.json",
+      "sha256": "3675add9ddca2ff5c367fa0b7591da146ba7423bbc9efc42ebdbbbf598c4d2f5"
+    },
+    {
+      "path": "tests/oracles/fixtures/golden/bridge_multi_display.json",
+      "sha256": "fb727629ed1e483e6af42c862570dd9dd7b5de4c6707edc65eb7e2ab82d2b32c"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/probe_boundary_exact_gap.json",
+      "sha256": "73ba5a0a36bc87a95a4895270266b6d5cd8711796f70124468ca9123f0a87755"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/conservation_deep_focus.json",
+      "sha256": "43d49f5a29de51d2ea7e121813e88aa53460e551f459dd42e268565d33f162ce"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/probe_boundary_exact.json",
+      "sha256": "1c1d66988009f21feb695a80df46aedfebe6e50a0a0d74eeab83b1d715814a6d"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/valve_nested_bottomup.json",
+      "sha256": "b9d062f080eeec1d32539e28d7add182efeb715f65dad93de88360df6feaa991"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/probe_boundary_over_gap.json",
+      "sha256": "527dfbeae4844e24cbcda06d31d7e0c9bcc50e6b2b92053983dd24567d76763a"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/probe_pinned_skip.json",
+      "sha256": "921966e414008874de02c0ada526af1ce1038540c12f3a83e39cfcb8e70cf71e"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/probe_mount_crowded.json",
+      "sha256": "819cc1e4796cce8423b0f94927ccbf3f4b22f5fcb6841bbaed250c56fcbfc3c1"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/probe_boundary_over.json",
+      "sha256": "08e2a4b012efe795fddb214085e0c9cdf12c4c5bb7a250aa7dae66f4254b4ce7"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/valve_reveal_focus.json",
+      "sha256": "24099522c2864c81fabe743bf2fa81f3c633ddd3db28f0ed55e93c4132749bd4"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/probe_crowded_col.json",
+      "sha256": "b0bf419b7327116e46fd539b97f3545a9d0f80cc76a9351741a2e225a593fe88"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/valve_pinned_skip.json",
+      "sha256": "99f4a693cc07b594eb1bd26c90065c6e4dbf42541637c379f8c4447684a5b924"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/valve_live_fold.json",
+      "sha256": "7e57e81d809232aad115c7f2377060792838fd1029939ad3ec3375f9f5639f49"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/probe_pinned_child.json",
+      "sha256": "5a22267b44e7cc32cb5287a93e366534e2169dac10a9c5c2863c164551c8e9c7"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/node_frames_overflow.json",
+      "sha256": "84fdb15254cdae4107dc25f289ffad5fb46067605fbef7fe0420e2ac2aa35b4c"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/node_frames_mount_multi.json",
+      "sha256": "75a10a5d84922a9c1a88f717e0f9cb7ad7562b9c8e79f95e1d1cb908ee2d3900"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/valve_live_empty_store.json",
+      "sha256": "9a539862606f6ac3e1f7c60fa8755eaea98c7c78bd0b1ffbd052017e1b11c2d8"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/conservation_overcanvas.json",
+      "sha256": "b2953b27ddd7a9ddbbfc1918773100269c5cdbda18b545db4019668dec52fa7e"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/probe_perp_ok.json",
+      "sha256": "5f1b32340852e6342d8c71035086ade02074ac3b8c70b181d4bd0d2de9a72919"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/node_frames_row2.json",
+      "sha256": "23bbceedc0e9e0f758b44ce831c64f9e3fecf792afaa6916bbb843b25d432c20"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/probe_crowded_3.json",
+      "sha256": "a09d10a9fa0b49267b6f7d5a177a17a9d6a89e3c798cfc769b01cef3c3411ad0"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/conservation_dropped.json",
+      "sha256": "dc0b2ba02fdad251a36ee410579a0115783156e98d410ee66ca2052bbdb14a5b"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/probe_fits.json",
+      "sha256": "09985a1db8feb2562404baf5ab8045260b3b0a1a8aeb1516791a0ac07b82f7cd"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/conservation_ok.json",
+      "sha256": "f730e5a6fccbc33bfec5de76d65e854091e09e29cb3b4a12968868fdd0231535"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/conservation_dangling_top.json",
+      "sha256": "5583f64547cb79694ad5cbb806bc22cb963fd735e26090633a6120620b9a44d3"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/valve_unfold.json",
+      "sha256": "7a6f2dae104a5f78c48474eeac304717bd84f5f9454a04bbefcb5b7e4e18b7dc"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/valve_unfold_with_fold.json",
+      "sha256": "7c4ee33aed13db224350b4e94b4457e0d7099705c8671ab0c7b911bb82ce13e9"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/valve_keeps_manual_stack.json",
+      "sha256": "095416ba8f5616e01674958c70a878ac815fad5475c52dc46f008b970b2c63c5"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/valve_crowded_fold.json",
+      "sha256": "8d5bda9ac998fdc88a363cd8399ecaefaf9181a718588a12ec08e5ac577745a2"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/valve_noop_feasible.json",
+      "sha256": "94e929ff915d6f8892922e1fc5363a03e8bbda2e0c17b521dd1a39f3a6d50a66"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/probe_crowded.json",
+      "sha256": "e54fe233ed898b735aec0c0a282f34211c5c0e4dc94a4f4c821662d078b7b98e"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/probe_nonstrict.json",
+      "sha256": "09b3fd74cec5b0afd926a4fd0c8db5a71f6ca3831635d5a14a50ebc9a47e88f6"
+    },
+    {
+      "path": "tests/oracles/fixtures/balance/valve_live_strip_preserves_authored.json",
+      "sha256": "afccec504428e701f6eae4a2b2d19b1b6c98ccc7eca10f523c675bae5d5866a6"
+    },
+    {
+      "path": "tests/oracles/fixtures/focusrole/tree_stacked.json",
+      "sha256": "03a7364b3528457b05db336f100872d9e2f74e8242fb9ce6d264883db3c82f81"
+    },
+    {
+      "path": "tests/oracles/fixtures/focusrole/arr_dialog_error.json",
+      "sha256": "0013afa2eccb4daf461f8a9403e65fbc687edc6d9b235a9cad554d1eed3f7e47"
+    },
+    {
+      "path": "tests/oracles/fixtures/focusrole/caps_unavailable_error.json",
+      "sha256": "9e59f138f02637317307ebcb154fd321e845deb1012851db7a091a84ddc0e7fa"
+    },
+    {
+      "path": "tests/oracles/fixtures/focusrole/notree_error.json",
+      "sha256": "408534fd55c267d067a86e92096c00d9d5c91787785b34ca573d1842ed753160"
+    },
+    {
+      "path": "tests/oracles/fixtures/focusrole/arr_stacked.json",
+      "sha256": "a21afec5e921a2422b24a7f137a0f26ea91d02f24626ee711ab975c0ecfb0808"
+    },
+    {
+      "path": "tests/oracles/fixtures/focusrole/arr_tiled_focus.json",
+      "sha256": "9774438df520804d484a72584ce54c11130762e668d6b069c3d0484a062977b1"
+    },
+    {
+      "path": "tests/oracles/fixtures/focusrole/arr_offtop_stacked.json",
+      "sha256": "f546cc0d442b68e3af641f4e9c9a68a4fc87fa37e67b34e7e60741af85cb12f2"
+    },
+    {
+      "path": "tests/oracles/fixtures/focusrole/arr_float_azure.json",
+      "sha256": "14c1493ac52bb338ebe002c703ec6f72a9192b42641adc3c95e5dd2f1a8c4be2"
+    },
+    {
+      "path": "leylined/Fixtures/mode_fsm/resize.frozen.json",
+      "sha256": "a6b3424e57420880c6b494b5241512129cb363bcebeec7241ef5e86b3150eee6"
+    },
+    {
+      "path": "leylined/Fixtures/mode_fsm/move.frozen.json",
+      "sha256": "fe78aac3cbdc5e92a0799edb81a162660dd4d697febedad2a49506a6a23c5a08"
+    },
+    {
+      "path": "leylined/Fixtures/mode_fsm/input.frozen.json",
+      "sha256": "e4069076aa67c512f182c7f929191fe819f65a94cbb22425d625aa69ab17d195"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_targets/targets_rec_flat_eq.json",
+      "sha256": "3a4df3f95a642dca6be6cbec9c3f9012f446881e421d4541f3c2aec9cb8a8268"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_targets/reframe_drift_row.json",
+      "sha256": "da0df3e6a9728b10d6ed29c05948c7f0c8862597cb4481a75f00bf65e7bd12d3"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_targets/min_fit_chrome_settles.json",
+      "sha256": "b76d05f96eb0abc233eb4e41f59b987cf360adb83daa72a0536787d5c5023a07"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_targets/targets_rec_deterministic.json",
+      "sha256": "56b31894f4f946029718e8d9e705083782ffad0c569dba2a1ba67f55c812af01"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_targets/targets_rec_depth2.json",
+      "sha256": "30ae85a76170258b1851c9da3c6283468696558bdc0d9823f6485f4a4f8b94b0"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_targets/context_switch.json",
+      "sha256": "0f9d1114294fa4b30603674b4c30e4996ee0c17015637af216cadacadc72f4a6"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_targets/all_conformant_empty.json",
+      "sha256": "60b3ec892002767b29913dc087db092e237057a212534f0a4668b0acb13bec9e"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_targets/vacant_contributes_nothing.json",
+      "sha256": "91cf539ed3ff7d71d8100fd0bd5c01c731b6791d0fd5ebce2f1b00c5a0db33d0"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/swap_exchange_ok.json",
+      "sha256": "2985b704d8eadb309b6589eae19a1824016cc4259359929612177b0e5face6e2"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/insert_line_bad_span_reject.json",
+      "sha256": "160ea5fe2065e1b392695937e43346db67f1211e81eb3b38828e1429cf4e9cb7"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_lines_tjunction_ride.json",
+      "sha256": "597372095cde5dfa6e0e182c297568b90dabf3d867497abb6dcc7863ef54e68c"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/promote_nonrect_reject.json",
+      "sha256": "e5437bdbe51c72e050c8b9172f799a521ee7b0155eeb337d1176fbc5d7a26461"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_line_out_of_span_no_ride.json",
+      "sha256": "42df0aec860a74834bc22e36671ba88d90a9324a8ca1151463ae7608b46b73c6"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_line_reconverge.json",
+      "sha256": "098c5c7d9e6de30c30220ff119de5fddb85ad160489f27e63e4aefe053854f41"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_line_clamps_at_edge.json",
+      "sha256": "076a42820d70358a22402f22a661e45358f617d4afad4a73c9508900f189f9c9"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_line_idless_reject.json",
+      "sha256": "50bfa1883aed127cc2355a0892e25e733596fd0400215e01c047fc097d70771a"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/promote_rect_ok.json",
+      "sha256": "0f8bc91bd9c469bc0fbe23f41a5eb7693d693aeff63c1d05364341d0be821212"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_lines_run_noncontiguous_bend.json",
+      "sha256": "55f7eb776f5f92dbc3d24578538e37156f6713a69e250af9d39949939d7bfe7e"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_lines_colinear_run.json",
+      "sha256": "dc5a8382c0d852db3b5b85a9e0f1e3d548bfacf908683d546693d5b72dbe052a"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/line_at_resolve_mint.json",
+      "sha256": "2c4ae4948624036184102d7bc6820f2f6db4cd8f29d413c419562158b088e345"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/insert_remove_roundtrip.json",
+      "sha256": "42d50334ae29b4ede49f604727315d458624dd584cc5de468c1430648a3194f5"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_lines_run_sticks_at_min.json",
+      "sha256": "26aca59b7dbb124527eed04f14623c55bb75826883271a5b27839cc393f454cf"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/line_at_promotion_excluded.json",
+      "sha256": "58b62ce6ce9a12a15f71ac4ca5ae619a7a88d0092d15cd7b31cab1832a989757"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_line_terminates.json",
+      "sha256": "9d00dbb062a61a41ac1b7a0d0e68b06c097d279fd62e7b7c39b1ef24439d9d12"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_line_vacant_cedes.json",
+      "sha256": "de48c368e33837b85dd55456f14c626c57e33e25f5d3be0e4c5d679fe27be840"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/drag_at_tick_segment.json",
+      "sha256": "2674d375d5f493887fa7ea13c343f59cb733acd863003b7d715e676a252ee637"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/swap_same_cell_reject.json",
+      "sha256": "25055b25edf9b109af4cdbc0e407a7b5c5aede077ef2f51101618d495ee9fb0e"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/remove_line_lshape_reject.json",
+      "sha256": "5db0a6a21948de7e8d85fabf1a9c7e383223cf9d7cd2bc353b6d25d5f3ccc212"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_line_sticks_at_min.json",
+      "sha256": "bff385f3c01a41421496217874cbd18b1df927cf501aa0b2b8d29fd63f520565"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/rebind_attach_detach.json",
+      "sha256": "f2b53c18d2c99462c5a388de8066d9885ffbac29e9e94e5d2ec31f14acbca9e4"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/insert_line_span_on_face_reject.json",
+      "sha256": "d643244c4d2eab7b86e36e98cc36296216fe0affb535f053793bb6b8f0c3b0b5"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_lines_both_stuck.json",
+      "sha256": "8e44b8fa84ccb9e4d5b41756e1ccbd2c12556999f0619aee4d9931f228c30198"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/rebind_occ_inv_split.json",
+      "sha256": "6e226bff395002b3cb3f176214f212f30a74fc8d1e142d1a76683770c91df8e4"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/rebind_partition_untouched.json",
+      "sha256": "ad9746ec791b893692d1aef3f208cb43e7804ff62e10f82fe806a03df5d21e86"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/swap_reserved_hole_ok.json",
+      "sha256": "29b2f4a9f09be49e93f370fd013900a212fd8ef1c955906465218bf9407d0581"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/insert_line_span_n1_degenerate.json",
+      "sha256": "8ef34f2049799229b8406364f437e54a983496840790420f3b1d64c895584798"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_line_tjunction.json",
+      "sha256": "1e1fe49c60ec3e7f1867997337fcb4f0778a3e7b2c891aabdd2147f2ed42c5a7"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_line_slicing.json",
+      "sha256": "66c940dcd15036ede6c7720b9c1990b7224bf5af39d85855d32ddb641e2ac4b1"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_lines_wall_slide.json",
+      "sha256": "458c3ce56fcf4607d509ceab90ebab21aa0e40d204758ed97d2052ec09b380ad"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/remove_line_fuse_ok.json",
+      "sha256": "c23ae3b95a8784bb15acdfbcc34922f5b1bd94878636141146113b3c671e70cb"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/swap_interior_reject.json",
+      "sha256": "9f20801c44736539cb31e365000d555a722358bca28964d87d1c3d7c75dbe51b"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/insert_line_span_ragged_reject.json",
+      "sha256": "246ef0380249400cc98ea96a3b0047e618a3a5a1fb60afe9a38eabe3f6cffbd4"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_line_bounded_to_parcel.json",
+      "sha256": "53e0d5d806aaa49c106ce676b72a7f12a1a77422ccb07d6681f36d8fb0db70a6"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_lines_run_tear_reject.json",
+      "sha256": "431c7a5de2437d5fc68644ee5770f3b182fb245a75a76b7be087e9f1d47da511"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/line_at_resolve_reuses_id.json",
+      "sha256": "0af0a3edec276b80ec5b7e16630627b6fe18cd027db5244417bdfd8c6a7af06d"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_lines_4way_reflow.json",
+      "sha256": "2ecc2d99b5c6c9af92be6e80618645d6593f6041af9e8331e87c3e685033857a"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/line_at_segment_midspan.json",
+      "sha256": "058a6fb992e20d1ac7d93763c1f1dda7d4048b0ca29d94af8f1efd94d6074aea"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_lines_promotion_reject.json",
+      "sha256": "7ebc57e83061cb9e5a0517d088087fcc8ad8697a99883e97d1d2d439f4577bcb"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/drag_at_tick_none.json",
+      "sha256": "a534ba48e63fbd6b1506f8172acbb0f6e399edb1da4d555cf53ee2f1203effef"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_line_sticks_at_stamped_min.json",
+      "sha256": "0d5b2284ed64a6afab15f8cae6ab74576b3602d1f26e4be1626a6a10e602b6f3"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_line_bounded_sibling.json",
+      "sha256": "0d9f63aa654ca65c63a2e3f0af296bd29f8b4b4addda7a28b3307458d5700640"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/swap_missing_cell_reject.json",
+      "sha256": "24bfc0f6bf5b0fac2eb308c7f731c3d65403feaa48b38aaddb132f95f4ba4bf8"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/insert_line_split_ok.json",
+      "sha256": "08bed773e947818f1a95fa127eaaa82f0a89ac2645b81c8f57cf5150ac1a873a"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_line_pinwheel_deferred.json",
+      "sha256": "72b03f95985437bb07a7ab4443c27cf87addee1993b949eecde541ff3354bf01"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_line_slicing_h.json",
+      "sha256": "8f0535abb1e7170745f413fc808c19e1927ead08097d1218fa1248d150c85091"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/drag_at_tick_clamped.json",
+      "sha256": "1496743ba4a6ec130ef8ed3488dc1737449285834c588e586e28859fb955aad5"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/line_at_none_offgrid.json",
+      "sha256": "5960e925c381ed445c3c055b393c6725f849dc823830392a464c36a26c0261b2"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/move_line_sticks_valve_next_settle.json",
+      "sha256": "5a9b2db521d4fdba84b2bb37eb8c1afaa446a6bf82e6c08a9eb33088f70ded95"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/line_at_junction.json",
+      "sha256": "3a581b9f89afc8c1ad15f06b2baba376c0d58c8141af7ad7da4df1249e87d0a8"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/demote_roundtrip.json",
+      "sha256": "9b75509118f2472782c7ef9229096ff3fbe5bc77b0af9d8fbfcd690f9cd09d6e"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/line_at_colinear_run.json",
+      "sha256": "d7848525e3aadaa19d5efd54828592eb341d168ff44ed962b2677f812792060b"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/remove_line_breaks_promotion_reject.json",
+      "sha256": "b13c53f9a96316f239aa5e4c19fb0d8d8900f770b248c1cb265862e1c169e5ef"
+    },
+    {
+      "path": "tests/oracles/fixtures/lineops/insert_line_span_tjunction.json",
+      "sha256": "8e8222e5f8ee006e04e9e92fc7686a352a46ec5e8b0f5fef0670b68447a48a14"
+    },
+    {
+      "path": "tests/oracles/fixtures/project/gap_grid_2x2.json",
+      "sha256": "6a0bf9569a2b656571d09543c111ff7b177674db95bcb12ba9a69230091d8674"
+    },
+    {
+      "path": "tests/oracles/fixtures/project/gap_min_size_overflow.json",
+      "sha256": "05af27934fcc4751e4d42113782f9a085eeb0a6b4e95c9489a62c43cb9f3aff9"
+    },
+    {
+      "path": "tests/oracles/fixtures/project/gap_multi_display.json",
+      "sha256": "0bd20611dcec82748837e85f26e3c883dc246369eb9cfe50bb5ebd08b019b953"
+    },
+    {
+      "path": "tests/oracles/fixtures/project/vacant_reserves_slot.json",
+      "sha256": "c6dd68e628cc094da2e3cdefc0a1a242fb242ec1ea038bbf6ff3486323d0bf63"
+    },
+    {
+      "path": "tests/oracles/fixtures/project/region_real_topology.json",
+      "sha256": "a16de4b84abebe3afe99b62e52628ee08cee150202a79a67304e1e7bd3640052"
+    },
+    {
+      "path": "tests/oracles/fixtures/project/shared_adapts_small.json",
+      "sha256": "813b24e461366906ec239027eb51e50cf5e4f9ab32146c1cfbebcdc281257fe5"
+    },
+    {
+      "path": "tests/oracles/fixtures/project/min_fit_grow_steal.json",
+      "sha256": "1370b42aab5400e09c44a362a45127955ac426db408d8a8da357d50b918602f0"
+    },
+    {
+      "path": "tests/oracles/fixtures/project/min_fit_impossible_overflow.json",
+      "sha256": "0ff9dcb8bf0b9a2ff47bd1e1a6077c0ef3fef06218a97b0c5596951abc1fad17"
+    },
+    {
+      "path": "tests/oracles/fixtures/project/gap_row_shared_gutter.json",
+      "sha256": "5f4af548d4988baaa813797e4074d4760d0095e0e6a8dc63aa3fdf4bb79bdc2d"
+    },
+    {
+      "path": "tests/oracles/fixtures/project/shared_adapts_large.json",
+      "sha256": "1085275d64d8511cd03d09acd751d5c012432f18fd8f4d97806f3b8983943357"
+    },
+    {
+      "path": "tests/oracles/fixtures/project/min_fit_pinned_ratio_veto.json",
+      "sha256": "17ae4ff6203e5006755dc6c776d9bd8f7d4dd70597866d2fc1bfdd9b70af6b65"
+    },
+    {
+      "path": "tests/oracles/fixtures/project/gap_single_window_inset.json",
+      "sha256": "c45258cd808a84429b9c2a11cde851978abbcd87633d1f994c10352877c62850"
+    },
+    {
+      "path": "tests/oracles/fixtures/project/contention_shared_both.json",
+      "sha256": "a0cd623f6a61ac5eb0772c6f0c360302bca4c7b82f364b52e669e2bd14c3c4fd"
+    },
+    {
+      "path": "tests/oracles/fixtures/project/rehome_absent_display.json",
+      "sha256": "8e779257f6299ac64798b9a1a44558a27acddacd3692000aff943207f981bbeb"
+    },
+    {
+      "path": "tests/oracles/fixtures/project/row_basic.json",
+      "sha256": "cf8215df56e6a97e48e6ec75723873ce4f9b416ceb1513a9e3ebad4c40884669"
+    },
+    {
+      "path": "tests/oracles/fixtures/project/stack_selects_top.json",
+      "sha256": "1ef06c2a34f3c3c6342e3ad0cbd3d48541a8a8803241c67756dcbfdd566dcd07"
+    },
+    {
+      "path": "tests/oracles/fixtures/project/overflow_min_size.json",
+      "sha256": "85de8ed8178dfaec8368f1f05b3517a147deba5b6a4b45529c10baec5c39a779"
+    },
+    {
+      "path": "tests/oracles/fixtures/project/dead_zone_authored.json",
+      "sha256": "be35ea8cacbac1e4c84b4dd6330f570758e374665e3393ff42f9b76e6ede3945"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_subsumption/empty.json",
+      "sha256": "5cc1fa27ff62a9ba0c14eb8d4210d229e20daa4443cb2a22ed0b62473f44e504"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_subsumption/balanced_overcanvas_exempt.json",
+      "sha256": "43560259c414b733ae878ab0880b1c24f0fe2e843de0a6d7d3e72ae440d3c0fc"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_subsumption/clean_grid_gap8.json",
+      "sha256": "c8c6430f36b7a2258312613b388afdcfc789e4dbbbd546e0b8d5cca15ea26c80"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_subsumption/clean_gapless.json",
+      "sha256": "8f89d4acb1ae6126e9d338d5d59e5300cab99fdfb4ad4a5e1752a71395da0a66"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_subsumption/balanced_pinned_overlap_exempt.json",
+      "sha256": "cd06c66b38aaaa83446d2b7a24aba1c459de270eb197a05323bd4bcb6f1a8da3"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_subsumption/overlap_injected.json",
+      "sha256": "13074d6b93678da62614fb67b5ffb3c2839fde880b00c3dd8c45ebc5e0cdd97f"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_subsumption/tol_4px.json",
+      "sha256": "0868b07c35e94b10c184117c7311798c14e1d7d9f94632147e0319ae818f1b56"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_subsumption/clean_multi_display.json",
+      "sha256": "1549d0b83a11088a7a709a8e9f8c3515afff026ad7d92c06cbe384c4ef8f3bd6"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_subsumption/contention.json",
+      "sha256": "464883c6eaedb949bcc529604596f8bd031013d2406d3ca1472e7f414669c86c"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_subsumption/balanced_valve_fold_green.json",
+      "sha256": "883be22e7f331c49903f94b55a6a7f60d3868bee2bf393820c53f90014313f5b"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_subsumption/single_axis_touch.json",
+      "sha256": "3b2c738355d33cea0af085d0eb0fbf7d2e76eaf0472ef74aba110f13a355141f"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_subsumption/containment_only.json",
+      "sha256": "91a704be82fc35fae1e892cd4d49760e34ec1d07e975a4459083dc49757382ad"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_subsumption/overlap_impossible.json",
+      "sha256": "e612279b859299045ea25a4c085249fe7809f64f549965ef3715ba3e853ebbcb"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_subsumption/tol_5px.json",
+      "sha256": "7c0843187d971ce0d9d691a82dc9c05b07d503930b33900649562a6cf8e8cd61"
+    },
+    {
+      "path": "tests/oracles/fixtures/minsize/learn_self_heal_down.json",
+      "sha256": "222b56b5cc4194edd22dc6fc56a2e9aea3f28ed8ed652261a4f1002729521734"
+    },
+    {
+      "path": "tests/oracles/fixtures/minsize/stamp_poisoned_floor_dropped.json",
+      "sha256": "697692758d0c612c42f8af49d43f32595dab07d3a3b5521600f6ca13646e2413"
+    },
+    {
+      "path": "tests/oracles/fixtures/minsize/learn_noop_when_fit.json",
+      "sha256": "f69a41c90f5f2dfc6aaa73a543b4e98149d1334e3e2e25f82569ae46314f2756"
+    },
+    {
+      "path": "tests/oracles/fixtures/minsize/learn_overflow_skipped.json",
+      "sha256": "0a4307d6f20ef1082a469c531120822367276c3c7529c20a8aaab441923333ac"
+    },
+    {
+      "path": "tests/oracles/fixtures/minsize/learn_refusal_up.json",
+      "sha256": "6a00a5bda35a4c5cf7ffece53d3de6dab1300136c56e8c1205a5cba5fadab2d9"
+    },
+    {
+      "path": "tests/oracles/fixtures/minsize/learn_down_on_refusal.json",
+      "sha256": "f51bdf8331dc77b31b55404bba4b36de6d8e0e91a543558acc63c56e4e86b72a"
+    },
+    {
+      "path": "tests/oracles/fixtures/minsize/stamp_from_store.json",
+      "sha256": "16a182f3159728ba1e15fa419be259d01c0935498654a760ebf677dd4079516c"
+    },
+    {
+      "path": "tests/oracles/fixtures/minsize/learn_skip_hidden_and_unobserved.json",
+      "sha256": "97ff6f45aa1afbe4c0dbe90a605caa7198ff5f71982112a697c16724769c0804"
+    },
+    {
+      "path": "tests/oracles/fixtures/minsize/learn_both_axes_preserve_unseen.json",
+      "sha256": "4df90cca2ac8a91b5839f062ca23dc4ed9564cbadf7cca96559784e7b29c14e5"
+    },
+    {
+      "path": "tests/oracles/fixtures/minsize/stamp_empty_store_noop.json",
+      "sha256": "33824ff163d2a70d7369a41317c8d5d4b251a56faf760791f2e5f060d5c46f27"
+    },
+    {
+      "path": "tests/oracles/fixtures/minsize/stamp_partial_axis.json",
+      "sha256": "4384e7499b72661e37b3e22943a21fbe7c10040342d390ed91a2585173399218"
+    },
+    {
+      "path": "tests/oracles/fixtures/minsize/stamp_preserve_authored.json",
+      "sha256": "8c8c8da34a5e6489983ee61fea0ed6263942cd0823f3a6c773e3b21434fe581c"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_valid/valid_rec_nested_ok.json",
+      "sha256": "494a2009eb705f0446f880812e856def9dd8368e3beb7d083ab545b3cf82ebbe"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_valid/single_window_fills_display.json",
+      "sha256": "32022526ba3d76ea91fcf80c23cac63b75a33eda71c0be8de91b8fe051923442"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_valid/pinwheel.json",
+      "sha256": "fbfce99725009ad9bcf246de27e1387044af361872cc34031d265fe74ff49cb4"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_valid/clean_2x2.json",
+      "sha256": "af497a6e39e23bda974cb4124f73263908f3839a0a85ce05b517f3a4ecb9d01e"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_valid/valid_rec_flat_eq.json",
+      "sha256": "c6f5dbf168fb4ee53b032351b330e864aa9ecf83dfe4110272c91b2a9865ae86"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_valid/hole_center.json",
+      "sha256": "f1cbe6e267c7d9b27222abce5114f7214f882dd89ff84a9d0a5cdd475d5c8ff5"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrangement_valid/valid_rec_nested_gap.json",
+      "sha256": "eb4ec000961735c5bb28010e8090177700bd54bdc19b09113642526a36dcd34a"
+    },
+    {
+      "path": "tests/oracles/fixtures/floorplan/cells_multi_display.json",
+      "sha256": "e87f6ed44a7a4b3758ea8290680e2aae7c026fb7024d3f0e186efe9e7caff7c0"
+    },
+    {
+      "path": "tests/oracles/fixtures/floorplan/edges_thin_cell_no_merge.json",
+      "sha256": "b8d9f790d9a68d8cf6ea8b2978cc07f8e550471251bff6114c3a9d5df92865ed"
+    },
+    {
+      "path": "tests/oracles/fixtures/floorplan/edges_row_shared_gutter.json",
+      "sha256": "5bb246a917a6d9d2043f5fd3f7009f4bd6c4716bccb3eb171f57cc53d80c7d12"
+    },
+    {
+      "path": "tests/oracles/fixtures/floorplan/edges_band_normalized.json",
+      "sha256": "84b18be4cbc25d39df916ac2ddd006bfb42bc2d26fba2b0e2afe6aaef6f96ef4"
+    },
+    {
+      "path": "tests/oracles/fixtures/floorplan/cells_tie.json",
+      "sha256": "8d2735f63e817755a2e11584e016d13bbc2975194fdeb1f31267e6a8f115f266"
+    },
+    {
+      "path": "tests/oracles/fixtures/floorplan/cells_single_window.json",
+      "sha256": "347161068a910428816b3ff327da9f9e40b79f079a749be95fd1e45fa1cfff68"
+    },
+    {
+      "path": "tests/oracles/fixtures/floorplan/cells_vacant_excluded.json",
+      "sha256": "76a62900d936e4ff28b07e8f60618795a5c84c6aa659e3ee1658e5036a883ec5"
+    },
+    {
+      "path": "tests/oracles/fixtures/floorplan/corners_staggered_double_t.json",
+      "sha256": "47ab34ccc97069c2834f441ee22c41e8662445f964da7d6dae716ef43ff62e3f"
+    },
+    {
+      "path": "tests/oracles/fixtures/floorplan/edges_presented_path.json",
+      "sha256": "1bf64536a69b62dfde16fe9b19110a7475c805d9e694d21a696d1e529d175ac0"
+    },
+    {
+      "path": "tests/oracles/fixtures/floorplan/cells_empty_tree.json",
+      "sha256": "e7fef5c6808e7a9a34a66b2e8e649c534763b9c82917908b0be9303c2ab11e8a"
+    },
+    {
+      "path": "tests/oracles/fixtures/floorplan/edges_gapless_grid.json",
+      "sha256": "1188750d86e79e39cde8d425c8a39b683101623cabcb75843dbb3f72707dd598"
+    },
+    {
+      "path": "tests/oracles/fixtures/floorplan/cells_stack_top.json",
+      "sha256": "da4df30b2dc9aab1abeb789ab4e1f0bd18edaedb4cd0b55f01b323d652d12c74"
+    },
+    {
+      "path": "tests/oracles/fixtures/floorplan/cells_grid_2x2.json",
+      "sha256": "6599767f6ffe72eb5d8e4ecef3dd975678ec617e2bd3ac72178fa40bfcc04b5e"
+    },
+    {
+      "path": "tests/oracles/fixtures/floorplan/corners_t_junction.json",
+      "sha256": "c37627104829889eb59edad47800385130084b2cde7ff474edd0d778b477b762"
+    },
+    {
+      "path": "tests/oracles/fixtures/floorplan/edges_cluster_anchor.json",
+      "sha256": "7b2d5e52d76f87e3939a91c64439861079fea980633129021b2e624df9a39507"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/reveal-leaf-already-top.json",
+      "sha256": "cc4a6b40436ca7df6e457ce50c9113c79176da202ff104e21a2efe408b4d9de2"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/stack_leaves_reject_nonleaf.json",
+      "sha256": "813dfc1742dfc7a87d16591f76198f1479f9ddb1e3e139f2201e0e856e1aeaa9"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/place_leaf_reject_nonleaf.json",
+      "sha256": "852cdc9851351070caf2f67bc4c0522c140bcb6b351e1691ce4cead7718bbf23"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/set_ratio_pins.json",
+      "sha256": "0c4b3e8351698c7153f99fcc0846c75247d38a5bd608a6fa369e00c2f81c0f63"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/remove_leaf_collapses.json",
+      "sha256": "9a6ffe7920af8d442dce25e37ff04b57cb154898e81f3dc966c8cda41f22458b"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/reveal-leaf-no-such-node.json",
+      "sha256": "e59065b9820a844cb4b230f8cf8312aec1799b7597955b019b7176a3e3912aab"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/move_leaf_before_side.json",
+      "sha256": "ca4369044f10031944774731234e370895758625a7c79dcbfd0645dfbb12cdd7"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/stack_leaves_parent_stack_top.json",
+      "sha256": "6bff64c3c6f6b30718fc87ae53a3d4aff0787ab93a4f410574f97d100b11c059"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/link_cycle_i1.json",
+      "sha256": "e27c063c7c50d1faf3e6bae7964c9baec5e16bc93f1e21efa9fa374cb001e541"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/reveal-leaf-nested-stacks.json",
+      "sha256": "cf89d139de3d175511004e2b716ab47e1ef4c631ce4a30fe524d3f613c52e0b9"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/swap_leaf_reject_missing.json",
+      "sha256": "d1d75efdd19d8e2f6406be9a2aebf29c307867f34977133f61d9703851c830a2"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/stack_leaves_reject_nonsibling.json",
+      "sha256": "012c6b387dde6cf230ba8b6da7542e0053a6491d7859121beeb8e4ed796f83be"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/place_leaf_reject_tiled.json",
+      "sha256": "9209e247206562db66d8c4eb8e6a28b327967f9eb0f95ba966f2270ec93a2db0"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/set_mode_shared.json",
+      "sha256": "046d288ec8688a99c21d3a738bc11fa52176e38ea15a75af046ca40d3025449a"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/swap_leaf_reject_same.json",
+      "sha256": "ba9c12b01e59c702d18acb76e53ee2f87d0cf5c98a41d2be369fc22f6ab0a8f5"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/delete_node_prunes.json",
+      "sha256": "8c9ea4171573964529ecc842e264f9c440bed93c1e6765f376479609125da658"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/link_ok.json",
+      "sha256": "36f95e98ba261bf7ff6393f064e4bad21441f79ffbe31be74a898d0e9a047d97"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/move_leaf_siblings_east.json",
+      "sha256": "d74f65c05fb5ac90f7df360b2b2f67ac30ef5b42d9008f23bdab842d4030c14d"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/swap_leaf_cross_parent.json",
+      "sha256": "acbb0e740d0f583fdbe71c65938739ade8b658b2d28673ca7fe9e187abfd88fb"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/place_leaf_into_root.json",
+      "sha256": "5dfb086a626e863bcf505c9b63f2059fb363611b91fe1d30a2bfb497f7a850f2"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/move_leaf_reject_nonleaf.json",
+      "sha256": "8c202d468bb2f1e47d0d2a8787366f168796dc7ec7d623ad3a0ca4c0f01f3fd1"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/retarget_nonstack_reject.json",
+      "sha256": "8a36d79a743e83c4d378f9dc8f6a3b089fdd103894aaef9c501d899640cc1e2a"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/unlink_edge_prunes.json",
+      "sha256": "2f77843e31377db5f2b0a5aafe61cdf97f9865a6b263f9446a202bf52453b3ae"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/place_leaf_before_col.json",
+      "sha256": "492c62fef7237d61b3ed0fef41c6fa026567802ad1d69d693b4968afef641915"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/swap_leaf_stack_top.json",
+      "sha256": "9660a9cad73d0bc5d74b146ba262f2449020af360a05acb78f9b83fe82a74ce5"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/remove_leaf_reject_internal.json",
+      "sha256": "1871dbe8d437a713cf9c479b8f3fbca7d8efdf06042dc2608f79eec6809474ea"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/place_leaf_siblings_east.json",
+      "sha256": "6f53a55750b6ec61319d26964474e36667f5819875b5544997f765d271fc11fe"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/move_leaf_col_north.json",
+      "sha256": "f7e2947034873855041c81c6f61a0a1f7dc55c8dc105faea410995077cfc6ab2"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/stack_leaves_ok.json",
+      "sha256": "41d0a3d02ab27cad2d888b62a7ff7f362cc96912ccc57c8db73ca05eabad08cf"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/move_leaf_self_noop.json",
+      "sha256": "2ac78b42fc1c7d1d3b6ff39318dbee896304ae7372119aecc1b6119494000055"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/place_leaf_reject_missing.json",
+      "sha256": "3cb7dd618d32a5b906e413940daec400a7c1e036872639ec28636659d565acd6"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/stack_leaves_reject_lt2.json",
+      "sha256": "c81352320cd8323af458309b82af2e11d5ff0f779af91739872a224b63e926be"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/move_leaf_cross_display_mount.json",
+      "sha256": "9598172e6f05c06feb52e70393ff6e0268c625c997a8a6267a593503f3f8de62"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/swap_leaf_reject_nonleaf.json",
+      "sha256": "afca28fc6eaa92b20bc8f2895aa24e1e9b7a9145ea35d8f303562a226509b7ce"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/move_leaf_cross_parent_split.json",
+      "sha256": "6d2deb45b6f106c87f426526b0dcaad66342652a9ca8f3de0b0991c7920e8ec3"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/link_leaf_multiparent_i2.json",
+      "sha256": "46b9e406c1812c997a7f38943f4ed88d963a89abc6543fef0935df257a5f13c1"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/retarget_stack_ok.json",
+      "sha256": "86cd2a07e640a9b1275dc8ae3c984d374e09fcba311e668ecfb0af60ebee5e0a"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/remove_leaf_absent_noop.json",
+      "sha256": "2a0f497c43f015d25f5e8cae46810078b78b17e44d0e1384d932652fda63f340"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/move_leaf_reject_missing.json",
+      "sha256": "ac25e8a81521450b400746ff58ec9cd1a07a4a91d505e9a671558fac7fb9950b"
+    },
+    {
+      "path": "tests/oracles/fixtures/ops/swap_leaf_siblings.json",
+      "sha256": "ef10884fbed304ab458787d76b609d83cb996e6ec34b0a91eedd19b2ce7384a2"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange/auto_w5.json",
+      "sha256": "fb1c57f3edb3eac94083d58e24951a38d18f7afcf6b3544f63a6426201e0d0f1"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange/grid_surplus_reject.json",
+      "sha256": "4cccfd22511aba571a641f7299c94747a061e4781d24f43ec6c8a6c7d83b6847"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange/auto_cols_2.json",
+      "sha256": "b7b758d16ce57a4cb3ec5993a50a3c80e9f0d1f89f6c7f3139b9145294bdbb0b"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange/auto_w4.json",
+      "sha256": "e3e8b35a2eeae59a6e8c061332248165cc9227eea39850a49e957e3af7126c62"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange/grid_collapse_reject.json",
+      "sha256": "4c784f586786e60419b93fbfdc83e287ad427fcc82a9b9237d9eaac01756b155"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange/auto_w3.json",
+      "sha256": "b1587a00688017a50b8a4ed84e250c6f8d7b3dd99d7efbd0e106afa18a513a1a"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange/auto_partition_mismatch.json",
+      "sha256": "026f4b383821aa3a0887f9ebcce44bf6b3fafef954599c479dbd397aab7d835b"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange/grid_3x1_underflow.json",
+      "sha256": "14dfb469b363232fb066d53b26ca5a7789b829c4372c64cdd9f2bcdb4684ac00"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange/grid_3x3_underflow_4win.json",
+      "sha256": "92f793838169ed56488fa6605e2c2cc7b0f63cf95caf32dcb9ac372eb711dbf6"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange/auto_bad_partition_reject.json",
+      "sha256": "7afc405a406fcbbdf7a016e08f36f4e9e936c688e7686f5de56e2fae60b0698e"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange/grid_promotion_reject.json",
+      "sha256": "1fd64c5bd4d22ba5a9f6b9b47541fee8df514ca65347aa5ed33481ae3240f489"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange/grid_2x2_exact.json",
+      "sha256": "6c3be34f9c30ed49a56eec219939277041680c426aa7104f2a65bbfeaf908eaa"
+    },
+    {
+      "path": "tests/oracles/fixtures/geometry/assign-wholly-in-d1.json",
+      "sha256": "4b25f5c60c86c412cbc19e76ac7e75c495211312ddcaf5636113ac2aa6239af7"
+    },
+    {
+      "path": "tests/oracles/fixtures/geometry/assign-fully-offscreen-lowest-id.json",
+      "sha256": "d5db9df345b9790d61a5997b58ac16a028356ed54f7e215cce2472be3cb97a69"
+    },
+    {
+      "path": "tests/oracles/fixtures/geometry/assign-tie-breaks-to-lower-id.json",
+      "sha256": "fe36b467729d2e54e767ab3062ff5ee1d8d191dd3c71bf50b58b4fbfd0df8ba3"
+    },
+    {
+      "path": "tests/oracles/fixtures/geometry/assign-dead-zone-frame-fallback.json",
+      "sha256": "0677ad642bfd002db4397128853045a1ac5b22f5320efe23fbd54a0b9c1d754d"
+    },
+    {
+      "path": "tests/oracles/fixtures/geometry/assign-straddler-larger-share.json",
+      "sha256": "81a75658cafd55deb498d53cd268697b736c4ea2926d82575119c3aa7201f30f"
+    },
+    {
+      "path": "tests/oracles/fixtures/geometry/assign-wholly-in-d3.json",
+      "sha256": "05ec88c88d122fad2f06d4342a59abe3cded3123821574272a8cffc9aeddd430"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange_optimize/optimize_w7.json",
+      "sha256": "68a294cdd510c496b76fb77b72d67425828cb7d55f2097ba26d4dffe5e9dc3d3"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange_optimize/optimize_w5_ultrawide.json",
+      "sha256": "61f0919845a4a916dce927b643e68399e145694b67197be04978f2b69d61be2c"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange_optimize/optimize_w6.json",
+      "sha256": "29b6fbd2f0dea955d0840e5527f50ca386ca4fae0a6f5e2a3e58165fd30a04be"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange_optimize/optimize_w1.json",
+      "sha256": "cbdd70bc82ec217ed337a8bc09482a6f3c0b22afe4f3016f1d4a773fcf7613a1"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange_optimize/optimize_w3.json",
+      "sha256": "82088a496b97466ee8aad45c1ad777ed3e7e41b1d128c38144658d56b0cf81fa"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange_optimize/optimize_w2.json",
+      "sha256": "b60dd137fb2d32fd01f19cb5e9c8135e7087e7ab6bdc2b84e628487880857ea6"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange_optimize/optimize_w5.json",
+      "sha256": "e3dc7e840951b8f608b37c6975672830f6cf6213a1f525b69a2b7f1a80098f6b"
+    },
+    {
+      "path": "tests/oracles/fixtures/arrange_optimize/optimize_w4.json",
+      "sha256": "57ef2b295e708d51cdc684f152649e8effad64889965fd3968ee9115414a00c0"
+    },
+    {
+      "path": "tests/oracles/fixtures/f1/empty.json",
+      "sha256": "46e8fe43c24211d9ccb8cfb0b609b09b6dec6af6c33a69cc9a2d13c02a25ac0c"
+    },
+    {
+      "path": "tests/oracles/fixtures/f1/balanced_overcanvas_exempt.json",
+      "sha256": "0a46f19d354c43d27be8ff8c48077043f897fb10309db757f7317261a135c9b6"
+    },
+    {
+      "path": "tests/oracles/fixtures/f1/clean_grid_gap8.json",
+      "sha256": "0f2ab430c41db0e0d07d9ecb08cb9376756ad3009df0282fd104f1bf7e23b1c9"
+    },
+    {
+      "path": "tests/oracles/fixtures/f1/clean_gapless.json",
+      "sha256": "1eb041ae33976486f1b53ac303769c67a5664ecc97f1660e4819c4c42ed4c8c6"
+    },
+    {
+      "path": "tests/oracles/fixtures/f1/balanced_pinned_overlap_exempt.json",
+      "sha256": "c1919611d7d020df05cfec80345617edcd11bf8606e1a1b6998505458b513df2"
+    },
+    {
+      "path": "tests/oracles/fixtures/f1/overlap_injected.json",
+      "sha256": "32bf2cc2b4ec1cd61bd5a70235900006ca59728b19c54607f9ecb5b79389274a"
+    },
+    {
+      "path": "tests/oracles/fixtures/f1/tol_4px.json",
+      "sha256": "fee22a99670a9e5700b8794693bc597e2180b8862d258d18e2404ab6e0b453ac"
+    },
+    {
+      "path": "tests/oracles/fixtures/f1/clean_multi_display.json",
+      "sha256": "9b9c8c9d64cfa9006eb168e7b6115157cbb3d631c76a29e9fa3b0719b87d3931"
+    },
+    {
+      "path": "tests/oracles/fixtures/f1/contention.json",
+      "sha256": "38ddf215eb02aecfad2534cc4603ea9a90f0461dd160e392c3bc2948c00c1ec0"
+    },
+    {
+      "path": "tests/oracles/fixtures/f1/balanced_valve_fold_green.json",
+      "sha256": "e159cdced9761790f815294d11755d64ae440b96c836fa308deb47c63395f4d3"
+    },
+    {
+      "path": "tests/oracles/fixtures/f1/single_axis_touch.json",
+      "sha256": "1a42eb67f40c5f249d9e338bea2ca2b2b873fa27a32540ff31b03939dc503e09"
+    },
+    {
+      "path": "tests/oracles/fixtures/f1/containment_only.json",
+      "sha256": "bf16577bb6edbb0d5b235f0e4edc01f928f3f3f6353b6eefb460955e02768da4"
+    },
+    {
+      "path": "tests/oracles/fixtures/f1/overlap_impossible.json",
+      "sha256": "f1c4f789a0448bda3bbfa898842014a1623c1bc7e61ce2ad3ecef831855e9891"
+    },
+    {
+      "path": "tests/oracles/fixtures/f1/tol_5px.json",
+      "sha256": "972d1e8169dcd93b3019ba7e8d93dd4db7462f81e1e49d8961c587ff54ea3269"
+    },
+    {
+      "path": "tests/oracles/fixtures/overlap/frameless_binding_skipped.json",
+      "sha256": "714176035047c7f9b063757991c85f78bcea0376c4f92c5bd2ea30dea54b0a85"
+    },
+    {
+      "path": "tests/oracles/fixtures/overlap/perfect_tie_cell_key_deterministic.json",
+      "sha256": "98eb8171f123d4e6e1ce14ddc34ca62265fba24233145f618273529116413d9e"
+    },
+    {
+      "path": "tests/oracles/fixtures/overlap/partial_frame_binding_skipped.json",
+      "sha256": "080796959e073891ddf76f5e892201008cc9e680b91056eb4929e42253414502"
+    },
+    {
+      "path": "tests/oracles/fixtures/overlap/overlap_dominates_area.json",
+      "sha256": "e3b46d225d6d96fcbcb1f1e1bd4ff944f328078d3fdccbc85d200b8dc6d46a5c"
+    },
+    {
+      "path": "tests/oracles/fixtures/overlap/stack_cell_top_window.json",
+      "sha256": "91d80d37e92672493d1005fa3e29e3e43b58087cdf7eb6d58aca6c1163ab4fb3"
+    },
+    {
+      "path": "tests/oracles/fixtures/overlap/tie_top_left_wins.json",
+      "sha256": "66e08735d66c64e3b7fb8f015763148ff2c07030d9cff7c1c891699b007013a9"
+    },
+    {
+      "path": "tests/oracles/fixtures/overlap/tie_area_top_wins.json",
+      "sha256": "eb2cab79e8dbaacde777e71dfb546e17b7d9b734fe1d38e2819e2edea638c9c3"
+    },
+    {
+      "path": "tests/oracles/fixtures/overlap/edge_touch_zero_overlap_null.json",
+      "sha256": "1055545619a99d4c52f71b781bc6bc339f61799f6092409510f0598836b03724"
+    },
+    {
+      "path": "tests/oracles/fixtures/overlap/zero_overlap_null.json",
+      "sha256": "1d4d30e7431f920c1c84dac7a7953271c3747299632538d75b1ca985eb0d6e15"
+    },
+    {
+      "path": "tests/oracles/fixtures/overlap/empty_store_null.json",
+      "sha256": "8100a63a7f733e16e28fe529c243508d4b489f4a55fd1a4c02e0ed73033c8447"
+    },
+    {
+      "path": "tests/oracles/fixtures/overlap/tie_overlap_three_way_bigger_cell.json",
+      "sha256": "d4f69c0bf83f9d4f1a664d154745aff50712a36c350ddabbf155f2606ecb8976"
+    },
+    {
+      "path": "tests/oracles/fixtures/overlap/off_display_picks_right_display.json",
+      "sha256": "937b56ce0d96f92956b2cde1e8ca73cdb22f53bffcfec6ad2c27f6a47bf5d2ac"
+    },
+    {
+      "path": "tests/oracles/fixtures/overlap/tie_overlap_bigger_cell.json",
+      "sha256": "c634a8b6f7c7c57a01e14e7f9ed287829d8f35dfc07b8fa2db29f2035445bab2"
+    },
+    {
+      "path": "tests/oracles/fixtures/overlap/clear_winner.json",
+      "sha256": "fc08112299266e78d56ee1d895ea279e077eae122d6cd0df58f9bbe06a5a6b7c"
+    },
+    {
+      "path": "tests/oracles/fixtures/colinear/offset-2x2-cross-seam.json",
+      "sha256": "842760d3ce784a6d09d0ff4f32745adcce37331dcae950f7b1a1de3c6c899a0d"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/reserved-edges.raw.json",
+      "sha256": "fcf1d81171d61a017768d7bedf0907567c65cfcc94a7b4a47eff405f93904e15"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/mixed-resized.raw.json",
+      "sha256": "7286bf9fc61991704de3a8d945c24cb29c4ee2498a15e7a1bebd7d9f297e27db"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/mixed.raw.json",
+      "sha256": "de8958901cdded15882420599f83540fb562c01c83c8459c1be83cedd38d4eb7"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/vertical.raw.json",
+      "sha256": "62424ef7cdccac65752fff43b544501afdcbbd0a95e397ef77a9bb06ab0f652d"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/display-surface/mixed.scene.json",
+      "sha256": "0e604365ef3d8e250dc647c54495da95f2adb4eded8174cc0b2058016a02a74d"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/display-surface/unmatched-display.scene.json",
+      "sha256": "3256ac288a0f0c544aff7ef4ae7cbe134fe936a2de299d68840af6cda6bf23ea"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/hidden-source.scene.json",
+      "sha256": "1a277ef9ad70149b564927c0e0697ef108b07fccd676d87ffb1011563fc50ed2"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/opaque-candidate-metadata.expected.json",
+      "sha256": "56d1a077158ddff7aa098064f0b73885e7ee0f1bce1c09effc5c5c4d924bfecc"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/partial-overlap.expected.json",
+      "sha256": "5290f39efcf826c87aa33a990b6865967beebc41fa7bf3661037430877aaabe1"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/stage-manager-hidden.scene.json",
+      "sha256": "7f4d1ba006c84394e46f8aeffedfa5a1d9dedeb92966b9f5237a3f8e63104444"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/two-up-vertical.expected.json",
+      "sha256": "a35aa217c6dd67f5327860460ad32424cdb31d2e4e61589052eb39ad8b137898"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/same-row-multiple-overlaps.scene.json",
+      "sha256": "247f437b3f5773607c91d0368cafd51b8f86d7d280f59f63d33972e6955c1b50"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/single-window.scene.json",
+      "sha256": "5fb343c5b6b7eea356745a0573a9f98f9a917be8287891d4d7794c586165a56c"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/minimized-source.scene.json",
+      "sha256": "18234a19c191a748ab127b86fc3dbc0f5c32f3122d280899fb84b0bf32e10e86"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/wrap-band.expected.json",
+      "sha256": "ad2b7bcb57c649dff7725dbca3ff93a3ed94541cea9d2fab34a4e992d4041d24"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/stage-manager-hidden.expected.json",
+      "sha256": "6c04c96fbf510e536123a1e086e67ad5330253eac5b3c4cb4cfce0ea7bdeb3c4"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/minimized-source.expected.json",
+      "sha256": "7bebd9851a2ff39afe009f5840aaa31e5431df156ab1653bd668c756bbc285fb"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/two-up-vertical.scene.json",
+      "sha256": "67673c1416404c9b7a5366b7ad4b4614573d79f43b997468f9a72defeafc6ed1"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/diagonal-offset.expected.json",
+      "sha256": "7edd91186a40cd6b6c907015481d2f03f6916fa65fa8e6c2bb2578ce25b9514e"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/hidden-source.expected.json",
+      "sha256": "10d65db8f5b4ecd654b0540f9958c24bb205a0dd3cad0abbc78855335ccba5e7"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/mixed-scale.expected.json",
+      "sha256": "12cd5ef5560681208479969f9076708e1fe135063402587c0df8eaa9be5a0235"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/two-up-horizontal.scene.json",
+      "sha256": "0725c00a6f38a226476facf3089cee67e8f7748a4cc83ebdeb7d82ce67f947ce"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/partial-overlap.scene.json",
+      "sha256": "c6b89cd84dcb7c028d9b109a8edd71ad79779707d3e6cb8287c0b926786e7889"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/same-row-multiple-overlaps.expected.json",
+      "sha256": "aa0bf88942744d2ff46c69b59c5a186dae31e6964b3e1a1d71dd688e81410181"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/mixed-scale.scene.json",
+      "sha256": "ca576c8f8deec75aa7c97a2eb71d60024cb0c730d8b65d68a18d04edede1ea78"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/wrap-band.scene.json",
+      "sha256": "f18db20fe47ebdd7dfe83548cfa19f6bc04691bcb064425db4050e0837fe5586"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/opaque-candidate-metadata.scene.json",
+      "sha256": "968e4dc97e10d010880a97f49d009d1eeaf6dafbfbe77c3b59baff06e9d91b82"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/single-window.expected.json",
+      "sha256": "bc3e07a081aba3d4bb980490f0254608068241e0603ee42bd25f6bacac68b399"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/two-up-horizontal.expected.json",
+      "sha256": "3c0c2ca26ea135ed6a7c6c81b8b5199a0fdd830f7604de41dba161177770b24d"
+    },
+    {
+      "path": "tests/oracles/navigation/fixtures/nav/diagonal-offset.scene.json",
+      "sha256": "0d2e15403436fe56d43cbbd4cd70dca53a53c1398f8bf7d1e230512302d10c33"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "version": "1.0.0",
+  "license": "MIT",
+  "license_review_pending": false,
+  "public_history": "fresh-anonymous",
+  "distribution": "source-homebrew-and-application-preview",
+  "public_repository": "https://github.com/scshafe/leyline-wm",
+  "homebrew_repository": "https://github.com/scshafe/homebrew-tap",
+  "publisher_ownership": "disclosed"
+}

@@ -1,0 +1,114 @@
+{
+  "fn": "move_lines_check",
+  "note": "Colinear-run RIGID clamp (A2): the run sticks at its MOST-constrained member. Same offset-2x2 as move_lines_colinear_run; the bottom-right cell (anchor 1:3:1, [600,500,400,500]) is bound to a window with min h=350 (room 150). Move the run {id1,id2} by +300. id1's only shrinking cell (bottom-left) is free → it could move 300; id2 is incident to the min-bound bottom-right → it can move only 150. RIGID: the shared clamp is the MIN (150), so BOTH segments stick at 650 (coords_after [650,650]) — the run stays STRAIGHT instead of id1->800 / id2->650 bending it. ASSERTS applied cdelta 150 on both, valid, bindings untouched. This is the run analog of move_line_sticks_at_min.",
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "arr": {
+    "segments": [
+      {
+        "axis": "h",
+        "coord": 500,
+        "lo": 0,
+        "hi": 500,
+        "id": 1
+      },
+      {
+        "axis": "h",
+        "coord": 500,
+        "lo": 500,
+        "hi": 1000,
+        "id": 2
+      },
+      {
+        "axis": "v",
+        "coord": 400,
+        "lo": 0,
+        "hi": 500,
+        "id": 3
+      },
+      {
+        "axis": "v",
+        "coord": 600,
+        "lo": 500,
+        "hi": 1000,
+        "id": 4
+      }
+    ],
+    "bindings": {
+      "1:3:1": {
+        "window_id": 11,
+        "presented": true,
+        "frame": {
+          "x": 600,
+          "y": 500,
+          "w": 400,
+          "h": 500
+        },
+        "contents": [
+          {
+            "window_id": 11,
+            "presented": true,
+            "frame": {
+              "x": 600,
+              "y": 500,
+              "w": 400,
+              "h": 500
+            },
+            "min_size": {
+              "w": 0,
+              "h": 350
+            }
+          }
+        ]
+      }
+    },
+    "off_top": []
+  },
+  "moves": [
+    {
+      "line_id": 1,
+      "delta": 300
+    },
+    {
+      "line_id": 2,
+      "delta": 300
+    }
+  ],
+  "expect": {
+    "applied": [
+      {
+        "cdelta": 150,
+        "line_id": 1
+      },
+      {
+        "cdelta": 150,
+        "line_id": 2
+      }
+    ],
+    "bindings_byte_eq": true,
+    "coords_after": [
+      650,
+      650
+    ],
+    "ncells_after": 4,
+    "ncells_before": 4,
+    "ok": true,
+    "order_independent": true,
+    "reason": null,
+    "ride_endpoints": null,
+    "store_intact_on_reject": null,
+    "valid": true
+  }
+}

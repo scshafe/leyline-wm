@@ -1,0 +1,29 @@
+{
+  "note": "SINGLE-DISPLAY DEGENERACY REGRESSION (S4 step 7 / hard-directive 5). On a 1-display topology cells_md MUST produce output byte-identical to S0's single-canvas cells() path — one bag == the whole canvas — modulo the display_id tag (the only addition; frames/atoms unchanged). A v@500 on a single display {0,0,1000,1000} gap 8 splits it into {8,8,492,984}+{500,8,492,984}, EXACTLY the cells A::cells(arr; canvas($T)) gives, each tagged display_id:1. This pins that the per-display partition does NOT perturb the single-display path (the existing equiv/cells single-display fixtures stay green; this fixture adds the explicit cells_md degeneracy lock).",
+  "fn": "cells_md",
+  "arr": [
+    { "axis": "v", "coord": 500, "lo": 8, "hi": 992 }
+  ],
+  "topology": {
+    "displays": [
+      { "id": 1, "frame": [0, 0, 1000, 1000] }
+    ],
+    "gap": 8
+  },
+  "expect": [
+    {
+      "atoms": [[0, 0]],
+      "i0": 0, "i1": 0, "j0": 0, "j1": 0,
+      "filled": true,
+      "frame": { "x": 8, "y": 8, "w": 492, "h": 984 },
+      "display_id": 1
+    },
+    {
+      "atoms": [[1, 0]],
+      "i0": 1, "i1": 1, "j0": 0, "j1": 0,
+      "filled": true,
+      "frame": { "x": 500, "y": 8, "w": 492, "h": 984 },
+      "display_id": 1
+    }
+  ]
+}

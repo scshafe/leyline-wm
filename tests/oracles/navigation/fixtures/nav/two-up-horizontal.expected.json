@@ -1,0 +1,9 @@
+{
+  "_doc": "East: 200 direct (perp_overlap_y=300 on src y[100,500] vs 200 y[200,800]). West: 200 wrap to the east-edge band of the aggregate surface. North/south: noCandidate (no x-axis overlap with 200).",
+  "results": {
+    "north": { "outcome": "noCandidate", "winner": null },
+    "east":  { "outcome": "direct",      "winner": 200, "ranked": [200] },
+    "south": { "outcome": "noCandidate", "winner": null },
+    "west":  { "outcome": "wrap",        "winner": 200, "ranked": [200] }
+  }
+}

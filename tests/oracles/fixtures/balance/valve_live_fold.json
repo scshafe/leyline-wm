@@ -1,0 +1,138 @@
+{
+  "note": "8.3 LIVE path: sync's mount-shaped output (bare leaves, NO min_size) + observed Chrome windows + a learned store {Chrome:{w:600}}. valve_live stamps min onto w:1/w:2, the mount d:1 is crowded (600+600>1000) → folds to stack, then the stamped mins are STRIPPED (persisted tree stays null-min so reconcile re-stamps fresh). This is why the valve is live-effective. Seeded+reviewed; F1 green + min stripped cross-checked.",
+  "fn": "valve_live",
+  "focused_leaf": null,
+  "minstore": {
+    "Chrome": {
+      "w": 600,
+      "h": 100
+    }
+  },
+  "observed": [
+    {
+      "window_id": 1,
+      "app": "Chrome",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        0,
+        0,
+        500,
+        1000
+      ]
+    },
+    {
+      "window_id": 2,
+      "app": "Chrome",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        500,
+        0,
+        500,
+        1000
+      ]
+    }
+  ],
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "w:1",
+          "w:2"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ],
+        "usable": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "config": {},
+  "expect": {
+    "facts": [
+      {
+        "action": "fold",
+        "axis": "row",
+        "kind": "stack",
+        "node": "d:1",
+        "required": 1200,
+        "span": 1000,
+        "surplus": [
+          "w:2"
+        ],
+        "top": "w:1"
+      }
+    ],
+    "tree": {
+      "nodes": {
+        "d:1": {
+          "children": [
+            "w:1",
+            "w:2"
+          ],
+          "display_id": 1,
+          "frame_source": "pinned",
+          "id": "d:1",
+          "mode": "stack",
+          "stack_source": "valve",
+          "valve_from": "row"
+        },
+        "root": {
+          "children": [
+            "d:1"
+          ],
+          "id": "root",
+          "mode": "region"
+        },
+        "w:1": {
+          "id": "w:1",
+          "window_id": 1
+        },
+        "w:2": {
+          "id": "w:2",
+          "window_id": 2
+        }
+      },
+      "root_id": "root"
+    }
+  }
+}

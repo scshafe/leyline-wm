@@ -1,0 +1,18 @@
+{
+  "note": "The PINWHEEL DERIVATION (not just validity): arrangement::cells derives EXACTLY the 5 pinwheel cells from the 4-segment non-slicing bag, proving the union-find machinery handles a layout no BSP tree can express. Same bag as arrangement_valid/pinwheel.json: v@960 y[0,1200], v@1920 y[600,1800], h@600 x[960,2880], h@1200 x[0,1920] over a 2880x1800 canvas. The four arms pin a centre cell. cells() (sorted [frame.y, frame.x]) returns 5 FILLED rectangles: A=(0,0,960,1200) left, B=(960,0,1920,600) top, C=(960,600,960,600) CENTRE, D=(1920,600,960,1200) right, E=(0,1200,1920,600) bottom. Frames hand-computed on paper and cross-checked in experiments/line-model/arrangement.py BEFORE blessing (a wrong span would derive 4 or 6 cells). Cells carry the atom box (i0..j1, atoms) S2 will key identity on.",
+  "fn": "cells",
+  "arr": [
+    {"axis": "v", "coord": 960, "lo": 0, "hi": 1200},
+    {"axis": "v", "coord": 1920, "lo": 600, "hi": 1800},
+    {"axis": "h", "coord": 600, "lo": 960, "hi": 2880},
+    {"axis": "h", "coord": 1200, "lo": 0, "hi": 1920}
+  ],
+  "canvas": {"x": 0, "y": 0, "w": 2880, "h": 1800},
+  "expect": [
+    {"atoms": [[0,0],[0,1]], "filled": true, "frame": {"x": 0, "y": 0, "w": 960, "h": 1200}, "i0": 0, "i1": 0, "j0": 0, "j1": 1},
+    {"atoms": [[1,0],[2,0]], "filled": true, "frame": {"x": 960, "y": 0, "w": 1920, "h": 600}, "i0": 1, "i1": 2, "j0": 0, "j1": 0},
+    {"atoms": [[1,1]], "filled": true, "frame": {"x": 960, "y": 600, "w": 960, "h": 600}, "i0": 1, "i1": 1, "j0": 1, "j1": 1},
+    {"atoms": [[2,1],[2,2]], "filled": true, "frame": {"x": 1920, "y": 600, "w": 960, "h": 1200}, "i0": 2, "i1": 2, "j0": 1, "j1": 2},
+    {"atoms": [[0,2],[1,2]], "filled": true, "frame": {"x": 0, "y": 1200, "w": 1920, "h": 600}, "i0": 0, "i1": 1, "j0": 2, "j1": 2}
+  ]
+}

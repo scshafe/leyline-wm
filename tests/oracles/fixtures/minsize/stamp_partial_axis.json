@@ -1,0 +1,20 @@
+{
+  "note": "A width-only learned floor stamps min_size {w:500} (no h) — only the refused axis constrains.",
+  "fn": "stamp",
+  "tree": {
+    "root_id": "w:6389",
+    "nodes": {
+      "w:6389": { "id": "w:6389", "window_id": 6389 }
+    }
+  },
+  "observed": [
+    { "window_id": 6389, "bundle_id": "com.google.Chrome" }
+  ],
+  "store": { "com.google.Chrome": { "w": 500 } },
+  "expect": {
+    "root_id": "w:6389",
+    "nodes": {
+      "w:6389": { "id": "w:6389", "window_id": 6389, "min_size": { "w": 500 } }
+    }
+  }
+}

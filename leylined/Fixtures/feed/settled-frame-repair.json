@@ -1,0 +1,118 @@
+{
+  "schema": "leyline/settled-frame-repair-fixture/v1",
+  "target": {
+    "x": 1004,
+    "y": 38,
+    "w": 916,
+    "h": 599
+  },
+  "scenarios": [
+    {
+      "name": "stable-size-miss",
+      "initial": {
+        "x": 1004,
+        "y": 38,
+        "w": 956,
+        "h": 599
+      },
+      "current": {
+        "x": 1004,
+        "y": 38,
+        "w": 956,
+        "h": 599
+      },
+      "candidate": true
+    },
+    {
+      "name": "at-target",
+      "initial": {
+        "x": 1004,
+        "y": 38,
+        "w": 916,
+        "h": 599
+      },
+      "current": {
+        "x": 1004,
+        "y": 38,
+        "w": 916,
+        "h": 599
+      },
+      "candidate": false
+    },
+    {
+      "name": "async-size-progress",
+      "initial": {
+        "x": 1004,
+        "y": 38,
+        "w": 956,
+        "h": 599
+      },
+      "current": {
+        "x": 1004,
+        "y": 38,
+        "w": 936,
+        "h": 599
+      },
+      "candidate": false
+    },
+    {
+      "name": "external-position-drift",
+      "initial": {
+        "x": 1004,
+        "y": 38,
+        "w": 956,
+        "h": 599
+      },
+      "current": {
+        "x": 1044,
+        "y": 38,
+        "w": 956,
+        "h": 599
+      },
+      "candidate": false
+    },
+    {
+      "name": "fractional-rounding",
+      "initial": {
+        "x": 1004,
+        "y": 38,
+        "w": 916,
+        "h": 599
+      },
+      "current": {
+        "x": 1004,
+        "y": 38,
+        "w": 916.5,
+        "h": 599
+      },
+      "candidate": false
+    },
+    {
+      "name": "missing-initial-read",
+      "initial": null,
+      "current": {
+        "x": 1004,
+        "y": 38,
+        "w": 956,
+        "h": 599
+      },
+      "candidate": false
+    },
+    {
+      "name": "stable-position-clamp-after-size-lands",
+      "initial": {
+        "x": 964,
+        "y": 38,
+        "w": 916,
+        "h": 599
+      },
+      "current": {
+        "x": 964,
+        "y": 38,
+        "w": 916,
+        "h": 599
+      },
+      "candidate": true
+    }
+  ]
+}

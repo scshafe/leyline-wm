@@ -1,0 +1,15 @@
+{
+  "note": "a stack's presented child is always top — descend ignores origin_leaf for stacks.",
+  "fn": "descend",
+  "tree": {
+    "root_id": "s",
+    "nodes": {
+      "s": { "id": "s", "mode": "stack", "top": "b", "children": ["a", "b"] },
+      "a": { "id": "a", "binding": { "app": "A" } },
+      "b": { "id": "b", "binding": { "app": "B" } }
+    }
+  },
+  "node": "s",
+  "origin_leaf": "a",
+  "expect": "b"
+}

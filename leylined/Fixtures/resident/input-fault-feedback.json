@@ -1,0 +1,18 @@
+{
+  "entry_chord": "cmd + ctrl + alt + shift - r",
+  "blocked_chord": "h",
+  "blocked_action": "resize.adjust.west",
+  "fault_reason": "authority_deadline",
+  "receipt_uptime_ns": 1000000000,
+  "later_receipt_uptime_ns": 1500000000,
+  "presentation_uptime_ns": 1100000000,
+  "later_presentation_uptime_ns": 1600000000,
+  "future_receipt_uptime_ns": 1700000000,
+  "first_generation": 2,
+  "later_generation": 4,
+  "epoch": "fixture-input-epoch-A",
+  "other_epoch": "fixture-input-epoch-B",
+  "burst_count": 128,
+  "busy_message": "Leyline released keyboard shortcuts because input was busy.",
+  "deadline_message": "Leyline released keyboard shortcuts after a delay."
+}

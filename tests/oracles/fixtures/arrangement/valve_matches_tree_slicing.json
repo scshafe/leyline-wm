@@ -1,0 +1,29 @@
+{
+  "note": "S5 step 10 — the S3 bridge guarantee extended to STACKS: on the SLICING subset the arrangement valve folds IDENTICALLY to the tree valve. A slicing crowded scene row[A, sub] where sub=row[c,d] (c/d min w 600, span ~330) folds but A (min 300) stays feasible. from_floorplan gives a real tree (the layout IS tree-expressible). The harness asserts the arrangement valve's stacked cells {members, top, source} EQUAL balance::valve's stack nodes (read via floorplan::stacks over B::valve's folded tree): only sub's region folds to a valve stack [c,d] top c, and A is NOT stacked — both models agree. The non-slicing pinwheel from step 1 has NO tree, so it is NOT in this equality oracle (its valve behavior is pinned by step 5's valve_crowd_fold + the partition/conservation invariants instead) — that asymmetry is the rollout's justification, not a test gap.",
+  "fn": "valve_matches_tree",
+  "focused_leaf": null,
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": { "id": "root", "mode": "row", "children": ["A", "sub"] },
+      "sub": { "id": "sub", "mode": "row", "children": ["c", "d"] },
+      "A": { "id": "A", "window_id": 1, "min_size": { "w": 300, "h": 100 } },
+      "c": { "id": "c", "window_id": 2, "min_size": { "w": 600, "h": 100 } },
+      "d": { "id": "d", "window_id": 3, "min_size": { "w": 600, "h": 100 } }
+    }
+  },
+  "topology": {
+    "displays": [{ "id": 1, "frame": [0, 0, 1000, 1000], "usable": [0, 0, 1000, 1000] }],
+    "gap": 0
+  },
+  "config": {},
+  "expect": {
+    "arr_stacks": [
+      { "members": ["c", "d"], "source": "valve", "top": "c" }
+    ],
+    "tree_stacks": [
+      { "members": ["c", "d"], "source": "valve", "top": "c" }
+    ],
+    "equal": true
+  }
+}

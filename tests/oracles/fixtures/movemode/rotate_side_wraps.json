@@ -1,0 +1,6 @@
+{
+  "fn": "rotate_side",
+  "note": "B3/C3: the rotation wraps - west -> north closes the clockwise cycle.",
+  "side": "west",
+  "expect": "north"
+}

@@ -1,0 +1,12 @@
+{
+  "note": "Stage 4.7 GATE — documented F1-RED EXEMPTION #1 (I4 pinned split): a user-pinned (ratio_source:pinned) infeasible split a/b (min w 600 in span 1000) → the valve SKIPS it (the user's hand-set split wins), fit_sizes is vetoed, the bump grows BOTH to 600 → a/b OVERLAP by 100 AND b (at x500..1100) escapes the 1000 root → both arms RED. As the user instructed; also RED under bsp; NOT a valve failure. Expect HAND-AUTHORED (the f1 FAIL convention: a broken f1 must not self-certify ok:true).",
+  "tree": { "root_id": "r", "nodes": {
+    "r": {"id":"r","mode":"row","ratio_source":"pinned","ratios":[1,1],"children":["a","b"]},
+    "a": {"id":"a","window_id":1,"min_size":{"w":600,"h":100}},
+    "b": {"id":"b","window_id":2,"min_size":{"w":600,"h":100}} } },
+  "topology": { "displays": [{"id":1,"frame":[0,0,1000,1000],"usable":[0,0,1000,1000]}], "gap":0 },
+  "expect": {"ok": false, "violations": [
+    {"kind":"overlap","a":"a","b":"b","overlap_x":100,"overlap_y":1000},
+    {"kind":"containment","cell":"b","frame":{"x":500,"y":0,"w":600,"h":1000},"root":{"x":0,"y":0,"w":1000,"h":1000}}
+  ]}
+}

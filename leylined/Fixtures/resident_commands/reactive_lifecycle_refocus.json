@@ -1,0 +1,250 @@
+{
+  "schema": "leyline/reactive-lifecycle-refocus/v1",
+  "extra_window": {
+    "window_id": 4,
+    "pid": 504,
+    "window_generation": 1
+  },
+  "three_cell_store": {
+    "segments": [
+      {
+        "axis": "v",
+        "coord": 400,
+        "lo": 30,
+        "hi": 800,
+        "id": 1,
+        "display_id": 1
+      },
+      {
+        "axis": "v",
+        "coord": 800,
+        "lo": 30,
+        "hi": 800,
+        "id": 2,
+        "display_id": 1
+      }
+    ],
+    "bindings": {
+      "1:0:0": {
+        "window_id": 1
+      },
+      "1:1:0": {
+        "window_id": 2
+      },
+      "1:2:0": {
+        "window_id": 4
+      }
+    },
+    "off_top": [],
+    "promotions": []
+  },
+  "cases": [
+    {
+      "name": "destroy-confirmed-source",
+      "event": "ax_window_destroyed",
+      "removed_ids": [
+        1
+      ],
+      "notification_window_id": 1,
+      "confirmed_focus": 1,
+      "current_focus": null,
+      "history": [
+        {
+          "window_id": 2,
+          "pid": 502,
+          "window_generation": 1,
+          "space_key": "display-A/space-A",
+          "display_id": "display-A"
+        }
+      ],
+      "expected_focus": 2,
+      "requires_focus": true,
+      "store": "two"
+    },
+    {
+      "name": "minimize-confirmed-source-unknown-current-focus",
+      "event": "ax_window_minimized",
+      "removed_ids": [
+        1
+      ],
+      "notification_window_id": 1,
+      "confirmed_focus": 1,
+      "current_focus": null,
+      "history": [
+        {
+          "window_id": 2,
+          "pid": 502,
+          "window_generation": 1,
+          "space_key": "display-A/space-A",
+          "display_id": "display-A"
+        }
+      ],
+      "expected_focus": 2,
+      "requires_focus": true,
+      "store": "two"
+    },
+    {
+      "name": "preserve-positive-current-focus-before-pending-history",
+      "event": "ax_window_destroyed",
+      "removed_ids": [
+        1
+      ],
+      "notification_window_id": 1,
+      "confirmed_focus": 1,
+      "current_focus": 2,
+      "history": [
+        {
+          "window_id": 1,
+          "pid": 501,
+          "window_generation": 1,
+          "space_key": "display-A/space-A",
+          "display_id": "display-A"
+        }
+      ],
+      "expected_focus": 2,
+      "requires_focus": false,
+      "store": "two"
+    },
+    {
+      "name": "absorber-precedes-valid-recent-survivor",
+      "event": "ax_window_destroyed",
+      "removed_ids": [
+        1
+      ],
+      "notification_window_id": 1,
+      "confirmed_focus": 1,
+      "current_focus": null,
+      "history": [
+        {
+          "window_id": 4,
+          "pid": 504,
+          "window_generation": 1,
+          "space_key": "display-A/space-A",
+          "display_id": "display-A"
+        }
+      ],
+      "expected_focus": 2,
+      "requires_focus": true,
+      "store": "pinned-three",
+      "expected_absorber": 2
+    },
+    {
+      "name": "recent-skips-stale-lifetime-after-even-reclaim",
+      "event": "ax_window_minimized",
+      "removed_ids": [
+        1
+      ],
+      "notification_window_id": 1,
+      "confirmed_focus": 1,
+      "current_focus": null,
+      "history": [
+        {
+          "window_id": 2,
+          "pid": 999,
+          "window_generation": 1,
+          "space_key": "display-A/space-A",
+          "display_id": "display-A"
+        },
+        {
+          "window_id": 4,
+          "pid": 504,
+          "window_generation": 1,
+          "space_key": "display-A/space-A",
+          "display_id": "display-A"
+        }
+      ],
+      "expected_focus": 4,
+      "requires_focus": true,
+      "store": "even-three",
+      "expected_absorber": null
+    },
+    {
+      "name": "unknown-focus-does-not-invent-confirmed-focus-loss",
+      "event": "ax_window_minimized",
+      "removed_ids": [
+        2
+      ],
+      "notification_window_id": 2,
+      "confirmed_focus": 1,
+      "current_focus": null,
+      "history": [
+        {
+          "window_id": 1,
+          "pid": 501,
+          "window_generation": 1,
+          "space_key": "display-A/space-A",
+          "display_id": "display-A"
+        }
+      ],
+      "expected_focus": null,
+      "requires_focus": false,
+      "store": "two"
+    },
+    {
+      "name": "no-eligible-survivor-has-no-focus-effect",
+      "event": "ax_window_destroyed",
+      "removed_ids": [
+        1,
+        2
+      ],
+      "notification_window_id": 1,
+      "confirmed_focus": 1,
+      "current_focus": null,
+      "history": [
+        {
+          "window_id": 3,
+          "pid": 503,
+          "window_generation": 1,
+          "space_key": "display-B/space-B",
+          "display_id": "display-B"
+        }
+      ],
+      "expected_focus": null,
+      "requires_focus": false,
+      "store": "two"
+    },
+    {
+      "name": "missing-notification-receipt-uses-exact-publication-receipt",
+      "event": "ax_window_destroyed",
+      "removed_ids": [
+        1
+      ],
+      "notification_window_id": 1,
+      "confirmed_focus": 1,
+      "current_focus": null,
+      "history": [
+        {
+          "window_id": 2,
+          "pid": 502,
+          "window_generation": 1,
+          "space_key": "display-A/space-A",
+          "display_id": "display-A"
+        }
+      ],
+      "expected_focus": 2,
+      "requires_focus": true,
+      "store": "two",
+      "omit_notification_receipt": true
+    }
+  ],
+  "three_cell_frames": {
+    "1": {
+      "x": 0,
+      "y": 30,
+      "w": 396,
+      "h": 770
+    },
+    "2": {
+      "x": 404,
+      "y": 30,
+      "w": 392,
+      "h": 770
+    },
+    "4": {
+      "x": 804,
+      "y": 30,
+      "w": 396,
+      "h": 770
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "note": "STRUCTURAL-GATE PROOF, the non-standard arm (Phase B, real shipped float-rules.json via rules_path): a Software Update window — an app REMOVED from the allowlist — that presents as a NON-STANDARD role (AXSheet, a modal sheet). With its preference rule gone (float_verdict default 'on') and resizable:true, the ONLY thing keeping it floated is is_standard (role AXWindow ∧ subrole AXStandardWindow), which an AXSheet fails ⇒ tileable FALSE. Proves a removed app that is non-standard STILL floats structurally; the aggressive narrowing relies on is_standard remaining the gate.",
+  "fn": "tileable",
+  "rules_path": "float-rules.json",
+  "window": {
+    "window_id": 72,
+    "app": "Software Update",
+    "title": "Updating",
+    "role": "AXSheet",
+    "subrole": "AXStandardWindow",
+    "resizable": true
+  },
+  "expect": false
+}

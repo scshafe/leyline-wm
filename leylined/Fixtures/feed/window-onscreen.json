@@ -1,0 +1,12 @@
+{
+  "scenarios": [
+    {"name": "absent-quartz-key-means-not-onscreen", "kind": "absent", "expected": "false"},
+    {"name": "actual-cfboolean-true-is-onscreen", "kind": "cfboolean", "value": true, "expected": "true"},
+    {"name": "actual-cfboolean-false-is-not-onscreen", "kind": "cfboolean", "value": false, "expected": "false"},
+    {"name": "cfnumber-zero-is-malformed-not-a-false-boolean", "kind": "cfnumber", "value": 0, "expected": "cg_target_visibility_malformed"},
+    {"name": "cfnumber-one-is-malformed-not-a-true-boolean", "kind": "cfnumber", "value": 1, "expected": "cg_target_visibility_malformed"},
+    {"name": "string-true-is-malformed-not-a-visibility-flag", "kind": "string", "value": "true", "expected": "cg_target_visibility_malformed"},
+    {"name": "string-false-is-malformed-not-an-absent-key", "kind": "string", "value": "false", "expected": "cg_target_visibility_malformed"},
+    {"name": "explicit-null-is-malformed-not-an-absent-key", "kind": "null", "expected": "cg_target_visibility_malformed"}
+  ]
+}

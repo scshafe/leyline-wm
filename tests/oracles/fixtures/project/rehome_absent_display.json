@@ -1,0 +1,86 @@
+{
+  "note": "tiling-resilience W2: a 2-display tree (lap pinned->display 1, ext pinned->display 3) projected onto a 1-display topology (only display 1, which is main). The ext mount's absent display 3 must re-home to main (display 1) so its window gets a real frame on main instead of a null frame / drop.",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "lap",
+          "ext"
+        ]
+      },
+      "lap": {
+        "id": "lap",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "binding": {
+          "app": "Lap"
+        },
+        "window_id": 11
+      },
+      "ext": {
+        "id": "ext",
+        "frame_source": "pinned",
+        "display_id": 3,
+        "binding": {
+          "app": "Ext"
+        },
+        "window_id": 22
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": {
+          "x": 0,
+          "y": 0,
+          "w": 2048,
+          "h": 1326
+        },
+        "usable": {
+          "x": 0,
+          "y": 38,
+          "w": 2048,
+          "h": 1288
+        },
+        "main": true
+      }
+    ],
+    "gap": 8
+  },
+  "expect": {
+    "contention": [],
+    "dead_zone_hits": [],
+    "leaves": {
+      "ext": {
+        "conformance": "conforming",
+        "desired_frame": {
+          "h": 1272,
+          "w": 2032,
+          "x": 8,
+          "y": 46
+        },
+        "overflow": false,
+        "presented": true,
+        "vacant": false
+      },
+      "lap": {
+        "conformance": "conforming",
+        "desired_frame": {
+          "h": 1272,
+          "w": 2032,
+          "x": 8,
+          "y": 46
+        },
+        "overflow": false,
+        "presented": true,
+        "vacant": false
+      }
+    },
+    "vacant": []
+  }
+}

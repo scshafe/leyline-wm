@@ -1,0 +1,149 @@
+{
+  "note": "S13.1 (O2 determinism) — arrangement_targets_rec($bridge;$topo) is a PURE, FOCUS-FREE function: same parent frame → BYTE-IDENTICAL child frames. The function's SIGNATURE takes only $bridge,$topo (the def signature arrangement_targets_rec($bridge;$topo) takes no focus arg); frames are CARRIED VERBATIM from each binding's contents[0].frame over the INTEGER atom grid (cells() is a LOCATOR over the union-find, NEVER a frame source — arrangement.jq:937-947, the anti-fork guard). So byte-identical input → byte-identical output trivially: this fixture's actual==expect under jq's deterministic evaluation IS the same-parent-frame→byte-identical-child-frames statement for a focus-free function. The byte-equal-TWICE + the TWO-FOCUS-STATE assertions (presented WINDOW frames identical under any focus; the presented SET may legitimately differ — that is B::valve's op_reveal_leaf reveal, NOT a determinism break) live in the SOLO cmd-test (the step-1 Verify gate). | DEPTH-2 SHAPE reused from targets_rec_depth2: single display 1 {0,0,1000,1000} gap 0. Top v@600 → LEFT cell {0,0,600,1000} (anchor 1:0:0, INTERIOR: child h@500 over LEFT.frame → child cells 0:0:0 top / 0:0:1 bottom, leaf bindings for 201/202) + RIGHT cell {600,0,400,1000} (anchor 1:1:0, LEAF for 102). | ANTI-DERIVE TRAP PRESERVED (the #1 hazard guard): each leaf's contents[0].frame is HAND-AUTHORED to DIFFER from the raw child-cell geometry (201 {20,20,560,460} ≠ raw {0,0,600,500}; 202 {20,520,560,460} ≠ raw {0,500,600,500}; 102 {620,20,360,960} ≠ raw {600,0,400,1000}) — so a future regression that DERIVES the nested frame from the partition (a second clamp dialect by the back door) reds this fixture. HAND-VERIFIED against the recursion: actual==expect emits each carried frame verbatim, keyed by globally-unique window_id (the path-qualified internal anchor is byte-invisible to the R4 map).",
+  "fn": "targets_rec",
+  "bridge": {
+    "segments": [
+      {
+        "axis": "v",
+        "coord": 600,
+        "lo": 0,
+        "hi": 1000
+      }
+    ],
+    "bindings": {
+      "1:0:0": {
+        "nested": {
+          "segments": [
+            {
+              "axis": "h",
+              "coord": 500,
+              "lo": 0,
+              "hi": 600
+            }
+          ],
+          "bindings": {
+            "0:0:0": {
+              "window_id": 201,
+              "presented": true,
+              "frame": {
+                "x": 20,
+                "y": 20,
+                "w": 560,
+                "h": 460
+              },
+              "contents": [
+                {
+                  "window_id": 201,
+                  "presented": true,
+                  "frame": {
+                    "x": 20,
+                    "y": 20,
+                    "w": 560,
+                    "h": 460
+                  }
+                }
+              ]
+            },
+            "0:0:1": {
+              "window_id": 202,
+              "presented": true,
+              "frame": {
+                "x": 20,
+                "y": 520,
+                "w": 560,
+                "h": 460
+              },
+              "contents": [
+                {
+                  "window_id": 202,
+                  "presented": true,
+                  "frame": {
+                    "x": 20,
+                    "y": 520,
+                    "w": 560,
+                    "h": 460
+                  }
+                }
+              ]
+            }
+          },
+          "off_top": []
+        }
+      },
+      "1:1:0": {
+        "window_id": 102,
+        "presented": true,
+        "frame": {
+          "x": 620,
+          "y": 20,
+          "w": 360,
+          "h": 960
+        },
+        "contents": [
+          {
+            "window_id": 102,
+            "presented": true,
+            "frame": {
+              "x": 620,
+              "y": 20,
+              "w": 360,
+              "h": 960
+            }
+          }
+        ],
+        "nested": {
+          "segments": [],
+          "bindings": {},
+          "off_top": []
+        }
+      }
+    },
+    "off_top": []
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "expect": {
+    "102": {
+      "frame": {
+        "h": 960,
+        "w": 360,
+        "x": 620,
+        "y": 20
+      },
+      "presented": true,
+      "window_id": 102
+    },
+    "201": {
+      "frame": {
+        "h": 460,
+        "w": 560,
+        "x": 20,
+        "y": 20
+      },
+      "presented": true,
+      "window_id": 201
+    },
+    "202": {
+      "frame": {
+        "h": 460,
+        "w": 560,
+        "x": 20,
+        "y": 520
+      },
+      "presented": true,
+      "window_id": 202
+    }
+  }
+}

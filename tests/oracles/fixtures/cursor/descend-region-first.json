@@ -1,0 +1,14 @@
+{
+  "note": "descend into a multi-presented container with no origin_leaf picks the first child.",
+  "fn": "descend",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": { "id": "r", "mode": "region", "children": ["a", "b"] },
+      "a": { "id": "a", "binding": { "app": "A" } },
+      "b": { "id": "b", "binding": { "app": "B" } }
+    }
+  },
+  "node": "r",
+  "expect": "a"
+}

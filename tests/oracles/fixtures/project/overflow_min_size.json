@@ -1,0 +1,80 @@
+{
+  "note": "a row split that squeezes a leaf below min_size (default 160x120) sets overflow:true rather than silently overlapping. §6 / risk-#5; confirmed empirically (Messages min width).",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "ratios": [
+          9,
+          1
+        ],
+        "children": [
+          "wide",
+          "narrow"
+        ]
+      },
+      "wide": {
+        "id": "wide",
+        "window_id": 1,
+        "binding": {
+          "app": "Wide"
+        }
+      },
+      "narrow": {
+        "id": "narrow",
+        "window_id": 2,
+        "binding": {
+          "app": "Narrow"
+        }
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          200,
+          400
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "contention": [],
+    "dead_zone_hits": [],
+    "leaves": {
+      "narrow": {
+        "conformance": "conforming",
+        "desired_frame": {
+          "h": 400,
+          "w": 20,
+          "x": 180,
+          "y": 0
+        },
+        "overflow": true,
+        "presented": true,
+        "vacant": false
+      },
+      "wide": {
+        "conformance": "conforming",
+        "desired_frame": {
+          "h": 400,
+          "w": 180,
+          "x": 0,
+          "y": 0
+        },
+        "overflow": false,
+        "presented": true,
+        "vacant": false
+      }
+    },
+    "vacant": []
+  }
+}

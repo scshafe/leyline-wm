@@ -1,0 +1,14 @@
+{
+  "note": "node_frames over a bare 2-leaf row, gap 0, 1000x1000: records EVERY node's frame (internal r + leaves a/b), unlike project which emits only leaves. Hand-authored.",
+  "fn": "node_frames",
+  "tree": { "root_id": "r", "nodes": {
+    "r": {"id":"r","mode":"row","children":["a","b"]},
+    "a": {"id":"a","window_id":1},
+    "b": {"id":"b","window_id":2} } },
+  "topology": { "displays": [{"id":1,"frame":[0,0,1000,1000],"usable":[0,0,1000,1000]}], "gap":0 },
+  "expect": {
+    "r": {"x":0,"y":0,"w":1000,"h":1000},
+    "a": {"x":0,"y":0,"w":500,"h":1000},
+    "b": {"x":500,"y":0,"w":500,"h":1000}
+  }
+}

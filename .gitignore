@@ -1,0 +1,27 @@
+runtime/*
+!runtime/.gitkeep
+**/*.local.json
+**/*.local.sh
+plugins/*
+!plugins/.gitkeep
+bin/leylined
+bin/Leyline Recovery.app/
+.claude/**/*.local.md
+.claude/*.local.md
+.claude/**/*.local.json
+.claude/*.local.json
+.claude/*.lock
+.DS_Store
+**/.DS_Store
+__pycache__/
+leylined/.build/
+
+bin/leylined-tests
+dist/
+.release-build/
+*.dSYM/
+*.p12
+*.pfx
+*.key
+*.pem
+bin/Leyline Recovery Tests.app/

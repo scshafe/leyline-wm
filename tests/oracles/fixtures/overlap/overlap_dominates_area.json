@@ -1,0 +1,11 @@
+{
+  "note": "WS-A tie-break #1 PROOF (distinct from the tie fixtures): the SMALLER cell wins because it has the LARGER overlap. Float strip x:[50,500] y:[0,400] sits almost entirely inside small cell A (400x400, area 160000) → ov 350*400=140000; it only clips a 100px column of huge cell B (2000x1000, area 2000000) → ov 100*400=40000. Overlap (140000>40000) dominates even though B's cell area is 12.5x A's. This is the ladder rung the existing fixtures never isolate — their winners all had the equal-or-greater overlap AND were never the smaller cell.",
+  "arr": {
+    "bindings": {
+      "1:0:0": {"window_id": 11, "presented": true, "frame": {"x": 0, "y": 0, "w": 400, "h": 400}},
+      "1:1:0": {"window_id": 22, "presented": true, "frame": {"x": 400, "y": 0, "w": 2000, "h": 1000}}
+    }
+  },
+  "float_frame": {"x": 50, "y": 0, "w": 450, "h": 400},
+  "expect": {"cell_key": "1:0:0", "window_id": 11, "frame": {"x": 0, "y": 0, "w": 400, "h": 400}}
+}

@@ -1,0 +1,108 @@
+{
+  "note": "incident (the pub->sub subscriber set): the STEP-0 2x2 grid's CENTRE vertical (v@1440 full-height). EVERY cell of a 2x2 touches the centre line — the two left cells at their max_x face, the two right cells at their min_x face — so all 4 subscribe. This matches the SEED PROTOTYPE exactly (arrangement.py incident V -> ['A','B','C','D']); the plan's step-6 verify text saying 2 is a stray error contradicting its own prototype, settled here in favour of the prototype (4). The HAND-REVIEWED expect is the 4 cell frames a move of this line would reflow. Cells returned WHOLE (frame + atom box) so S2 can re-home by identity.",
+  "fn": "incident",
+  "arr": [
+    {
+      "axis": "v",
+      "coord": 1440,
+      "lo": 0,
+      "hi": 1800
+    },
+    {
+      "axis": "h",
+      "coord": 900,
+      "lo": 0,
+      "hi": 2880
+    }
+  ],
+  "canvas": {
+    "x": 0,
+    "y": 0,
+    "w": 2880,
+    "h": 1800
+  },
+  "line": {
+    "axis": "v",
+    "coord": 1440,
+    "lo": 0,
+    "hi": 1800
+  },
+  "expect": [
+    {
+      "atoms": [
+        [
+          0,
+          0
+        ]
+      ],
+      "filled": true,
+      "frame": {
+        "h": 900,
+        "w": 1440,
+        "x": 0,
+        "y": 0
+      },
+      "i0": 0,
+      "i1": 0,
+      "j0": 0,
+      "j1": 0
+    },
+    {
+      "atoms": [
+        [
+          1,
+          0
+        ]
+      ],
+      "filled": true,
+      "frame": {
+        "h": 900,
+        "w": 1440,
+        "x": 1440,
+        "y": 0
+      },
+      "i0": 1,
+      "i1": 1,
+      "j0": 0,
+      "j1": 0
+    },
+    {
+      "atoms": [
+        [
+          0,
+          1
+        ]
+      ],
+      "filled": true,
+      "frame": {
+        "h": 900,
+        "w": 1440,
+        "x": 0,
+        "y": 900
+      },
+      "i0": 0,
+      "i1": 0,
+      "j0": 1,
+      "j1": 1
+    },
+    {
+      "atoms": [
+        [
+          1,
+          1
+        ]
+      ],
+      "filled": true,
+      "frame": {
+        "h": 900,
+        "w": 1440,
+        "x": 1440,
+        "y": 900
+      },
+      "i0": 1,
+      "i1": 1,
+      "j0": 1,
+      "j1": 1
+    }
+  ]
+}

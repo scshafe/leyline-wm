@@ -1,0 +1,37 @@
+{
+  "note": "S4 step 2 (R5): _bags partitions the input segment bag by display via G::assign_display (the engine's own homing policy, reused — max usable-overlap, ties→lowest id). FLUSH 2-display topology. v@500 (centre {500,500}) homes to d1; v@1500 (centre {1500,500}) homes to d2 — each segment lands in EXACTLY ONE bag. The hand-injected cross-seam h@500 spans x[500,1500] (extent crosses the x=1000 seam, contained in NO single display rect) → REJECTED, never homed (a malformed cross-seam segment is impossible from valid authoring; asserted here so a future authoring bug surfaces as a fixture failure, not a silent fused cell). Downstream derivation sees N independent per-display bags, never one global bag.",
+  "fn": "bags",
+  "arr": [
+    { "axis": "v", "coord": 500, "lo": 8, "hi": 992 },
+    { "axis": "v", "coord": 1500, "lo": 8, "hi": 992 },
+    { "axis": "h", "coord": 500, "lo": 500, "hi": 1500 }
+  ],
+  "topology": {
+    "displays": [
+      { "id": 1, "frame": [0, 0, 1000, 1000] },
+      { "id": 2, "frame": [1000, 0, 1000, 1000] }
+    ],
+    "gap": 8
+  },
+  "expect": {
+    "bags": [
+      {
+        "display_id": 1,
+        "rect": { "x": 8, "y": 8, "w": 984, "h": 984 },
+        "segments": [
+          { "axis": "v", "coord": 500, "lo": 8, "hi": 992 }
+        ]
+      },
+      {
+        "display_id": 2,
+        "rect": { "x": 1008, "y": 8, "w": 984, "h": 984 },
+        "segments": [
+          { "axis": "v", "coord": 1500, "lo": 8, "hi": 992 }
+        ]
+      }
+    ],
+    "rejected": [
+      { "axis": "h", "coord": 500, "lo": 500, "hi": 1500 }
+    ]
+  }
+}

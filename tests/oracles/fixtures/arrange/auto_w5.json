@@ -1,0 +1,80 @@
+{
+  "note": "arrange_auto W=5: aspect [3,2] -> top 3, bottom 2. No holes.",
+  "fn": "auto",
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1920,
+          1080
+        ]
+      }
+    ],
+    "dead_zones": []
+  },
+  "store": {},
+  "did": "1",
+  "partition": {
+    "orient": "rows",
+    "parts": [
+      3,
+      2
+    ]
+  },
+  "windows": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "expect": {
+    "bound": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "cells": 5,
+    "frames": [
+      {
+        "h": 540,
+        "w": 640,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "h": 540,
+        "w": 640,
+        "x": 640,
+        "y": 0
+      },
+      {
+        "h": 540,
+        "w": 640,
+        "x": 1280,
+        "y": 0
+      },
+      {
+        "h": 540,
+        "w": 960,
+        "x": 0,
+        "y": 540
+      },
+      {
+        "h": 540,
+        "w": 960,
+        "x": 960,
+        "y": 540
+      }
+    ],
+    "ok": true,
+    "pinned": true,
+    "reserved": 0,
+    "valid": true
+  }
+}

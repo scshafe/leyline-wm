@@ -1,0 +1,18 @@
+{
+  "note": "S5 step 3 (RED — HAND-AUTHORED ok:false, NEVER regenerated). The companion to f1_stack_is_one_cell: a stacked cell SHOULD be one filled rect (its top fills the region, surplus members contribute no frame), but a CORRUPTED stack attribute LEAKS a surplus member's frame into the grid as a bordered region. Modeled as four walls sealing an interior courtyard on a 1000x1000 canvas — v@400 + v@600 over y[400,600], h@400 + h@600 over x[400,600]. The centre atom (400,400,200,200) seals as its OWN filled 1x1 cell; the EIGHT surrounding atoms union into one ring whose index box is 3x3=9 (non_rectangular: atoms 8, box 9), claimed_atoms 1 != grid_atoms 9 → the no-gap clause fires (kind gap, missing_area 960000 = 1000*1000 - 200*200, frame the unclaimed-ring bbox = the whole canvas). The expect is HAND-AUTHORED so a broken partition check (always-ok, or one that drops the gap clause) cannot self-certify ok:true on a leaked surplus frame — mirroring floorplan.jq's hand-authored FAIL fixtures. In this atom-grid model a gap ALWAYS co-occurs with a non_rectangular component (they are dual; the leak emits BOTH), per arrangement_valid/hole_center.",
+  "fn": "valid",
+  "arr": [
+    { "axis": "v", "coord": 400, "lo": 400, "hi": 600 },
+    { "axis": "v", "coord": 600, "lo": 400, "hi": 600 },
+    { "axis": "h", "coord": 400, "lo": 400, "hi": 600 },
+    { "axis": "h", "coord": 600, "lo": 400, "hi": 600 }
+  ],
+  "canvas": { "x": 0, "y": 0, "w": 1000, "h": 1000 },
+  "expect": {
+    "ok": false,
+    "violations": [
+      { "kind": "non_rectangular", "frame": { "x": 0, "y": 0, "w": 1000, "h": 1000 }, "atoms": 8, "box": 9 },
+      { "kind": "gap", "missing_area": 960000, "frame": { "x": 0, "y": 0, "w": 1000, "h": 1000 } }
+    ]
+  }
+}

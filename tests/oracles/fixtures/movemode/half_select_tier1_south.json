@@ -1,0 +1,10 @@
+{
+  "fn": "half_select",
+  "note": "fork-2 tier 1 (origin offset, trailing): the focused window's ORIGIN y=600 is below the neighbor cell midpoint (y=540), beyond the tolerance, so it takes the TRAILING (south) half.",
+  "target_cell": {"frame": {"x": 0, "y": 0, "w": 480, "h": 1080}},
+  "focused_frame": {"x": 480, "y": 600, "w": 480, "h": 480},
+  "display": {"frame": {"x": 0, "y": 0, "w": 1920, "h": 1080}},
+  "dir": "east",
+  "tol": 4,
+  "expect": "south"
+}

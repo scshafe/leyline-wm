@@ -1,0 +1,14 @@
+{
+  "note": "Gate (non-standard / flagged edge): a modal dialog reports role AXWindow but subrole AXDialog. is_standard requires subrole == AXStandardWindow, so a dialog is NOT standard ⇒ NOT tileable, even though it is resizable and unallowlisted. The load-bearing 'never grab a dialog' case.",
+  "fn": "tileable",
+  "window": {
+    "window_id": 20,
+    "app": "Safari",
+    "title": "Do you want to save changes?",
+    "role": "AXWindow",
+    "subrole": "AXDialog",
+    "resizable": true
+  },
+  "rules": [],
+  "expect": false
+}

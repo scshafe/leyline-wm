@@ -1,0 +1,259 @@
+{
+  "schema": "leyline/resident-command-fixture/v1",
+  "world": {
+    "event": "world_seed",
+    "observer_generation": 8,
+    "topology_revision": 4,
+    "management_enabled": true,
+    "mode": "default",
+    "observation": {
+      "ready": true,
+      "world_complete": true,
+      "failure_code": null,
+      "world_failure_code": null
+    },
+    "topology": [
+      {
+        "id": 1,
+        "display_id": "display-A",
+        "frame": {
+          "x": 0,
+          "y": 0,
+          "w": 1200,
+          "h": 800
+        },
+        "usable_frame": {
+          "x": 0,
+          "y": 30,
+          "w": 1200,
+          "h": 770
+        },
+        "usable_frame_known": true
+      },
+      {
+        "id": 2,
+        "display_id": "display-B",
+        "frame": {
+          "x": 1200,
+          "y": 0,
+          "w": 1200,
+          "h": 800
+        },
+        "usable_frame": {
+          "x": 1200,
+          "y": 30,
+          "w": 1200,
+          "h": 770
+        },
+        "usable_frame_known": true
+      }
+    ],
+    "space_contexts": [
+      {
+        "space_key": "display-A/space-A",
+        "display_id": "display-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true
+      },
+      {
+        "space_key": "display-B/space-B",
+        "display_id": "display-B",
+        "space_enabled": false,
+        "space_visible": true,
+        "space_identity_available": true
+      }
+    ],
+    "space_activation": {
+      "display-A/space-A": true,
+      "display-B/space-B": false
+    },
+    "windows": [
+      {
+        "window_id": 1,
+        "pid": 501,
+        "display_id": "display-A",
+        "space_key": "display-A/space-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true,
+        "eligible": true,
+        "role": "AXWindow",
+        "subrole": "AXStandardWindow",
+        "resizable": true,
+        "movable": true,
+        "minimized": false,
+        "window_generation": 1,
+        "frame": {
+          "x": 0,
+          "y": 30,
+          "w": 596,
+          "h": 770
+        }
+      },
+      {
+        "window_id": 2,
+        "pid": 502,
+        "display_id": "display-A",
+        "space_key": "display-A/space-A",
+        "space_enabled": true,
+        "space_visible": true,
+        "space_identity_available": true,
+        "eligible": true,
+        "role": "AXWindow",
+        "subrole": "AXStandardWindow",
+        "resizable": true,
+        "movable": true,
+        "minimized": false,
+        "window_generation": 1,
+        "frame": {
+          "x": 604,
+          "y": 30,
+          "w": 596,
+          "h": 770
+        }
+      },
+      {
+        "window_id": 3,
+        "pid": 503,
+        "display_id": "display-B",
+        "space_key": "display-B/space-B",
+        "space_enabled": false,
+        "space_visible": true,
+        "space_identity_available": true,
+        "eligible": true,
+        "role": "AXWindow",
+        "subrole": "AXStandardWindow",
+        "resizable": true,
+        "movable": true,
+        "minimized": false,
+        "window_generation": 1,
+        "frame": {
+          "x": 1200,
+          "y": 30,
+          "w": 1200,
+          "h": 770
+        }
+      }
+    ],
+    "focus": {
+      "window_id": 1,
+      "pid": 501,
+      "display_id": "display-A",
+      "space_key": "display-A/space-A",
+      "space_enabled": true,
+      "space_visible": true,
+      "space_identity_available": true,
+      "eligible": true,
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "movable": true,
+      "minimized": false,
+      "window_generation": 1,
+      "frame": {
+        "x": 0,
+        "y": 30,
+        "w": 596,
+        "h": 770
+      }
+    },
+    "active_context": {
+      "space_key": "display-A/space-A",
+      "display_id": "display-A",
+      "space_enabled": true,
+      "space_visible": true,
+      "space_identity_available": true
+    }
+  },
+  "store": {
+    "segments": [
+      {
+        "axis": "v",
+        "coord": 600,
+        "lo": 30,
+        "hi": 800,
+        "id": 1,
+        "display_id": 1
+      }
+    ],
+    "bindings": {
+      "1:0:0": {
+        "window_id": 1
+      },
+      "1:1:0": {
+        "window_id": 2
+      }
+    },
+    "off_top": [],
+    "promotions": []
+  },
+  "gap": 8,
+  "expected": {
+    "initial_source_width": 596,
+    "resize_step": 40,
+    "three_resize_source_width": 716,
+    "reserved_top": 30,
+    "enabled_space_window_ids": [
+      1,
+      2
+    ],
+    "disabled_space_window_id": 3
+  },
+  "scenarios": [
+    "registered_navigation_confirmed_focus",
+    "held_resize_cumulative_latest_batch",
+    "move_preview_cancel_noeffects",
+    "keyup_preserves_final_pending",
+    "identity_context_invalidates_old_work",
+    "duplicate_request_payload_conflict",
+    "space_A_ON_B_OFF_isolation",
+    "journal_failure_zeroeffects",
+    "committed_checkpoint_highwater_recovery",
+    "incomplete_observer_refuses",
+    "cross_app_focus_goal_generations_explicit",
+    "interior_gutter_0_canvas_minfit",
+    "interior_gutter_8_canvas_minfit",
+    "interior_gutter_20_canvas_minfit",
+    "empty_identified_space_state_only_durable_zeroeffects",
+    "all_OFF_state_only_durable_zeroeffects",
+    "real_space_switch_restores_dormant_manual_geometry",
+    "same_value_B_OFF_preserves_revision_and_A_flight",
+    "meaningful_B_toggles_preserve_A_interaction_scope",
+    "sparse_activation_removal_restores_default_ON",
+    "cached_frames_never_confirm_landing",
+    "terminal_results_publish_once_after_late_cancel_callback",
+    "input_release_fences_issued_and_delayed_commands_before_mode_delivery",
+    "state_only_layout_normalization_commits_modal_authority_and_origin",
+    "frame_continuity_across_focus_registration_rebind",
+    "actual_identity_or_scope_change_cancels_frame",
+    "recovered_complete_world_reconciles_after_activation"
+  ],
+  "outer_gap": 0,
+  "gutter_cases": [
+    {
+      "gap": 0,
+      "outer_gap": 0
+    },
+    {
+      "gap": 8,
+      "outer_gap": 0
+    },
+    {
+      "gap": 20,
+      "outer_gap": 0
+    }
+  ],
+  "activation_regression": {
+    "origin_space_key": "display-A/space-A",
+    "independent_space_key": "display-B/space-B",
+    "origin_window_space_keys": {
+      "1": "display-A/space-A",
+      "2": "display-A/space-A"
+    }
+  },
+  "input_generation_regression": {
+    "entry_chord": "cmd + ctrl + alt + shift - r",
+    "adjust_chord": "l"
+  }
+}

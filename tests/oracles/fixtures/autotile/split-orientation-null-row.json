@@ -1,0 +1,6 @@
+{
+  "note": "split_orientation: a null frame (unprojectable / root-seed) defaults to row.",
+  "fn": "split_orientation",
+  "frame": null,
+  "expect": "row"
+}

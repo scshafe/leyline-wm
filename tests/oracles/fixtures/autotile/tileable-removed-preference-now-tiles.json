@@ -1,0 +1,14 @@
+{
+  "note": "AGGRESSIVE-NARROWING PROOF (Phase B, real shipped float-rules.json via rules_path): Preview — a former PREFERENCE float removed from the allowlist in the aggressive narrowing — presents a resizable, standard window (role AXWindow, subrole AXStandardWindow). With the 'preview' rule gone, no rule matches ⇒ float_verdict default 'on' AND the structural gate (is_resizable ∧ is_standard) passes ⇒ tileable TRUE. The aggressive win: an app that used to float now tiles, gated only by is_resizable+is_standard. If anyone re-adds a preview float rule to the real file, this goes red.",
+  "fn": "tileable",
+  "rules_path": "float-rules.json",
+  "window": {
+    "window_id": 70,
+    "app": "Preview",
+    "title": "diagram.pdf",
+    "role": "AXWindow",
+    "subrole": "AXStandardWindow",
+    "resizable": true
+  },
+  "expect": true
+}

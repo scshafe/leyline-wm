@@ -1,0 +1,51 @@
+{
+  "note": "ORPHAN unreachable from root → BARE DELETE: 'orphan' is present in .nodes but no edge reaches it from root_id 'r' (it dangles). paths_to(r; orphan) is [] → path null/len<2 branch fires: just del(.nodes.orphan), no parent surgery, no collapse. The reachable tree r=[a,b] is untouched. Guards against remove mis-treating an orphan as a child of some node.",
+  "fn": "remove",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "mode": "row",
+        "children": [
+          "a",
+          "b"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1
+      },
+      "b": {
+        "id": "b",
+        "window_id": 2
+      },
+      "orphan": {
+        "id": "orphan",
+        "window_id": 9
+      }
+    }
+  },
+  "leaf": "orphan",
+  "expect": {
+    "nodes": {
+      "a": {
+        "id": "a",
+        "window_id": 1
+      },
+      "b": {
+        "id": "b",
+        "window_id": 2
+      },
+      "r": {
+        "children": [
+          "a",
+          "b"
+        ],
+        "id": "r",
+        "mode": "row"
+      }
+    },
+    "root_id": "r"
+  }
+}

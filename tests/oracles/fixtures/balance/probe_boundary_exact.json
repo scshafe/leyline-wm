@@ -1,0 +1,10 @@
+{
+  "note": "Exact fit_sizes boundary (gap 0, even split): Σmin (500+500)==span 1000 → required==span → NOT > → no candidate. Pairs with probe_boundary_over to pin required>span ⇔ fit_sizes' $tmin>$avail overlap point (default threshold 0).",
+  "fn": "probe",
+  "tree": { "root_id": "r", "nodes": {
+    "r": {"id":"r","mode":"row","children":["a","b"]},
+    "a": {"id":"a","window_id":1,"min_size":{"w":500,"h":100}},
+    "b": {"id":"b","window_id":2,"min_size":{"w":500,"h":100}} } },
+  "topology": { "displays": [{"id":1,"frame":[0,0,1000,1000],"usable":[0,0,1000,1000]}], "gap":0 },
+  "expect": []
+}

@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Build one native profile. The shipping profile excludes developer tests.
+# Usage: leylined-build [--tests] [--output FILE] [--arch arm64|x86_64] [--scratch-path DIR] [--disable-sandbox]
+set -euo pipefail
+builder_root="$(cd "$(dirname "$0")/.." && pwd -P)"
+builder_profile=production
+builder_arch="$(uname -m)"
+builder_output="$builder_root/bin/leylined"
+builder_scratch=""
+builder_disable_sandbox=0
+while (($#)); do
+  case "$1" in
+    --tests) builder_profile=tests; builder_output="$builder_root/bin/leylined-tests"; shift ;;
+    --output) [[ $# -ge 2 ]] || exit 64; builder_output="$2"; shift 2 ;;
+    --arch) [[ $# -ge 2 ]] || exit 64; builder_arch="$2"; shift 2 ;;
+    --scratch-path) [[ $# -ge 2 ]] || exit 64; builder_scratch="$2"; shift 2 ;;
+    --disable-sandbox) builder_disable_sandbox=1; shift ;;
+    --help|-h) printf '%s\n' 'leylined-build [--tests] [--output FILE] [--arch arm64|x86_64] [--scratch-path DIR] [--disable-sandbox]'; exit 0 ;;
+    *) printf 'Unknown build option: %s\n' "$1" >&2; exit 64 ;;
+  esac
+done
+case "$builder_arch" in arm64|x86_64) ;; *) printf 'Unsupported architecture\n' >&2; exit 64 ;; esac
+cd "$builder_root"
+command -v swift >/dev/null || { printf 'Swift6 or newer is required (Xcode Command Line Tools).\n' >&2; exit 69; }
+[[ -n "$builder_scratch" ]] || builder_scratch="$builder_root/leylined/.build/$builder_profile-$builder_arch"
+if [[ "$builder_profile" == tests ]]; then export LEYLINE_BUILD_TESTS=1; else unset LEYLINE_BUILD_TESTS; fi
+builder_args=(--package-path "$builder_root/leylined" --scratch-path "$builder_scratch" -c release --triple "$builder_arch-apple-macosx14.0")
+if (( builder_disable_sandbox )); then builder_args+=(--disable-sandbox); fi
+if [[ "$builder_profile" == production ]]; then
+  builder_args+=(-Xswiftc -file-prefix-map -Xswiftc "$builder_root=/leyline"
+    -Xswiftc -debug-prefix-map -Xswiftc "$builder_root=/leyline"
+    -Xcc "-ffile-prefix-map=$builder_root=/leyline"
+    -Xcc "-fdebug-prefix-map=$builder_root=/leyline")
+fi
+swift build "${builder_args[@]}"
+builder_product="$(swift build "${builder_args[@]}" --show-bin-path)/leylined"
+mkdir -p "$(dirname "$builder_output")"
+builder_candidate="$(mktemp "$(dirname "$builder_output")/.leyline-build.XXXXXX")"
+trap 'rm -f "$builder_candidate"' EXIT
+cp "$builder_product" "$builder_candidate"
+chmod 0755 "$builder_candidate"
+if [[ "$builder_profile" == production ]]; then /usr/bin/strip -S "$builder_candidate"; fi
+"$builder_root/bin/leyline-codesign" "$builder_candidate" org.leyline.leylined
+codesign --verify --strict "$builder_candidate"
+mv -f "$builder_candidate" "$builder_output"
+printf 'Built %s profile: %s\n' "$builder_profile" "$builder_output"

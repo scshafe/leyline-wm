@@ -1,0 +1,145 @@
+{
+  "note": "ADOPT one newcomer at the focused leaf (mount-shape). root(region) → d:1(pinned mount, display 1) → i:w:2(row)=[w:1,w:2] over a 1200x800 display; observed adds window 3 (tileable); focus is w:1. window 3 homes to display 1 (only display), so adopt_newcomers anchors inside mount d:1 at the focused leaf w:1. sync re-projects the tree to read w:1's frame for split_orientation: w:1 is the left child of i:w:2 which fills the mount's usable rect (full 1200x800), so w:1's frame is {x:0,y:0,w:600,h:800} — TALL (600<800) → col. w:1 is replaced in i:w:2's slot by i:w:3(col)=[w:1,w:3]. Demonstrates orientation follows the projected sub-frame (not the whole canvas), the newcomer opens in the focused leaf's former slot, and the split stays CONFINED to the home mount. No ratios anywhere (auto_proportion stable).",
+  "fn": "sync",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "i:w:2"
+        ]
+      },
+      "i:w:2": {
+        "id": "i:w:2",
+        "mode": "row",
+        "children": [
+          "w:1",
+          "w:2"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      }
+    }
+  },
+  "observed": [
+    {
+      "window_id": 1,
+      "app": "A",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        0,
+        0,
+        600,
+        800
+      ]
+    },
+    {
+      "window_id": 2,
+      "app": "B",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        600,
+        0,
+        600,
+        800
+      ]
+    },
+    {
+      "window_id": 3,
+      "app": "C",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true,
+      "frame": [
+        0,
+        0,
+        600,
+        800
+      ]
+    }
+  ],
+  "focused_leaf": "w:1",
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1200,
+          800
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "nodes": {
+      "d:1": {
+        "children": [
+          "i:w:2"
+        ],
+        "display_id": 1,
+        "frame_source": "pinned",
+        "id": "d:1",
+        "mode": "row"
+      },
+      "i:w:2": {
+        "children": [
+          "i:w:3",
+          "w:2"
+        ],
+        "id": "i:w:2",
+        "mode": "row"
+      },
+      "i:w:3": {
+        "children": [
+          "w:1",
+          "w:3"
+        ],
+        "id": "i:w:3",
+        "mode": "col"
+      },
+      "root": {
+        "children": [
+          "d:1"
+        ],
+        "id": "root",
+        "mode": "region"
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      },
+      "w:3": {
+        "id": "w:3",
+        "window_id": 3
+      }
+    },
+    "root_id": "root"
+  }
+}

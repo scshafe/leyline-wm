@@ -1,0 +1,90 @@
+{
+  "schema": "leyline/v1-input-routes",
+  "expected_action_routes": {
+    "default": {
+      "cmd + ctrl + alt + shift - h": "nav.focus.west",
+      "cmd + ctrl + alt + shift - j": "nav.focus.south",
+      "cmd + ctrl + alt + shift - k": "nav.focus.north",
+      "cmd + ctrl + alt + shift - l": "nav.focus.east",
+      "cmd + ctrl + alt + shift - m": "move.start",
+      "cmd + ctrl + alt + shift - r": "resize.start",
+      "ctrl + alt - r": "service.restart",
+      "cmd + ctrl + alt + shift - a": "space.management.toggle"
+    },
+    "move": {
+      "0x24": "move.execute.auto",
+      "0x35": "move.cancel",
+      "0x5A": "mode.cancel",
+      "c": "move.rotate",
+      "cmd + ctrl + alt + shift - c": "move.rotate",
+      "cmd + ctrl + alt + shift - d": "move.drop",
+      "cmd + ctrl + alt + shift - h": "move.cursor.west",
+      "cmd + ctrl + alt + shift - j": "move.cursor.south",
+      "cmd + ctrl + alt + shift - k": "move.cursor.north",
+      "cmd + ctrl + alt + shift - l": "move.cursor.east",
+      "cmd + ctrl + alt + shift - m": "move.off",
+      "cmd + ctrl + alt + shift - s": "move.execute.swap",
+      "ctrl + alt - r": "service.restart",
+      "d": "move.drop",
+      "h": "move.cursor.west",
+      "i": "move.level.down",
+      "j": "move.cursor.south",
+      "k": "move.cursor.north",
+      "l": "move.cursor.east",
+      "s": "move.execute.swap",
+      "u": "move.level.up",
+      "cmd + ctrl + alt + shift - a": "space.management.toggle"
+    },
+    "resize": {
+      "0x35": "resize.off",
+      "0x5A": "mode.cancel",
+      "cmd + ctrl + alt + shift - h": "nav.focus.west",
+      "cmd + ctrl + alt + shift - j": "nav.focus.south",
+      "cmd + ctrl + alt + shift - k": "nav.focus.north",
+      "cmd + ctrl + alt + shift - l": "nav.focus.east",
+      "cmd + ctrl + alt + shift - r": "resize.off",
+      "ctrl + alt - r": "service.restart",
+      "h": "resize.adjust.west",
+      "j": "resize.adjust.south",
+      "k": "resize.adjust.north",
+      "l": "resize.adjust.east",
+      "cmd + ctrl + alt + shift - a": "space.management.toggle"
+    }
+  },
+  "expected_claim_counts": {
+    "default": 8,
+    "move": 22,
+    "resize": 13
+  },
+  "retained_action_ids": [
+    "move.cancel",
+    "move.cursor.east",
+    "move.cursor.north",
+    "move.cursor.south",
+    "move.cursor.west",
+    "move.drop",
+    "move.execute.auto",
+    "move.execute.swap",
+    "move.level.down",
+    "move.level.up",
+    "move.off",
+    "move.rotate",
+    "move.start",
+    "nav.focus.east",
+    "nav.focus.north",
+    "nav.focus.south",
+    "nav.focus.west",
+    "resize.adjust.east",
+    "resize.adjust.north",
+    "resize.adjust.south",
+    "resize.adjust.west",
+    "resize.off",
+    "resize.start",
+    "service.restart",
+    "space.management.toggle"
+  ],
+  "unsupported_action_ids": [],
+  "reserved_chords": [
+    "cmd + ctrl + alt + shift - f"
+  ]
+}

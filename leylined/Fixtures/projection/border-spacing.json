@@ -1,0 +1,651 @@
+{
+  "display": {
+    "x": 0,
+    "y": 0,
+    "w": 1920,
+    "h": 1243
+  },
+  "tiling_frame": {
+    "x": 0,
+    "y": 38,
+    "w": 1920,
+    "h": 1205
+  },
+  "cases": [
+    {
+      "width": 0,
+      "expected_left": {
+        "x": 0,
+        "y": 38,
+        "w": 960.0,
+        "h": 1205
+      },
+      "expected_right": {
+        "x": 960.0,
+        "y": 38,
+        "w": 960.0,
+        "h": 1205
+      },
+      "expected_outer_left": {
+        "x": 0,
+        "y": 38,
+        "w": 960.0,
+        "h": 1205
+      },
+      "expected_outer_right": {
+        "x": 960.0,
+        "y": 38,
+        "w": 960.0,
+        "h": 1205
+      },
+      "topology": {
+        "displays": [
+          {
+            "id": 1,
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "w": 1920,
+              "h": 1243
+            },
+            "usable": {
+              "x": 0,
+              "y": 38,
+              "w": 1920,
+              "h": 1205
+            }
+          }
+        ],
+        "gap": 0,
+        "outer_gap": 0
+      },
+      "arrangement": {
+        "segments": [
+          {
+            "axis": "v",
+            "coord": 960,
+            "lo": 38,
+            "hi": 1243,
+            "display_id": 1
+          }
+        ],
+        "bindings": {
+          "1:0:0": {
+            "window_id": 1
+          },
+          "1:1:0": {
+            "window_id": 2
+          }
+        },
+        "off_top": []
+      }
+    },
+    {
+      "width": 1,
+      "expected_left": {
+        "x": 1,
+        "y": 39,
+        "w": 958.5,
+        "h": 1203
+      },
+      "expected_right": {
+        "x": 960.5,
+        "y": 39,
+        "w": 958.5,
+        "h": 1203
+      },
+      "expected_outer_left": {
+        "x": 0,
+        "y": 38,
+        "w": 960.5,
+        "h": 1205
+      },
+      "expected_outer_right": {
+        "x": 959.5,
+        "y": 38,
+        "w": 960.5,
+        "h": 1205
+      },
+      "topology": {
+        "displays": [
+          {
+            "id": 1,
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "w": 1920,
+              "h": 1243
+            },
+            "usable": {
+              "x": 0,
+              "y": 38,
+              "w": 1920,
+              "h": 1205
+            }
+          }
+        ],
+        "gap": 1,
+        "outer_gap": 1
+      },
+      "arrangement": {
+        "segments": [
+          {
+            "axis": "v",
+            "coord": 960,
+            "lo": 39,
+            "hi": 1242,
+            "display_id": 1
+          }
+        ],
+        "bindings": {
+          "1:0:0": {
+            "window_id": 1
+          },
+          "1:1:0": {
+            "window_id": 2
+          }
+        },
+        "off_top": []
+      }
+    },
+    {
+      "width": 3,
+      "expected_left": {
+        "x": 3,
+        "y": 41,
+        "w": 955.5,
+        "h": 1199
+      },
+      "expected_right": {
+        "x": 961.5,
+        "y": 41,
+        "w": 955.5,
+        "h": 1199
+      },
+      "expected_outer_left": {
+        "x": 0,
+        "y": 38,
+        "w": 961.5,
+        "h": 1205
+      },
+      "expected_outer_right": {
+        "x": 958.5,
+        "y": 38,
+        "w": 961.5,
+        "h": 1205
+      },
+      "topology": {
+        "displays": [
+          {
+            "id": 1,
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "w": 1920,
+              "h": 1243
+            },
+            "usable": {
+              "x": 0,
+              "y": 38,
+              "w": 1920,
+              "h": 1205
+            }
+          }
+        ],
+        "gap": 3,
+        "outer_gap": 3
+      },
+      "arrangement": {
+        "segments": [
+          {
+            "axis": "v",
+            "coord": 960,
+            "lo": 41,
+            "hi": 1240,
+            "display_id": 1
+          }
+        ],
+        "bindings": {
+          "1:0:0": {
+            "window_id": 1
+          },
+          "1:1:0": {
+            "window_id": 2
+          }
+        },
+        "off_top": []
+      }
+    },
+    {
+      "width": 8,
+      "expected_left": {
+        "x": 8,
+        "y": 46,
+        "w": 948.0,
+        "h": 1189
+      },
+      "expected_right": {
+        "x": 964.0,
+        "y": 46,
+        "w": 948.0,
+        "h": 1189
+      },
+      "expected_outer_left": {
+        "x": 0,
+        "y": 38,
+        "w": 964.0,
+        "h": 1205
+      },
+      "expected_outer_right": {
+        "x": 956.0,
+        "y": 38,
+        "w": 964.0,
+        "h": 1205
+      },
+      "topology": {
+        "displays": [
+          {
+            "id": 1,
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "w": 1920,
+              "h": 1243
+            },
+            "usable": {
+              "x": 0,
+              "y": 38,
+              "w": 1920,
+              "h": 1205
+            }
+          }
+        ],
+        "gap": 8,
+        "outer_gap": 8
+      },
+      "arrangement": {
+        "segments": [
+          {
+            "axis": "v",
+            "coord": 960,
+            "lo": 46,
+            "hi": 1235,
+            "display_id": 1
+          }
+        ],
+        "bindings": {
+          "1:0:0": {
+            "window_id": 1
+          },
+          "1:1:0": {
+            "window_id": 2
+          }
+        },
+        "off_top": []
+      }
+    },
+    {
+      "width": 16,
+      "expected_left": {
+        "x": 16,
+        "y": 54,
+        "w": 936.0,
+        "h": 1173
+      },
+      "expected_right": {
+        "x": 968.0,
+        "y": 54,
+        "w": 936.0,
+        "h": 1173
+      },
+      "expected_outer_left": {
+        "x": 0,
+        "y": 38,
+        "w": 968.0,
+        "h": 1205
+      },
+      "expected_outer_right": {
+        "x": 952.0,
+        "y": 38,
+        "w": 968.0,
+        "h": 1205
+      },
+      "topology": {
+        "displays": [
+          {
+            "id": 1,
+            "frame": {
+              "x": 0,
+              "y": 0,
+              "w": 1920,
+              "h": 1243
+            },
+            "usable": {
+              "x": 0,
+              "y": 38,
+              "w": 1920,
+              "h": 1205
+            }
+          }
+        ],
+        "gap": 16,
+        "outer_gap": 16
+      },
+      "arrangement": {
+        "segments": [
+          {
+            "axis": "v",
+            "coord": 960,
+            "lo": 54,
+            "hi": 1227,
+            "display_id": 1
+          }
+        ],
+        "bindings": {
+          "1:0:0": {
+            "window_id": 1
+          },
+          "1:1:0": {
+            "window_id": 2
+          }
+        },
+        "off_top": []
+      }
+    }
+  ],
+  "screens": [
+    {
+      "name": "bottom-dock",
+      "screen": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1243
+      },
+      "visible": {
+        "x": 0,
+        "y": 73,
+        "w": 1920,
+        "h": 1132
+      },
+      "safe_top": 0,
+      "primary_height": 1243,
+      "expected": {
+        "x": 0,
+        "y": 38,
+        "w": 1920,
+        "h": 1205
+      }
+    },
+    {
+      "name": "left-dock",
+      "screen": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1243
+      },
+      "visible": {
+        "x": 70,
+        "y": 0,
+        "w": 1850,
+        "h": 1205
+      },
+      "safe_top": 0,
+      "primary_height": 1243,
+      "expected": {
+        "x": 0,
+        "y": 38,
+        "w": 1920,
+        "h": 1205
+      }
+    },
+    {
+      "name": "notch",
+      "screen": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1243
+      },
+      "visible": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1243
+      },
+      "safe_top": 38,
+      "primary_height": 1243,
+      "expected": {
+        "x": 0,
+        "y": 38,
+        "w": 1920,
+        "h": 1205
+      }
+    },
+    {
+      "name": "below-primary",
+      "screen": {
+        "x": -1600,
+        "y": -900,
+        "w": 1600,
+        "h": 900
+      },
+      "visible": {
+        "x": -1600,
+        "y": -840,
+        "w": 1600,
+        "h": 816
+      },
+      "safe_top": 0,
+      "primary_height": 1243,
+      "expected": {
+        "x": -1600,
+        "y": 1267,
+        "w": 1600,
+        "h": 876
+      }
+    }
+  ],
+  "nested": {
+    "topology": {
+      "displays": [
+        {
+          "id": 1,
+          "frame": {
+            "x": 0,
+            "y": 0,
+            "w": 1920,
+            "h": 1243
+          },
+          "usable": {
+            "x": 0,
+            "y": 38,
+            "w": 1920,
+            "h": 1205
+          }
+        }
+      ],
+      "gap": 8,
+      "outer_gap": 8
+    },
+    "arrangement": {
+      "segments": [
+        {
+          "axis": "v",
+          "coord": 960,
+          "lo": 46,
+          "hi": 1235,
+          "display_id": 1
+        }
+      ],
+      "bindings": {
+        "1:0:0": {
+          "nested": {
+            "segments": [
+              {
+                "axis": "h",
+                "coord": 640.5,
+                "lo": 8,
+                "hi": 960
+              }
+            ],
+            "bindings": {
+              "0:0:0": {
+                "window_id": 1
+              },
+              "0:0:1": {
+                "window_id": 3
+              }
+            },
+            "off_top": []
+          }
+        },
+        "1:1:0": {
+          "window_id": 2
+        }
+      },
+      "off_top": []
+    },
+    "expected_frames": {
+      "1": {
+        "x": 8,
+        "y": 46,
+        "w": 948,
+        "h": 590.5
+      },
+      "3": {
+        "x": 8,
+        "y": 644.5,
+        "w": 948,
+        "h": 590.5
+      },
+      "2": {
+        "x": 964,
+        "y": 46,
+        "w": 948,
+        "h": 1189
+      }
+    }
+  },
+  "resident_cases": [
+    {
+      "width": 0,
+      "expected_left": {
+        "x": 0,
+        "y": 30,
+        "w": 600,
+        "h": 770
+      },
+      "expected_right": {
+        "x": 600,
+        "y": 30,
+        "w": 600,
+        "h": 770
+      }
+    },
+    {
+      "width": 1,
+      "expected_left": {
+        "x": 1,
+        "y": 31,
+        "w": 599,
+        "h": 768
+      },
+      "expected_right": {
+        "x": 601,
+        "y": 31,
+        "w": 598,
+        "h": 768
+      }
+    },
+    {
+      "width": 3,
+      "expected_left": {
+        "x": 3,
+        "y": 33,
+        "w": 596,
+        "h": 764
+      },
+      "expected_right": {
+        "x": 602,
+        "y": 33,
+        "w": 595,
+        "h": 764
+      }
+    },
+    {
+      "width": 8,
+      "expected_left": {
+        "x": 8,
+        "y": 38,
+        "w": 588,
+        "h": 754
+      },
+      "expected_right": {
+        "x": 604,
+        "y": 38,
+        "w": 588,
+        "h": 754
+      }
+    },
+    {
+      "width": 16,
+      "expected_left": {
+        "x": 16,
+        "y": 46,
+        "w": 576,
+        "h": 738
+      },
+      "expected_right": {
+        "x": 608,
+        "y": 46,
+        "w": 576,
+        "h": 738
+      }
+    }
+  ],
+  "edge_rounding": {
+    "frame": {
+      "x": 8,
+      "y": 644.5,
+      "w": 948,
+      "h": 590.5
+    },
+    "expected": {
+      "x": 8,
+      "y": 645,
+      "w": 948,
+      "h": 590
+    },
+    "border_width": 8,
+    "expected_bottom": 1243
+  },
+  "negative_edge_rounding": {
+    "left": {
+      "x": -100,
+      "y": 0,
+      "w": 99.5,
+      "h": 100
+    },
+    "right": {
+      "x": 0.5,
+      "y": 0,
+      "w": 99.5,
+      "h": 100
+    },
+    "expected_left": {
+      "x": -100,
+      "y": 0,
+      "w": 100,
+      "h": 100
+    },
+    "expected_right": {
+      "x": 1,
+      "y": 0,
+      "w": 99,
+      "h": 100
+    },
+    "expected_gap": 1
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "generation": 7,
+  "request_id": "native-startup-seed-order",
+  "seed": {
+    "event": "world_seed",
+    "observation": {"world_complete": true, "reason": "world_seed"},
+    "observer_generation": 1,
+    "windows": [
+      {"window_id": 101, "pid": 71, "window_generation": 1, "space_key": "space:fixture", "display_id": "display:fixture", "eligible": true, "managed": true, "space_visible": true, "space_enabled": true, "space_identity_available": true, "role": "AXWindow", "subrole": "AXStandardWindow", "movable": true, "resizable": true, "minimized": false, "destroyed": false},
+      {"window_id": 102, "pid": 72, "window_generation": 2, "space_key": "space:fixture", "display_id": "display:fixture", "eligible": true, "managed": true, "space_visible": true, "space_enabled": true, "space_identity_available": true, "role": "AXWindow", "subrole": "AXStandardWindow", "movable": true, "resizable": true, "minimized": false, "destroyed": false}
+    ]
+  },
+  "partial_seed": {"event": "world_seed", "observation": {"world_complete": false, "world_failure_code": "fixture_partial_capture"}},
+  "recovery_event": "explicit_recovery",
+  "starting_delta": {"event": "resident_starting", "resident_starting": true, "resident_running": false, "resident_status": "Starting"},
+  "initial_off": {"event": "global_stop", "management_enabled": false, "resident_running": false, "resident_status": "Stopped"}
+}

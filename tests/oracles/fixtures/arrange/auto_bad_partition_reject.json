@@ -1,0 +1,9 @@
+{
+  "note": "Registry trust-boundary reject (fidelity-review MINOR): a third-party optimizer's malformed partition (a 0 band) is rejected before lowering, ahead of the sum check — no silent window drop/dup. parts [3,0] sums to 3 (passes the sum check) but the 0 band is caught.",
+  "fn": "auto",
+  "topology": { "displays": [ { "id": 1, "frame": [0, 0, 1920, 1080] } ], "dead_zones": [] },
+  "store": {},
+  "did": "1", "partition": { "orient": "rows", "parts": [3, 0] }, "windows": [1, 2, 3],
+  "reason_has": "non-positive",
+  "expect": { "ok": false, "reason_has": true }
+}

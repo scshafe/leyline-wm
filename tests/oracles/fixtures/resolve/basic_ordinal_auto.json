@@ -1,0 +1,56 @@
+{
+  "note": "one app, one window, a descriptor with only bundle_id → claims the sole window by next-available ordinal (tier ordinal_auto). §7.",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "children": [
+          "a"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "binding": {
+          "bundle_id": "com.foo"
+        }
+      }
+    }
+  },
+  "windows": [
+    {
+      "window_id": 10,
+      "bundle_id": "com.foo",
+      "title": "Hi"
+    }
+  ],
+  "expect": {
+    "bound": [
+      {
+        "leaf_id": "a",
+        "tier": "ordinal_auto",
+        "window_id": 10
+      }
+    ],
+    "tree": {
+      "nodes": {
+        "a": {
+          "binding": {
+            "bundle_id": "com.foo"
+          },
+          "id": "a",
+          "window_id": 10
+        },
+        "r": {
+          "children": [
+            "a"
+          ],
+          "id": "r"
+        }
+      },
+      "root_id": "r"
+    },
+    "unmanaged": [],
+    "vacant": []
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "note": "Promotion-touch reject (v1): a store carrying promotions refuses the re-author — demote first.",
+  "fn": "grid",
+  "topology": { "displays": [ { "id": 1, "frame": [0, 0, 1920, 1080] } ], "dead_zones": [] },
+  "store": { "segments": [], "bindings": {}, "off_top": [], "promotions": [ { "coord_map": { "x": 0, "y": 0, "w": 10, "h": 10 } } ] },
+  "did": "1", "n": 2, "m": 2,
+  "windows": [101],
+  "reason_has": "demote first",
+  "expect": { "ok": false, "reason_has": true }
+}

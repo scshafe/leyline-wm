@@ -1,0 +1,14 @@
+{
+  "note": "W=6 -> 2x3 (rows [3,3]); score 0.405465 (NOT 0 — 2/3 distortion; 6 is not a perfect square).",
+  "w": 6,
+  "expect": {
+    "cols": 3,
+    "orient": "rows",
+    "parts": [
+      3,
+      3
+    ],
+    "rows": 2,
+    "score": 0.405465
+  }
+}

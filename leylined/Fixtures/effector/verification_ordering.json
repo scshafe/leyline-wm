@@ -1,0 +1,10 @@
+{
+  "receipt": 10,
+  "issued": 100,
+  "first_source": 130,
+  "second_source": 120,
+  "first_delivery": 140,
+  "verification": 150,
+  "ack_verification": 170,
+  "future_source": 160
+}

@@ -1,0 +1,12 @@
+{
+  "note": "Stale floor self-heal: recorded w:500 but the window now sits AT a 400w target (it really can go to 400) → lower w to 400. Height 300 recorded, window not below it → preserved. Monotone toward truth.",
+  "fn": "learn",
+  "targets": {
+    "6389": { "window_id": 6389, "presented": true, "frame": { "x": 0, "y": 0, "w": 400, "h": 600 } }
+  },
+  "observed": [
+    { "window_id": 6389, "bundle_id": "com.google.Chrome", "frame": { "x": 0, "y": 0, "w": 400, "h": 600 } }
+  ],
+  "store": { "com.google.Chrome": { "w": 500, "h": 300 } },
+  "expect": { "com.google.Chrome": { "w": 400, "h": 300 } }
+}

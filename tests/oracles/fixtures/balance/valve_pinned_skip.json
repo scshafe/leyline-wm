@@ -1,0 +1,97 @@
+{
+  "note": "8.3 I4 exemption: a ratio_source:pinned row, infeasible (600+600>1000) → valve does NOT fold it (the user's hand-set split wins, falls to the bump like bsp). Tree unchanged, facts []. F1 stays RED here — the one documented exemption.",
+  "fn": "valve",
+  "focused_leaf": null,
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": {
+        "id": "r",
+        "mode": "row",
+        "ratio_source": "pinned",
+        "ratios": [
+          1,
+          1
+        ],
+        "children": [
+          "a",
+          "b"
+        ]
+      },
+      "a": {
+        "id": "a",
+        "window_id": 1,
+        "min_size": {
+          "w": 600,
+          "h": 100
+        }
+      },
+      "b": {
+        "id": "b",
+        "window_id": 2,
+        "min_size": {
+          "w": 600,
+          "h": 100
+        }
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ],
+        "usable": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "config": {},
+  "expect": {
+    "facts": [],
+    "tree": {
+      "nodes": {
+        "a": {
+          "id": "a",
+          "min_size": {
+            "h": 100,
+            "w": 600
+          },
+          "window_id": 1
+        },
+        "b": {
+          "id": "b",
+          "min_size": {
+            "h": 100,
+            "w": 600
+          },
+          "window_id": 2
+        },
+        "r": {
+          "children": [
+            "a",
+            "b"
+          ],
+          "id": "r",
+          "mode": "row",
+          "ratio_source": "pinned",
+          "ratios": [
+            1,
+            1
+          ]
+        }
+      },
+      "root_id": "r"
+    }
+  }
+}

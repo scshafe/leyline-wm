@@ -1,0 +1,28 @@
+{
+  "note": "swap_leaf(a, x) where a is its stack-parent S's `top`. The `top` pointer must FOLLOW the trade: after the swap, x sits in S (presented) and a moves out to the plain slot — so S.top flips a→x. Without the top fix-up the stack would present nothing (dangling top).",
+  "tree": {
+    "root_id": "r",
+    "nodes": {
+      "r": { "id": "r", "mode": "row", "children": ["S", "x"] },
+      "S": { "id": "S", "mode": "stack", "top": "a", "children": ["a", "c"] },
+      "a": { "id": "a", "window_id": 1 },
+      "c": { "id": "c", "window_id": 3 },
+      "x": { "id": "x", "window_id": 9 }
+    }
+  },
+  "op": "swap_leaf",
+  "args": { "a": "a", "b": "x" },
+  "expect": {
+    "ok": true,
+    "tree": {
+      "root_id": "r",
+      "nodes": {
+        "r": { "id": "r", "mode": "row", "children": ["S", "a"] },
+        "S": { "id": "S", "mode": "stack", "top": "x", "children": ["x", "c"] },
+        "a": { "id": "a", "window_id": 1 },
+        "c": { "id": "c", "window_id": 3 },
+        "x": { "id": "x", "window_id": 9 }
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "note": "WS-A tie-break #2 over THREE candidates: a 100px-wide full-height float strip overlaps all three left-anchored cells by exactly 100*200=20000 (equal overlap). Cell areas differ (A 300x200=60000, B 450x200=90000, C 550x200=110000) → the BIGGEST (C, window 33) wins; the middle cell B must NOT win. The existing tie_overlap_bigger_cell fixture only proves bigger-cell over TWO; this proves the rule is a true ordering over >2, catching a max-vs-min or 'first-bigger' regression.",
+  "arr": {
+    "bindings": {
+      "1:0:0": {"window_id": 11, "presented": true, "frame": {"x": 1000, "y": 0, "w": 300, "h": 200}},
+      "1:0:1": {"window_id": 22, "presented": true, "frame": {"x": 1000, "y": 300, "w": 450, "h": 200}},
+      "1:0:2": {"window_id": 33, "presented": true, "frame": {"x": 1000, "y": 600, "w": 550, "h": 200}}
+    }
+  },
+  "float_frame": {"x": 1000, "y": 0, "w": 100, "h": 900},
+  "expect": {"cell_key": "1:0:2", "window_id": 33, "frame": {"x": 1000, "y": 600, "w": 550, "h": 200}}
+}

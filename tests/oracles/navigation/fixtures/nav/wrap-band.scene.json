@@ -1,0 +1,13 @@
+{
+  "_doc": "Three displays in a row. Source on the leftmost; the only other window sits on the rightmost. The east-edge band (depth = max display w = 1512) of the aggregate surface lies on display 3. East and west both reach window 300 — east as direct (positive overlap and side-of-source), west as wrap (no window west; wraps into the east-edge band).",
+  "displays": [
+    { "index": 1, "frame": { "x":    0, "y": 0, "w": 1512, "h": 982 } },
+    { "index": 2, "frame": { "x": 1512, "y": 0, "w": 1280, "h": 982 } },
+    { "index": 3, "frame": { "x": 2792, "y": 0, "w": 1280, "h": 982 } }
+  ],
+  "windows": [
+    { "id": 100, "display": 1, "frame": { "x":  100, "y": 100, "w": 600, "h": 400 }, "app": "Source"     },
+    { "id": 300, "display": 3, "frame": { "x": 2900, "y": 200, "w": 800, "h": 600 }, "app": "WrapTarget" }
+  ],
+  "source": { "window_id": 100 }
+}

@@ -1,0 +1,11 @@
+{
+  "observer_epoch": "fixture-continuous-world-source",
+  "receipt_uptime_ns": 1000,
+  "windows": [
+    {"window_id": 101, "pid": 111, "frame": {"x": 0, "y": 30, "w": 596, "h": 770}, "display_id": "display-a", "space_key": "space:uuid:fixture-a"},
+    {"window_id": 103, "pid": 111, "frame": {"x": 600, "y": 30, "w": 596, "h": 770}, "display_id": "display-a", "space_key": "space:uuid:fixture-a"}
+  ],
+  "topology": {"displays": [{"id": 1, "frame": {"x": 0, "y": 0, "w": 1200, "h": 800}, "usable": {"x": 0, "y": 30, "w": 1200, "h": 770}}], "gap": 8, "outer_gap": 0},
+  "context": {"display_id": 1, "space_uuid": "fixture-a", "space_key": "space:uuid:fixture-a", "space_enabled": true, "space_visible": true, "space_identity_available": true},
+  "manual_divider": 640
+}

@@ -1,0 +1,78 @@
+{
+  "note": "GAP (the shared-gutter invariant): two windows row-split in a 1200x800 mount, gap:8. The gutter between them is ONE gap-width, not two: w:1 ends at x=596, w:2 starts at x=604 (8px between), and each is 8px from the outer edges. avail = 1184 - 8 = 1176, split 588/588. This is the core 'never doubled' property the whole feature rests on.",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "w:1",
+          "w:2"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1200,
+          800
+        ]
+      }
+    ],
+    "gap": 8
+  },
+  "expect": {
+    "contention": [],
+    "dead_zone_hits": [],
+    "leaves": {
+      "w:1": {
+        "conformance": "conforming",
+        "desired_frame": {
+          "h": 784,
+          "w": 588,
+          "x": 8,
+          "y": 8
+        },
+        "overflow": false,
+        "presented": true,
+        "vacant": false
+      },
+      "w:2": {
+        "conformance": "conforming",
+        "desired_frame": {
+          "h": 784,
+          "w": 588,
+          "x": 604,
+          "y": 8
+        },
+        "overflow": false,
+        "presented": true,
+        "vacant": false
+      }
+    },
+    "vacant": []
+  }
+}

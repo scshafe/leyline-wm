@@ -1,0 +1,90 @@
+{
+  "fn": "move_check",
+  "note": "S17.1 (the anchored-endpoint RIDE + a near-miss). A T-junction: v@600 full-span (id:1, the dragged line) + h@500 spanning x in [0,600] (id:2, its HI endpoint anchored ON v@600) + h@300 full-span (id:3, a near-miss X-crossing: its span straddles x=600 in its INTERIOR, neither endpoint at 600). Drag v@600 by delta=-100. ASSERTS: v.coord 600->500 (translate); h@500.hi RIDES 600->500 as a SPAN edit (M.coord=500 FROZEN — id:2 ends up {h,500,lo:0,hi:500}); h@300 (id:3) is NOT ridden (its lo=0/hi=1000 endpoints are not at 600 — the perpendicular-axis selection + the lo/hi TOL test reject an interior crossing). The partition stays valid_rec:true; one BFS layer; |segments| unchanged (INV). perp_endpoints_after pins both h endpoints post-move.",
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 0
+  },
+  "arr": {
+    "segments": [
+      {
+        "axis": "v",
+        "coord": 600,
+        "lo": 0,
+        "hi": 1000,
+        "id": 1
+      },
+      {
+        "axis": "h",
+        "coord": 500,
+        "lo": 0,
+        "hi": 600,
+        "id": 2
+      },
+      {
+        "axis": "h",
+        "coord": 300,
+        "lo": 0,
+        "hi": 1000,
+        "id": 3
+      }
+    ],
+    "bindings": {},
+    "off_top": []
+  },
+  "line_id": 1,
+  "delta": -100,
+  "expect": {
+    "coord_after": 500,
+    "ncells_after": 5,
+    "ncells_before": 5,
+    "ok": true,
+    "perp_endpoints_after": [
+      {
+        "hi": 500,
+        "id": 2,
+        "lo": 0
+      },
+      {
+        "hi": 1000,
+        "id": 3,
+        "lo": 0
+      }
+    ],
+    "segments_after": [
+      {
+        "axis": "v",
+        "coord": 500,
+        "hi": 1000,
+        "id": 1,
+        "lo": 0
+      },
+      {
+        "axis": "h",
+        "coord": 500,
+        "hi": 500,
+        "id": 2,
+        "lo": 0
+      },
+      {
+        "axis": "h",
+        "coord": 300,
+        "hi": 1000,
+        "id": 3,
+        "lo": 0
+      }
+    ],
+    "segments_len_eq": true,
+    "valid": true
+  }
+}

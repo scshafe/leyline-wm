@@ -1,0 +1,10 @@
+{
+  "note": "assign_display: a window in D1's menu-bar strip (y[10,50]) overlaps NO usable rect (D1 usable starts at y=57), so it falls back to max FRAME overlap -> D1.",
+  "fn": "assign_display",
+  "win": {"x": 100, "y": 10, "w": 800, "h": 40},
+  "displays": [
+    {"id": 1, "frame": {"x": 0, "y": 0, "w": 2880, "h": 1864}, "usable": {"x": 0, "y": 57, "w": 2880, "h": 1807}},
+    {"id": 3, "frame": {"x": 1930, "y": -1440, "w": 3440, "h": 1440}, "usable": {"x": 1930, "y": -1440, "w": 3440, "h": 1440}}
+  ],
+  "expect": 1
+}

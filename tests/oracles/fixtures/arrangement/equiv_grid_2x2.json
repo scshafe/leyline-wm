@@ -1,0 +1,98 @@
+{
+  "note": "SET-EQUALITY proof (gap=8): arrangement::cells(from_floorplan(t;topo)) gutter-bridged == floorplan's cell rect set. The two interior gridlines sit at the gutter CENTRELINES (v@500,h@500); cells abut there edge-to-edge, the equiv oracle re-applies the gap/2 inset -> the {8,8,488,488}x4 set floorplan computes. The gap=8 BRACKET of the covered-vs-centreline open question (equiv_gapless_grid is the gap=0 bracket); both green under ONE rule settles it. SET equality (rect set sorted [x,y,w,h]), NOT order/leaf-keyed: arrangement cells have NO leaf_id (identity is S2).",
+  "fn": "equiv",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "d:1"
+        ]
+      },
+      "d:1": {
+        "id": "d:1",
+        "mode": "row",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "children": [
+          "c1",
+          "c2"
+        ]
+      },
+      "c1": {
+        "id": "c1",
+        "mode": "col",
+        "children": [
+          "w:1",
+          "w:3"
+        ]
+      },
+      "c2": {
+        "id": "c2",
+        "mode": "col",
+        "children": [
+          "w:2",
+          "w:4"
+        ]
+      },
+      "w:1": {
+        "id": "w:1",
+        "window_id": 1
+      },
+      "w:3": {
+        "id": "w:3",
+        "window_id": 3
+      },
+      "w:2": {
+        "id": "w:2",
+        "window_id": 2
+      },
+      "w:4": {
+        "id": "w:4",
+        "window_id": 4
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      }
+    ],
+    "gap": 8
+  },
+  "expect": [
+    {
+      "x": 8,
+      "y": 8,
+      "w": 488,
+      "h": 488
+    },
+    {
+      "x": 8,
+      "y": 504,
+      "w": 488,
+      "h": 488
+    },
+    {
+      "x": 504,
+      "y": 8,
+      "w": 488,
+      "h": 488
+    },
+    {
+      "x": 504,
+      "y": 504,
+      "w": 488,
+      "h": 488
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "note": "Stage 2 Step 6 (config knob): the per-strategy reequalize_policy threaded into sync as $config. Scene: a steady-state mount d:1 → [w:601, sub]; sub(col) carries an explicit computed ratios [0.6,0.4]; all three windows live + bound (no prune, no adopt). With reequalize_policy:\"off\", _reequalize is a no-op, so sub's hand-shaped ratios SURVIVE the settle (full sticky). Contrast the default (\"always\", the 5-arg form + every other sync fixture) which strips them — see sync-facts-config-reequalize-{off,always}.json for the matching fact-stream contrast. Proves a config value flips behavior; the empty/absent config stays byte-identical to legacy (all other sync-*.json).",
+  "fn": "sync",
+  "config": { "reequalize_policy": "off" },
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": { "id": "root", "mode": "region", "children": ["d:1"] },
+      "d:1": { "id": "d:1", "mode": "row", "frame_source": "pinned", "display_id": 1, "children": ["w:601", "sub"] },
+      "sub": { "id": "sub", "mode": "col", "ratios": [0.6, 0.4], "children": ["w:602", "w:603"] },
+      "w:601": { "id": "w:601", "window_id": 601 },
+      "w:602": { "id": "w:602", "window_id": 602 },
+      "w:603": { "id": "w:603", "window_id": 603 }
+    }
+  },
+  "observed": [
+    { "window_id": 601, "app": "A", "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true, "minimized": false, "frame": [0, 0, 960, 1080] },
+    { "window_id": 602, "app": "B", "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true, "minimized": false, "frame": [960, 0, 960, 540] },
+    { "window_id": 603, "app": "C", "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true, "minimized": false, "frame": [960, 540, 960, 540] }
+  ],
+  "focused_leaf": null,
+  "topology": { "displays": [{ "id": 1, "frame": [0, 0, 1920, 1080] }], "dead_zones": [] },
+  "expect": {
+    "root_id": "root",
+    "nodes": {
+      "root": { "id": "root", "mode": "region", "children": ["d:1"] },
+      "d:1": { "id": "d:1", "mode": "row", "frame_source": "pinned", "display_id": 1, "children": ["w:601", "sub"] },
+      "sub": { "id": "sub", "mode": "col", "ratios": [0.6, 0.4], "children": ["w:602", "w:603"] },
+      "w:601": { "id": "w:601", "window_id": 601 },
+      "w:602": { "id": "w:602", "window_id": 602 },
+      "w:603": { "id": "w:603", "window_id": 603 }
+    }
+  }
+}

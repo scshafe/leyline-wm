@@ -1,0 +1,26 @@
+{
+  "note": "S-P2 store_grid_roundtrip — a MIXED-AXIS grid persists the two-settle byte-lock (parcel/store-roundtrip.sh). The prior is a BSP grid: d:1 (row) splits into w:1 (left, full height) and a col-split n:1 (w:2 top / w:3 bottom). from_floorplan derives a MIXED-AXIS bag (a full-height v divider + a right-half h divider). settle-1 (cold, prior=tree) authors the grid store; settle-2 (native, prior=the grid STORE) re-derives the frames from the carried segments and must be BYTE-IDENTICAL — proving the native steady-state author (AR::bridge_arrangement_native) PERSISTS a grid where the cold _prior_tree flat reconstruction would FLATTEN it (a mixed-axis bag nulls _prior_tree_structured, the exact case B1 gates today). gap:8 exercises the gap/2 interior gutter through the native derivation. No expect oracle — the relation (settle-2 == settle-1) IS the oracle.",
+  "prior": {
+    "root_id": "root",
+    "nodes": {
+      "root": { "id": "root", "mode": "region", "children": ["d:1"] },
+      "d:1": { "id": "d:1", "mode": "row", "frame_source": "pinned", "display_id": 1, "children": ["w:1", "n:1"] },
+      "n:1": { "id": "n:1", "mode": "col", "children": ["w:2", "w:3"] },
+      "w:1": { "id": "w:1", "window_id": 1 },
+      "w:2": { "id": "w:2", "window_id": 2 },
+      "w:3": { "id": "w:3", "window_id": 3 }
+    }
+  },
+  "observed": [
+    { "window_id": 1, "frame": [0, 0, 956, 1064], "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true },
+    { "window_id": 2, "frame": [964, 0, 956, 528], "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true },
+    { "window_id": 3, "frame": [964, 536, 956, 528], "role": "AXWindow", "subrole": "AXStandardWindow", "resizable": true }
+  ],
+  "topology": {
+    "displays": [
+      { "id": 1, "frame": { "x": 0, "y": 0, "w": 1920, "h": 1080 }, "usable": { "x": 0, "y": 0, "w": 1920, "h": 1080 } }
+    ],
+    "dead_zones": [],
+    "gap": 8
+  }
+}

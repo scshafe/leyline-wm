@@ -1,0 +1,58 @@
+{
+  "note": "DRIFT GUARD for the shipped parcel/float-rules.json (loaded via rules_path, NOT embedded). Pins the AGGRESSIVE narrowed policy (Phase B, 2026-05-30) AND the load-bearing last-match-wins ordering of the surviving wm.surface.* pair. (1) A WezTerm 'wm.surface.notes-panel' window (id 1) must be MANAGED — the surface_notes_panel manage:on rule, declared AFTER the broad surface_transient manage:off, must win. (2) A sibling 'wm.surface.scratch' (id 2) floats (broad off rule only). (3) A plain Safari window (id 3) is managed (no rule). (4) A Calculator window (id 4), now that the preference 'calculator' rule was REMOVED in the aggressive narrowing, is resizable+standard so it now TILES → managed (the aggressive win — was float in the old policy). (5) A Raycast launcher window (id 5) still floats (the kept launcher-overlay rule). If anyone reorders the WezTerm rule pair, fat-fingers a regex, OR re-adds a preference float (e.g. calculator), this fixture goes red.",
+  "fn": "partition",
+  "rules_path": "float-rules.json",
+  "observed": [
+    {
+      "window_id": 1,
+      "app": "WezTerm",
+      "title": "wm.surface.notes-panel",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 2,
+      "app": "WezTerm",
+      "title": "wm.surface.scratch",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 3,
+      "app": "Safari",
+      "title": "Anthropic",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 4,
+      "app": "Calculator",
+      "title": "",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    },
+    {
+      "window_id": 5,
+      "app": "Raycast",
+      "title": "",
+      "role": "AXWindow",
+      "subrole": "AXStandardWindow",
+      "resizable": true
+    }
+  ],
+  "expect": {
+    "float": [
+      2,
+      5
+    ],
+    "managed": [
+      1,
+      3,
+      4
+    ]
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "note": "shared internal subtree presented on the SMALL display (width 1000) → p,q at 500 each. True reference; no contention (mB.top=soloB). §6.",
+  "tree": {
+    "root_id": "root",
+    "nodes": {
+      "root": {
+        "id": "root",
+        "mode": "region",
+        "children": [
+          "mA",
+          "mB"
+        ]
+      },
+      "mA": {
+        "id": "mA",
+        "frame_source": "pinned",
+        "display_id": 1,
+        "mode": "stack",
+        "children": [
+          "sharedPair",
+          "soloA"
+        ],
+        "top": "sharedPair"
+      },
+      "mB": {
+        "id": "mB",
+        "frame_source": "pinned",
+        "display_id": 2,
+        "mode": "stack",
+        "children": [
+          "sharedPair",
+          "soloB"
+        ],
+        "top": "soloB"
+      },
+      "sharedPair": {
+        "id": "sharedPair",
+        "mode": "row",
+        "children": [
+          "p",
+          "q"
+        ]
+      },
+      "p": {
+        "id": "p",
+        "window_id": 1,
+        "binding": {
+          "app": "P"
+        }
+      },
+      "q": {
+        "id": "q",
+        "window_id": 2,
+        "binding": {
+          "app": "Q"
+        }
+      },
+      "soloA": {
+        "id": "soloA",
+        "window_id": 3,
+        "binding": {
+          "app": "SA"
+        }
+      },
+      "soloB": {
+        "id": "soloB",
+        "window_id": 4,
+        "binding": {
+          "app": "SB"
+        }
+      }
+    }
+  },
+  "topology": {
+    "displays": [
+      {
+        "id": 1,
+        "frame": [
+          0,
+          0,
+          1000,
+          1000
+        ]
+      },
+      {
+        "id": 2,
+        "frame": [
+          1000,
+          0,
+          2000,
+          1000
+        ]
+      }
+    ]
+  },
+  "expect": {
+    "contention": [],
+    "dead_zone_hits": [],
+    "leaves": {
+      "p": {
+        "conformance": "conforming",
+        "desired_frame": {
+          "h": 1000,
+          "w": 500,
+          "x": 0,
+          "y": 0
+        },
+        "overflow": false,
+        "presented": true,
+        "vacant": false
+      },
+      "q": {
+        "conformance": "conforming",
+        "desired_frame": {
+          "h": 1000,
+          "w": 500,
+          "x": 500,
+          "y": 0
+        },
+        "overflow": false,
+        "presented": true,
+        "vacant": false
+      },
+      "soloA": {
+        "conformance": "conforming",
+        "desired_frame": null,
+        "overflow": false,
+        "presented": false,
+        "vacant": false
+      },
+      "soloB": {
+        "conformance": "conforming",
+        "desired_frame": {
+          "h": 1000,
+          "w": 2000,
+          "x": 1000,
+          "y": 0
+        },
+        "overflow": false,
+        "presented": true,
+        "vacant": false
+      }
+    },
+    "vacant": []
+  }
+}

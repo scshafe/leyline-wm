@@ -1,0 +1,70 @@
+{
+  "note": "incident (the 2-subscriber case): a T-junction stem — v@1200 full-height + h@900 LEFT-ONLY [0,1200]. The partial-span h line is touched by EXACTLY the two LEFT cells (top-left, bottom-left); the full-height RIGHT cell does NOT subscribe (its faces are nowhere near coord 900, and its x-extent does not overlap the line's span [0,1200] anyway). Matches the prototype's incident(Hl) -> ['A','C']. The genuine 2-subscriber case (vs the full-grid line's 4), proving incident keys off BOTH a face match AND a span overlap. HAND-REVIEWED expect = the 2 left cell frames.",
+  "fn": "incident",
+  "arr": [
+    {
+      "axis": "v",
+      "coord": 1200,
+      "lo": 0,
+      "hi": 1800
+    },
+    {
+      "axis": "h",
+      "coord": 900,
+      "lo": 0,
+      "hi": 1200
+    }
+  ],
+  "canvas": {
+    "x": 0,
+    "y": 0,
+    "w": 2880,
+    "h": 1800
+  },
+  "line": {
+    "axis": "h",
+    "coord": 900,
+    "lo": 0,
+    "hi": 1200
+  },
+  "expect": [
+    {
+      "atoms": [
+        [
+          0,
+          0
+        ]
+      ],
+      "filled": true,
+      "frame": {
+        "h": 900,
+        "w": 1200,
+        "x": 0,
+        "y": 0
+      },
+      "i0": 0,
+      "i1": 0,
+      "j0": 0,
+      "j1": 0
+    },
+    {
+      "atoms": [
+        [
+          0,
+          1
+        ]
+      ],
+      "filled": true,
+      "frame": {
+        "h": 900,
+        "w": 1200,
+        "x": 0,
+        "y": 900
+      },
+      "i0": 0,
+      "i1": 0,
+      "j0": 1,
+      "j1": 1
+    }
+  ]
+}
