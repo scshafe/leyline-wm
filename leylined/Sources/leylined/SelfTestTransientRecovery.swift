@@ -14,6 +14,7 @@ private final class RecoveryFixtureOperations: @unchecked Sendable {
     func fireTimer() { lock.lock(); let item = timers.isEmpty ? nil : timers.removeFirst(); lock.unlock(); item?.1() }
     func runOne() { lock.lock(); let item = work.isEmpty ? nil : work.removeFirst(); lock.unlock(); item?() }
     var timerCount: Int { lock.lock(); defer { lock.unlock() }; return timers.count }
+    var pendingDelays: [UInt64] { lock.lock(); defer { lock.unlock() }; return timers.map(\.0) }
 }
 private final class RecoveryFixtureState: @unchecked Sendable {
     private let lock = NSLock()
@@ -42,11 +43,13 @@ func runProjectionTransientRecoveryScenarios(test: inout SelfTest) {
           let codes = fixture.at(path: "transient_codes")?.arrayValue?.compactMap(\.stringValue) else {
         test.check(false, "transient-recovery/fixture-load"); return
     }
-    test.check(fixture.at(path: "scenarios")?.arrayValue?.count == 8 && codes.count == 5
+    test.check(fixture.at(path: "scenarios")?.arrayValue?.count == 11 && codes.count == 6
         && codes.allSatisfy(ProjectionTransientRecovery.isTransient)
         && !ProjectionTransientRecovery.isTransient(fixture.requiredString("nontransient_code"))
-        && fixture.at(path: "delay_milliseconds")?.intValue == Int64(ProjectionTransientRecovery.delayMilliseconds),
-        "transient-recovery/nonempty-eight-scenario-fixture-with-explicit-cannotComplete-and-one-hundred-ms-budget")
+        && fixture.at(path: "delay_milliseconds")?.intValue == Int64(ProjectionTransientRecovery.delayMilliseconds)
+        && fixture.at(path: "delays_milliseconds")?.arrayValue?.compactMap(\.intValue).map(UInt64.init)
+            == ProjectionTransientRecovery.delaysMilliseconds,
+        "transient-recovery/eleven-scenario-fixture-with-explicit-cannotComplete-and-finite-backoff-budget")
     let operations = RecoveryFixtureOperations(), state = RecoveryFixtureState(), observer = FakeAccessibilityObserver()
     let recovery = ProjectionTransientRecovery(execute: { operations.enqueue($0) }, schedule: { operations.schedule($0, $1) })
     let feed = ProjectionInputFeed(observer: observer, captureTargeted: { state.capture($0) }, executeOnObservationLane: { operations.enqueue($0) },
@@ -69,21 +72,42 @@ func runProjectionTransientRecoveryScenarios(test: inout SelfTest) {
     test.check(operations.timerCount == 0 && recovery.snapshot.at(path: "attempt_count")?.intValue == 1,
         "transient-recovery/failure-after-attempt-cannot-self-rearm-or-create-infinite-loop")
     feed.applicationActivated(app)
+    let backoff = ProjectionTransientRecovery.delaysMilliseconds
+    test.check(operations.pendingDelays == [backoff[0]], "transient-recovery/distinct-external-activation-rearms-at-the-first-delay")
     operations.fireTimer(); operations.runOne()
-    test.check(recovery.snapshot.at(path: "attempt_count")?.intValue == 2 && operations.timerCount == 0
+    test.check(recovery.snapshot.at(path: "attempt_count")?.intValue == 2 && operations.pendingDelays == [backoff[1]]
         && state.latest?["observation"]?.at(path: "world_recovered")?.boolValue == false && state.latest?["focus"] == .null,
-        "transient-recovery/distinct-external-activation-rearms-once-and-failed-attempt-stays-unavailable")
+        "transient-recovery/failed-attempt-stays-unavailable-and-claims-the-next-fixed-delay")
+    operations.fireTimer(); operations.runOne()
+    test.check(recovery.snapshot.at(path: "attempt_count")?.intValue == 3 && operations.pendingDelays == [backoff[2]],
+        "transient-recovery/each-failed-attempt-claims-only-the-following-delay")
+    operations.fireTimer(); operations.runOne()
+    test.check(recovery.snapshot.at(path: "attempt_count")?.intValue == 4 && operations.timerCount == 0
+        && recovery.snapshot.at(path: "phase")?.stringValue == "exhausted"
+        && recovery.snapshot.at(path: "scheduled_count")?.intValue == 4
+        && state.latest?["observation"]?.at(path: "world_recovered")?.boolValue == false,
+        "transient-recovery/finite-backoff-exhausts-without-self-rearming-or-an-infinite-loop")
+    // A launching application answers -25204 until it is ready; nothing announces readiness.
+    feed.applicationActivated(app)
+    operations.fireTimer(); operations.runOne()
+    state.isFailing = false
+    operations.fireTimer(); operations.runOne()
+    test.check(recovery.snapshot.at(path: "attempt_count")?.intValue == 6 && operations.timerCount == 0
+        && state.latest?["observation"]?.at(path: "world_recovered")?.boolValue == true
+        && state.latest?["transient_recovery_first_failure"]?.stringValue == codes[2],
+        "transient-recovery/application-that-answers-on-a-later-delay-recovers-without-new-input")
+    state.isFailing = true
     feed.applicationActivated(app); let before = state.count
     operations.fireTimer()
     feed.applicationActivated(app)
     operations.runOne()
-    test.check(state.count == before + 1 && recovery.snapshot.at(path: "attempt_count")?.intValue == 2,
+    test.check(state.count == before + 1 && recovery.snapshot.at(path: "attempt_count")?.intValue == 6,
         "transient-recovery/stale-queued-observer-generation-performs-no-capture-or-attach")
     operations.fireTimer(); state.sessionGeneration += 1; operations.runOne()
-    test.check(recovery.snapshot.at(path: "attempt_count")?.intValue == 2,
+    test.check(recovery.snapshot.at(path: "attempt_count")?.intValue == 6,
         "transient-recovery/session-change-invalidates-queued-recovery-before-external-read")
     feed.applicationActivated(app); operations.fireTimer(); state.observationEpoch += 1; operations.runOne()
-    test.check(recovery.snapshot.at(path: "attempt_count")?.intValue == 2,
+    test.check(recovery.snapshot.at(path: "attempt_count")?.intValue == 6,
         "transient-recovery/global-observation-epoch-change-invalidates-queued-recovery")
     feed.applicationActivated(app); let stopCount = state.count
     feed.stop(); operations.fireTimer(); operations.runOne()
@@ -97,10 +121,13 @@ func runProjectionTransientRecoveryScenarios(test: inout SelfTest) {
     _ = barrier.observeFailure(codes[0], context: context, isCurrent: { _ in true }, operation: { _, _ in
         barrier.invalidate()
         seen.observationEpoch = barrier.requiredObservationEpoch ?? 0
+        return (context, codes[0])
     })
     isolated.fireTimer(); isolated.runOne()
     test.check(seen.observationEpoch == 3 && barrier.requiredObservationEpoch == nil,
         "transient-recovery/blocked-capture-retains-original-publication-epoch-through-invalidation")
+    test.check(isolated.timerCount == 0 && barrier.snapshot.at(path: "phase")?.stringValue == "inactive",
+        "transient-recovery/attempt-failing-after-invalidation-claims-no-further-delay")
 }
 
 /// Boundary scenarios verify the whole-message reserve independently of AX IO.

@@ -6,8 +6,9 @@ extension Arrangement {
     // ── bridge_arrangement_native_adopt (S-P4) ───────────────────────────
     /// Insert arrivals with one canonical native author; unsafe batches return null atomically.
     /// Largest-first uses raw area/top/left/key order and a known-minimum feasible cut along the
-    /// split axis; a floor wider than the anchor's other side is left to the bridge's re-cut or
-    /// overlap. A newcomer with no feasible cut joins the anchor cell as a managed overload member.
+    /// split axis; floors the anchor cannot hold beside each other are cut at its middle and left
+    /// to the bridge's re-cut or overlap. Only a newcomer whose floor exceeds the display along
+    /// the split axis joins the anchor cell as a managed overload member.
     public static func bridgeArrangementNativeAdopt(store: JSONValue, newcomers: [Int64],
                                                     ndid: Int64, focused: JSONValue, topo: JSONValue,
                                                     newcomerMinimums: [Int64: JSONValue] = [:]) -> JSONValue {
@@ -44,11 +45,18 @@ extension Arrangement {
             let vertical = anchor.frame.w >= anchor.frame.h
             let displayCanvas = bags(parseSegs(result.at(path: "segments")), normalized)
                 .first(where: { $0.displayId == displayID })?.rect ?? anchor.canvas
-            let cut = feasibleCut(canvas: anchor.frame, vertical: vertical,
-                proposed: vertical ? anchor.frame.x + anchor.frame.w / 2 : anchor.frame.y + anchor.frame.h / 2,
-                lowMinimum: vertical ? oldMin.w : oldMin.h, highMinimum: vertical ? newMin.w : newMin.h,
-                lowPerpendicularMinimum: 0, highPerpendicularMinimum: 0,
-                gap: gap, ownerCanvas: displayCanvas)
+            let proposed = vertical ? anchor.frame.x + anchor.frame.w / 2 : anchor.frame.y + anchor.frame.h / 2
+            func cutAt(low: Double, high: Double) -> Double? {
+                feasibleCut(canvas: anchor.frame, vertical: vertical, proposed: proposed,
+                    lowMinimum: low, highMinimum: high, lowPerpendicularMinimum: 0, highPerpendicularMinimum: 0,
+                    gap: gap, ownerCanvas: displayCanvas)
+            }
+            // Floors the cell cannot hold side by side still split it at the middle: the bridge's
+            // re-cut moves neighbouring lines, else the newcomer overlaps its split sibling.
+            // Only a floor wider than the display along the split axis stacks with the anchor.
+            let cut = cutAt(low: vertical ? oldMin.w : oldMin.h, high: vertical ? newMin.w : newMin.h)
+                ?? (fits(vertical ? newMin.w : newMin.h, in: vertical ? displayCanvas.w : displayCanvas.h)
+                    ? cutAt(low: 0, high: 0) : nil)
             if let cut {
                 let localDisplay: Int64 = anchor.ownerPath.isEmpty ? displayID : 0
                 let local = anchor.ownerPath.isEmpty ? topo : localTopology(canvas: anchor.canvas, displayID: 0, gap: gap)

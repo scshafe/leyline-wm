@@ -235,14 +235,16 @@ struct LiveTargetedProjectionWindowReader: TargetedProjectionWindowReading {
             }
         }
         let observedIds = Set(handles.map(\.windowId))
-        guard visibleIds.subtracting(observedIds.union(ignoredIds)).isEmpty else {
+        let unresolved = visibleIds.subtracting(observedIds.union(ignoredIds))
+        guard unresolved.isEmpty else {
             let missing = visible.filter { row in
                 guard let id = (row[kCGWindowNumber as String] as? NSNumber)?.int64Value else { return true }
                 return !observedIds.contains(id)
             }.map { row in
                 "id=\((row[kCGWindowNumber as String] as? NSNumber)?.int64Value ?? 0),pid=\((row[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value ?? 0)"
             }.joined(separator: ";")
-            return .failure(.init(code: "world_visible_window_set_incomplete:\(missing):observed=\(observedIds.sorted()):inventory=\(inventoryCounts.joined(separator: ","))"))
+            return .failure(.init(code: "world_visible_window_set_incomplete:\(missing):observed=\(observedIds.sorted()):inventory=\(inventoryCounts.joined(separator: ","))",
+                                  unresolvedWindowIds: unresolved))
         }
         return .success(.init(handles: handles, visibleWindowIds: visibleIds, ownerPids: owners, ignoredWindowIds: ignoredIds))
     }

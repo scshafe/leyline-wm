@@ -1,5 +1,18 @@
 # Release notes
 
+## 1.0.2
+
+Changes since 1.0.1:
+
+- Fixed: a new window whose minimum size did not fit beside the window it was
+  placed with was stacked on top of that window. It now splits the tile, and the
+  split lines move to make room, or it overlaps the window it was split from.
+  Only a window whose minimum is larger than the display still stacks.
+- Fixed: a newly launched window could stay untiled until another app was
+  activated. A short-lived launch window that Accessibility never lists no longer
+  leaves the world incomplete after it closes, and an app that does not yet answer
+  Accessibility right after launch is retried at 100, 500 and 2000 ms instead of once.
+
 ## 1.0.1
 
 Changes since 1.0.0:

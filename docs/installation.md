@@ -92,11 +92,11 @@ required. Developer checks also need Python 3.
 See [development](development.md) for isolated test profiles.
 
 Versioned source, universal app archives and checksums are available in the
-[GitHub release](https://github.com/scshafe/leyline-wm/releases/tag/v1.0.1).
+[GitHub release](https://github.com/scshafe/leyline-wm/releases/tag/v1.0.2).
 
 ## Signing and Gatekeeper
 
-The prepared 1.0.1 universal app is **ad-hoc signed and unnotarized**. Local
+The prepared 1.0.2 universal app is **ad-hoc signed and unnotarized**. Local
 Homebrew/source builds are also ad-hoc signed. These signatures do not establish
 Developer ID signing or notarization. Do not treat an archive
 checksum as Gatekeeper approval. Normal direct distribution uses a Developer ID

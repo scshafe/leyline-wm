@@ -83,6 +83,13 @@ func liveProjectionAXWindowIdentityResult(_ element: AXUIElement,
 
 struct ProjectionObservationFailure: Error, Equatable, Sendable {
     let code: String
+    /// Visible window-server IDs this failure could not classify. A window that
+    /// never had an AX row ends without an AX event, so its window-server
+    /// Space notification is the only evidence that can retire the failure.
+    let unresolvedWindowIds: Set<Int64>
+    init(code: String, unresolvedWindowIds: Set<Int64> = []) {
+        self.code = code; self.unresolvedWindowIds = unresolvedWindowIds
+    }
 }
 
 /// Reserve the whole fixed message allowance before every external call. A

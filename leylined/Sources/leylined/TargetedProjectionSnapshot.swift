@@ -609,9 +609,14 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
     /// The window server reports a window joining or leaving a Space, including a
     /// Mission Control move that raises no AX or workspace event. A cached window
     /// now on another Space owes a sweep; one on no Space was destroyed, which the
-    /// AX lifecycle reports.
+    /// AX lifecycle reports. While the world is incomplete, only a window the last
+    /// read could not classify owes one.
     func windowChangedSpace(windowId: Int64) -> Bool {
-        guard sessionAvailable(), trusted(), worldObservationActive, worldComplete,
+        guard sessionAvailable(), trusted() else { return false }
+        // A visible window the last read could not classify has no AX lifetime to
+        // end it. Its own join/leave notification is the one event that can.
+        if !worldComplete { return worldFailure?.unresolvedWindowIds.contains(windowId) == true }
+        guard worldObservationActive,
               let row = cachedWindows[windowId], row["space_identity_available"]?.boolValue == true else { return false }
         switch spaces.context(windowId: windowId) {
         case .success(let context):
@@ -685,8 +690,9 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
                     }
                 }
             }
-            guard inventory.visibleWindowIds.subtracting(Set(cachedWindows.keys)).isEmpty else {
-                worldFailure = worldFailure ?? .init(code: "world_visible_window_set_incomplete")
+            let unresolved = inventory.visibleWindowIds.subtracting(Set(cachedWindows.keys))
+            guard unresolved.isEmpty else {
+                worldFailure = worldFailure ?? .init(code: "world_visible_window_set_incomplete", unresolvedWindowIds: unresolved)
                 return
             }
             rebindWorldObserver(generation: request.observerGeneration)

@@ -1,6 +1,6 @@
 # Leyline
 
-Leyline 1.0.1 is a native macOS tiling window manager. One resident manages window
+Leyline 1.0.2 is a native macOS tiling window manager. One resident manages window
 layout, keyboard shortcuts, borders, move previews and menu controls. An independent
 Recovery app remains available when the resident is unresponsive.
 
@@ -27,7 +27,7 @@ ley install --start
 Source installation needs Swift 6 or newer from Xcode Command Line Tools. Homebrew
 builds Leyline and Recovery and supplies optional CLI diagnostic dependencies.
 
-Or download the universal app archive from the [1.0.1 release](https://github.com/scshafe/leyline-wm/releases/tag/v1.0.1).
+Or download the universal app archive from the [1.0.2 release](https://github.com/scshafe/leyline-wm/releases/tag/v1.0.2).
 It contains Apple silicon and Intel binaries. Extract it, then run:
 
 ```sh
@@ -41,11 +41,11 @@ to the resident in System Settings → Privacy & Security, then choose **Restart
 Leyline** from its menu. To start during installation, use `./install.sh --start`.
 
 A downloaded archive's signing/notarization status matters to macOS Gatekeeper.
-The prepared 1.0.1 app archive is ad-hoc signed and has not been notarized. Read
+The prepared 1.0.2 app archive is ad-hoc signed and has not been notarized. Read
 [installation](docs/installation.md) for permissions, updates and signing details.
 
 Both installation paths preserve existing preferences and journals. See the
-[release](https://github.com/scshafe/leyline-wm/releases/tag/v1.0.1) for checksums,
+[release](https://github.com/scshafe/leyline-wm/releases/tag/v1.0.2) for checksums,
 source and the app archive's actual signing status.
 
 ## Use

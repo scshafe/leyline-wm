@@ -1,12 +1,18 @@
 {
   "schema": "leyline/transient-recovery-fixture/v1",
   "delay_milliseconds": 100,
+  "delays_milliseconds": [
+    100,
+    500,
+    2000
+  ],
   "transient_codes": [
     "ax_inventory_read_failed:pid=12157:-25204",
     "ax_focus_registration_failed:-25204",
     "ax_window_identity_read_failed:-25204",
     "ax_inventory_classification_attribute_unavailable:AXRole:-25204:pid=12157",
-    "ax_read_deadline_exceeded"
+    "ax_read_deadline_exceeded",
+    "ax_window_created_registration_failed:-25204:pid=12157"
   ],
   "nontransient_code": "ax_notification_identity_mismatch",
   "scenarios": [
@@ -14,6 +20,9 @@
     "fresh_baseline_and_attach",
     "attempt_failure_does_not_rearm",
     "external_activation_rearms",
+    "failed_attempt_claims_next_delay",
+    "finite_backoff_exhausts",
+    "later_delay_recovers_launching_app",
     "stale_observer_generation",
     "stale_session_and_epoch",
     "stop_cancels_pending",

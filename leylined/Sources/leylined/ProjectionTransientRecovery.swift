@@ -9,8 +9,12 @@ private final class ProjectionRecoveryCancellation: @unchecked Sendable {
     func cancel() { item.cancel() }
 }
 
-/// @canonical projection_transient_recovery -- one fault-triggered baseline attempt per external epoch.
-/// The single 100ms backoff is recovery work, never an ordinary-state poll or a self-rearming retry.
+/// @canonical projection_transient_recovery -- a fixed, finite backoff of fault-triggered baseline
+/// attempts per external epoch. An application that has just launched answers AX with -25204 for
+/// several hundred milliseconds after NSWorkspace reports the launch, and nothing announces when it
+/// starts answering, so one 100ms attempt can land inside that window. Each attempt that still fails
+/// transiently schedules the next delay; the schedule never rearms itself and is never an
+/// ordinary-state poll. Only real external input (`rearm`) restores the budget.
 final class ProjectionTransientRecovery: @unchecked Sendable {
     struct Context: Equatable, Sendable {
         let observerGeneration: UInt64
@@ -19,7 +23,11 @@ final class ProjectionTransientRecovery: @unchecked Sendable {
     }
     typealias Execute = @Sendable (@escaping @Sendable () -> Void) -> Void
     typealias Schedule = @Sendable (UInt64, @escaping @Sendable () -> Void) -> (@Sendable () -> Void)
-    static let delayMilliseconds: UInt64 = 100
+    /// The attempt's own transient failure, and the context it left, when the fresh baseline failed again.
+    typealias FollowUp = (context: Context, failure: String)
+    typealias Operation = @Sendable (Context, String) -> FollowUp?
+    static let delaysMilliseconds: [UInt64] = [100, 500, 2_000]
+    static var delayMilliseconds: UInt64 { delaysMilliseconds[0] }
     private struct Pending {
         let serial: UInt64
         let context: Context
@@ -30,7 +38,8 @@ final class ProjectionTransientRecovery: @unchecked Sendable {
     private let execute: Execute
     private let schedule: Schedule
     private var armed: Context?
-    private var consumed = true
+    private var scheduledInEpoch = Int.max
+    private var consumed: Bool { scheduledInEpoch >= Self.delaysMilliseconds.count }
     private var pending: Pending?
     private var active: Context?
     private var serial: UInt64 = 0
@@ -56,10 +65,10 @@ final class ProjectionTransientRecovery: @unchecked Sendable {
     /// Real lifecycle/start/recovery input arms a fresh budget. An attempted recovery never calls this.
     func rearm(_ context: Context) {
         lock.lock(); let cancel = pending?.cancel; pending = nil
-        armed = context; consumed = false; firstFailure = nil; lock.unlock(); cancel?()
+        armed = context; scheduledInEpoch = 0; firstFailure = nil; lock.unlock(); cancel?()
     }
     func invalidate() {
-        lock.lock(); let cancel = pending?.cancel; pending = nil; armed = nil; consumed = true
+        lock.lock(); let cancel = pending?.cancel; pending = nil; armed = nil; scheduledInEpoch = Int.max
         lock.unlock(); cancel?()
     }
     var requiredObservationEpoch: UInt64? { lock.lock(); defer { lock.unlock() }; return active?.observationEpoch }
@@ -67,40 +76,61 @@ final class ProjectionTransientRecovery: @unchecked Sendable {
         lock.lock(); defer { lock.unlock() }
         let context = active ?? pending?.context ?? armed
         return .object(["phase": .string(active != nil ? "running" : pending != nil ? "pending" : armed == nil ? "inactive" : consumed ? "exhausted" : "armed"),
-            "delay_milliseconds": .int(Int64(Self.delayMilliseconds)), "scheduled_count": .int(schedules), "attempt_count": .int(attempts),
+            "delay_milliseconds": .int(Int64(Self.delayMilliseconds)),
+            "delays_milliseconds": .array(Self.delaysMilliseconds.map { .int(Int64($0)) }),
+            "scheduled_count": .int(schedules), "attempt_count": .int(attempts),
             "first_failure_code": firstFailure.map(JSONValue.string) ?? .null,
             "source_observer_generation": context.map { .int(Int64(clamping: $0.observerGeneration)) } ?? .null,
             "session_generation": context.map { .int(Int64(clamping: $0.sessionGeneration)) } ?? .null,
             "observation_epoch": context.map { .int(Int64(clamping: $0.observationEpoch)) } ?? .null])
     }
-    /// Consumes the epoch budget before scheduling. Duplicate faults and a failure returned by
-    /// operation cannot start another attempt; stale queued work performs no external observation.
+    /// Consumes one slot of the epoch budget before scheduling. Duplicate faults cannot start a
+    /// parallel attempt, and a failure an attempt publishes while running cannot rearm the budget;
+    /// it only returns as that attempt's follow-up. Stale queued work performs no external observation.
     @discardableResult
     func observeFailure(_ code: String, context: Context,
                         isCurrent: @escaping @Sendable (Context) -> Bool,
-                        operation: @escaping @Sendable (Context, String) -> Void) -> Bool {
+                        operation: @escaping Operation) -> Bool {
         guard Self.isTransient(code) else { return false }
         lock.lock()
         guard armed == context, !consumed, pending == nil, active == nil else { lock.unlock(); return false }
-        consumed = true; serial &+= 1; let ticket = serial
-        pending = Pending(serial: ticket, context: context, failure: code)
-        firstFailure = code; schedules += 1; lock.unlock()
-        let cancel = schedule(Self.delayMilliseconds) { [weak self] in
+        firstFailure = code
+        scheduleLocked(context: context, failure: code, isCurrent: isCurrent, operation: operation)
+        return true
+    }
+
+    /// Caller holds the lock; this releases it before handing work to the scheduler.
+    private func scheduleLocked(context: Context, failure: String,
+                                isCurrent: @escaping @Sendable (Context) -> Bool, operation: @escaping Operation) {
+        let delay = Self.delaysMilliseconds[scheduledInEpoch]
+        scheduledInEpoch += 1; serial &+= 1; let ticket = serial
+        pending = Pending(serial: ticket, context: context, failure: failure)
+        schedules += 1; lock.unlock()
+        let cancel = schedule(delay) { [weak self] in
             guard let self else { return }
             self.execute { [self] in
                 self.lock.lock()
                 guard let work = self.pending, work.serial == ticket, self.armed == work.context else { self.lock.unlock(); return }
                 self.pending = nil; self.active = work.context; self.lock.unlock()
+                var followUp: FollowUp?
                 if isCurrent(work.context) {
                     self.lock.lock(); self.attempts += 1; self.lock.unlock()
-                    operation(work.context, work.failure)
+                    followUp = operation(work.context, work.failure)
                 }
-                self.lock.lock(); self.active = nil; self.lock.unlock()
+                self.lock.lock(); self.active = nil
+                // The attempt replaced the observer generation without rearming. Its own
+                // transient failure may claim the next delay only while the epoch it serves
+                // is still armed; external input rearmed or invalidated it otherwise.
+                if let followUp, Self.isTransient(followUp.failure), self.armed == work.context, !self.consumed {
+                    self.armed = followUp.context
+                    self.scheduleLocked(context: followUp.context, failure: work.failure, isCurrent: isCurrent, operation: operation)
+                } else {
+                    self.lock.unlock()
+                }
             }
         }
         lock.lock()
         if pending?.serial == ticket { pending?.cancel = cancel; lock.unlock() }
         else { lock.unlock(); cancel() }
-        return true
     }
 }

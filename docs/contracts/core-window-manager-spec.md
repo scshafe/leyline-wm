@@ -1,6 +1,6 @@
 # Core window-manager contract
 
-Leyline 1.0.1 manages eligible tiled windows, borders, move previews and controls
+Leyline 1.0.2 manages eligible tiled windows, borders, move previews and controls
 in one native `leylined` resident. On-demand CLI clients and the independent
 Finder Recovery app do not own layout authority.
 
@@ -30,10 +30,12 @@ longer dimension. Equal choices are deterministic. Ordinary insertion preserves
 unrelated ownership and boundaries.
 
 Known application minimum sizes compose upward through nested owners. A common
-cut must satisfy the source and every surviving participant along the split axis;
-a floor wider than the cell's other side is left to the re-cut or overlap below. If
-automatic adoption cannot fit another independent tile, an overload leaf retains
-all members at a shared footprint; the Windows menu makes each member selectable.
+cut must satisfy the source and every surviving participant along the split axis.
+When no cut in the cell fits both floors, automatic adoption still splits it at the
+middle and leaves the floors to the re-cut or overlap below; a floor wider than the
+cell's other side is handled the same way. Only a newcomer whose floor along the
+split axis exceeds the display joins an overload leaf, which retains all members at
+a shared footprint; the Windows menu makes each member selectable.
 
 When a known minimum later exceeds a window's tile, lines move the least distance
 that lets every known minimum fit, inner splits before the lines bounding their

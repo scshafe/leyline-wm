@@ -607,6 +607,24 @@ private func runTargetedProjectionWindowSpaceScenarios(rows: [JSONValue], test: 
         "window-space/window-on-another-space-sweeps-into-core-and-keeps-lifetimes")
     test.check(!scenario.snapshots.windowChangedSpace(windowId: moved),
         "window-space/second-notification-of-the-same-move-owes-nothing")
+
+    // A visible window with no AX row (a launch-time transient) leaves the world
+    // incomplete and never raises an AX destroy. Only its own notification re-reads.
+    let transient = moved + 2_000
+    scenario.reader.inventoryFailure = .init(code: "world_visible_window_set_incomplete", unresolvedWindowIds: [transient])
+    scenario.recover()
+    test.check(core.worldState.at(path: "observation.world_complete")?.boolValue == false
+        && scenario.snapshots.windowChangedSpace(windowId: transient)
+        && !scenario.snapshots.windowChangedSpace(windowId: moved)
+        && !scenario.snapshots.windowChangedSpace(windowId: transient + 1),
+        "window-space/unclassified-visible-window-notification-owes-a-sweep")
+    scenario.reader.inventoryFailure = nil
+    let beforeRecovery = scenario.reader.inventoryCalls
+    scenario.feed.windowSpaceChanged(frontmost: scenario.app)
+    test.check(scenario.reader.inventoryCalls == beforeRecovery + 1
+        && core.worldState.at(path: "observation.world_complete")?.boolValue == true
+        && !scenario.snapshots.windowChangedSpace(windowId: transient),
+        "window-space/unclassified-window-sweep-restores-a-complete-world")
     scenario.finish()
 }
 

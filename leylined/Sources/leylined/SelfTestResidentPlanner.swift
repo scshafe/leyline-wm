@@ -126,6 +126,12 @@ func runResidentPlannerCompletionScenarios(tests: inout SelfTest) {
         && overloadedTargets.at(path: "2.effect_frame") == overloadedTargets.at(path: "1.effect_frame")
         && overloadedTargets.at(path: "2.stack_top_window_id") == .int(1),
         "planner-completion/every-stack-member-has-identical-canonical-physical-footprint-and-front-identity")
+    // Floors that only crowd each other (600 + 500 on 1000 points) split and overlap instead of stacking.
+    let crowded = Arrangement.bridgeArrangementNativeAdopt(store: fixture.arrangement("overload"), newcomers: [2], ndid: 1,
+        focused: .null, topo: topology, newcomerMinimums: [2: .object(["w": .int(500), "h": .int(100)])])
+    tests.check(Arrangement.allocatedCells(crowded, topo: topology).count == 2
+        && Arrangement.allocatedCells(crowded, topo: topology).allSatisfy { $0.memberIDs.count == 1 },
+        "planner-completion/floors-that-crowd-each-other-split-instead-of-stacking")
     let selected = Arrangement.selectingMember(store: overloaded, windowID: 2, topo: topology)
     tests.check(selected.map { Arrangement.allocatedWindowIDs($0, topo: topology) } == [2, 1]
         && selected?.at(path: "bindings.1:0:0.window_id") == fixture.scene("overload").at(path: "expected_selected_top"),
@@ -515,6 +521,27 @@ private func runMinimumOverlapScenarios(tests: inout SelfTest) {
     tests.check(adopted != .null && Arrangement.allocatedCells(adopted, topo: topology).allSatisfy { $0.memberIDs.count == 1 }
         && expectedAdoption.allSatisfy { adoptedTargets.at(path: "\($0.key).frame") == $0.value.json },
         "minimum-overlap/newcomer-wider-than-its-cell-splits-and-overlaps-instead-of-stacking")
+    // Live 2026-10-27: voice-lab (960x632) opened into a 2x2 whose largest cell holds a 480-wide
+    // web app. 480 + 960 exceeds the 1023-point quadrant, so it used to stack over the web app;
+    // the quadrant splits and the top row's half of v1024 moves right to make room instead.
+    let wide = try! JSONValue.parse(Data(#"{"displays":[{"id":1,"frame":{"x":0,"y":0,"w":2048,"h":1326},"usable":{"x":0,"y":41,"w":2048,"h":1285}}],"gap":1,"outer_gap":1}"#.utf8))
+    let quadrants = try! JSONValue.parse(Data(#"{"segments":[{"axis":"h","coord":694.5,"lo":1,"hi":2047},{"axis":"v","coord":1024,"lo":42,"hi":694.5},{"axis":"v","coord":1024,"lo":694.5,"hi":1325}],"bindings":{"1:0:0":{"window_id":1,"min_size":{"w":480}},"1:1:0":{"window_id":2,"min_size":{"w":500,"h":652}},"1:0:1":{"window_id":3},"1:1:1":{"window_id":4}},"off_top":[]}"#.utf8))
+    let joined = Arrangement.bridgeArrangementNativeAdopt(store: Arrangement.bridgeArrangementNative(store: quadrants, topo: wide),
+        newcomers: [5], ndid: 1, focused: .int(5), topo: wide, newcomerMinimums: [5: .object(["w": .int(960), "h": .int(632)])])
+    let joinedTargets = Arrangement.arrangementTargetsRec(bridge: joined, topo: wide)
+    let expectedJoin: [Int: Frame] = [1: Frame(x: 1, y: 42, w: 511, h: 652), 5: Frame(x: 513, y: 42, w: 960, h: 652),
+                                      2: Frame(x: 1474, y: 42, w: 573, h: 652),
+                                      3: Frame(x: 1, y: 695, w: 1022.5, h: 630), 4: Frame(x: 1024.5, y: 695, w: 1022.5, h: 630)]
+    let joinedOK = joined != .null && Arrangement.allocatedCells(joined, topo: wide).allSatisfy {
+        $0.memberIDs.count == 1 && $0.binding.at(path: "minimum_fit") == nil }
+        && expectedJoin.allSatisfy { joinedTargets.at(path: "\($0.key).frame") == $0.value.json }
+    if !joinedOK { print("diagnostic minimum-overlap/newcomer-in-occupied-quadrant targets=\(joinedTargets.canonical()) arrangement=\(joined.canonical())") }
+    tests.check(joinedOK, "minimum-overlap/newcomer-whose-floor-crowds-its-anchor-recuts-instead-of-stacking")
+    // A floor wider than the display along the split axis still joins the anchor as an overload member.
+    let oversized = Arrangement.bridgeArrangementNativeAdopt(store: Arrangement.bridgeArrangementNative(store: quadrants, topo: wide),
+        newcomers: [5], ndid: 1, focused: .int(5), topo: wide, newcomerMinimums: [5: .object(["w": .int(2100)])])
+    tests.check(Arrangement.allocatedCells(oversized, topo: wide).contains { Set($0.memberIDs).isSuperset(of: [1, 5]) },
+        "minimum-overlap/newcomer-wider-than-the-display-joins-its-anchor-as-overload")
 }
 
 /// Sanitized left-nested terminals/right browser geometry, including exact one-point borders.

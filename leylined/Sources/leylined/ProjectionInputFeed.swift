@@ -316,8 +316,10 @@ final class ProjectionInputFeed: @unchecked Sendable {
         }
     }
 
+    /// Returns the published transient failure, if any, so a recovery attempt can report its own result.
+    @discardableResult
     private func emit(event: String, extra: JSONObject,
-                      accessibilityEvent: AccessibilityFocusEvent? = nil) {
+                      accessibilityEvent: AccessibilityFocusEvent? = nil) -> String? {
         cacheAudit?.cancelForForeground()
         let snapshot = capture(ProjectionSnapshotRequest(
             reason: event, application: application,
@@ -383,18 +385,21 @@ final class ProjectionInputFeed: @unchecked Sendable {
         deliver(delta)
         let failures = [snapshot.observation["world_failure_code"]?.stringValue,
                         snapshot.observation["failure_code"]?.stringValue, health.degradedReason].compactMap { $0 }
-        if let code = failures.first(where: ProjectionTransientRecovery.isTransient), let transientRecovery {
+        let transient = failures.first(where: ProjectionTransientRecovery.isTransient)
+        if let code = transient, let transientRecovery {
             transientRecovery.observeFailure(code, context: recoveryContext(), isCurrent: { [weak self] context in
                 guard let self else { return false }
                 return recoveryPermitted() && recoveryContext() == context
             }, operation: { [weak self] context, firstFailure in
-                guard let self else { return }
+                guard let self else { return nil }
                 rebind(to: application, rearmRecovery: false)
-                emit(event: "explicit_recovery", extra: ["transient_recovery_attempt": .bool(true),
+                let failure = emit(event: "explicit_recovery", extra: ["transient_recovery_attempt": .bool(true),
                     "transient_recovery_first_failure": .string(firstFailure),
                     "transient_recovery_source_generation": .int(Int64(clamping: context.observerGeneration))])
+                return failure.map { (recoveryContext(), $0) }
             })
         }
+        return transient
     }
 
     private func recoveryContext() -> ProjectionTransientRecovery.Context {
