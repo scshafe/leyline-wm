@@ -40,6 +40,12 @@ final class ResidentInput: @unchecked Sendable {
     private let desiredRunning = ResidentAtomic<Bool>(false)
     private let claimsAllowed = ResidentAtomic<Bool>(false)
     private let spaceControlAllowed = ResidentAtomic<Bool>(false)
+    private let navigationAllowed = ResidentAtomic<Bool>(false)
+    /// Some claim family is currently allowed, so the tap may accept events at all.
+    private var anyClaimAllowed: Bool {
+        claimsAllowed.load(ordering: .acquiring) || spaceControlAllowed.load(ordering: .acquiring)
+            || navigationAllowed.load(ordering: .acquiring)
+    }
     private let workerActive = ResidentAtomic<Bool>(false)
     private let lifecycleGeneration = ResidentAtomic<UInt64>(0)
     private let tapInstalled = ResidentAtomic<Bool>(false)
@@ -143,6 +149,7 @@ final class ResidentInput: @unchecked Sendable {
         desiredRunning.store(false, ordering: .releasing)
         claimsAllowed.store(false, ordering: .releasing)
         spaceControlAllowed.store(false, ordering: .releasing)
+        navigationAllowed.store(false, ordering: .releasing)
         routing.setClaimEligibility(management: false, spaceControl: false)
         routing.setAccepting(false)
         routing.release(reason: .globalStop)
@@ -183,18 +190,20 @@ final class ResidentInput: @unchecked Sendable {
 
     /// The authoritative world gate must positively allow claims. A running
     /// tap on an incomplete/unknown/OFF world remains a pass-through monitor.
-    func setClaimsAllowed(_ allowed: Bool, spaceControlAllowed controlAllowed: Bool = false, reason: ResidentInputReleaseReason = .worldUnavailable) {
+    func setClaimsAllowed(_ allowed: Bool, spaceControlAllowed controlAllowed: Bool = false,
+                          navigationAllowed navigable: Bool = false, reason: ResidentInputReleaseReason = .worldUnavailable) {
         let previous = claimsAllowed.exchange(allowed, ordering: .acquiringAndReleasing)
+        navigationAllowed.store(navigable, ordering: .releasing)
         let priorControl = spaceControlAllowed.exchange(controlAllowed, ordering: .acquiringAndReleasing)
         if priorControl && !controlAllowed { routing.invalidateSpaceContext() }
-        routing.setClaimEligibility(management: allowed, spaceControl: controlAllowed)
+        routing.setClaimEligibility(management: allowed, spaceControl: controlAllowed, navigation: navigable)
         if !allowed {
             routing.setAccepting(false)
             if previous || routing.mode != "default" { routing.release(reason: reason, preserveSpaceControls: controlAllowed) }
         }
         if desiredRunning.load(ordering: .acquiring), tapInstalled.load(ordering: .acquiring),
            !safetyReleased.load(ordering: .acquiring) {
-            routing.setAccepting(allowed || controlAllowed)
+            routing.setAccepting(allowed || controlAllowed || navigable)
         }
     }
 
@@ -204,6 +213,7 @@ final class ResidentInput: @unchecked Sendable {
         value["desired_running"] = .bool(desiredRunning.load(ordering: .acquiring))
         value["claims_allowed"] = .bool(claimsAllowed.load(ordering: .acquiring))
         value["space_control_allowed"] = .bool(spaceControlAllowed.load(ordering: .acquiring))
+        value["navigation_allowed"] = .bool(navigationAllowed.load(ordering: .acquiring))
         value["tap_create_failed"] = .bool(createFailed.load(ordering: .acquiring))
         value["safety_released"] = .bool(safetyReleased.load(ordering: .acquiring))
         value["watchdog_release_count"] = .int(Int64(watchdogReleaseCount.load(ordering: .relaxed)))
@@ -264,7 +274,7 @@ final class ResidentInput: @unchecked Sendable {
         let run = desiredRunning.load(ordering: .acquiring)
         CGEvent.tapEnable(tap: created, enable: run)
         tapInstalled.store(run, ordering: .releasing)
-        routing.setAccepting(run && (claimsAllowed.load(ordering: .acquiring) || spaceControlAllowed.load(ordering: .acquiring)))
+        routing.setAccepting(run && anyClaimAllowed)
         portLock.unlock()
         ready.signal()
         if run { CFRunLoopRun() }
@@ -325,7 +335,8 @@ final class ResidentInput: @unchecked Sendable {
         }
         let generation = routing.generation
         guard let route = routing.route(for: chord),
-              routing.admit(chord: chord, receiptUptimeNs: now, isRepeat: repeated, spaceContextGeneration: spaceContext) == .claimed else {
+              routing.admit(chord: chord, receiptUptimeNs: now, isRepeat: repeated, spaceContextGeneration: spaceContext,
+                  pointer: ResidentInputPointer(x: Double(event.location.x), y: Double(event.location.y))) == .claimed else {
             return Unmanaged.passUnretained(event)
         }
         heldChords[code] = HeldChord(chord: chord, actionId: route.actionId, generation: generation)
@@ -367,7 +378,7 @@ final class ResidentInput: @unchecked Sendable {
            now - authority < ResidentInputConstants.rearmFreshnessNanoseconds,
            desiredRunning.load(ordering: .acquiring), let tap {
             CGEvent.tapEnable(tap: tap, enable: true)
-            routing.setAccepting(claimsAllowed.load(ordering: .acquiring) || spaceControlAllowed.load(ordering: .acquiring))
+            routing.setAccepting(anyClaimAllowed)
             safetyReleased.store(false, ordering: .releasing)
             rearmCount.wrappingAdd(1, ordering: .relaxed)
         }

@@ -25,6 +25,13 @@ extension JSONValue {
             && at(path: "space_enabled")?.boolValue == true
             && at(path: "minimized")?.boolValue != true && at(path: "destroyed")?.boolValue != true
     }
+    /// The focused window stands on an OFF, hidden or unidentified Space, so ordinary
+    /// window chords stay with its application. No focus, or an unmanaged window on an
+    /// enabled visible Space, is not this.
+    var focusOutsideManagedSpaces: Bool {
+        guard let focus = at(path: "focus"), focus.objectValue != nil else { return false }
+        return focus.at(path: "space_enabled")?.boolValue != true || focus.at(path: "space_visible")?.boolValue != true
+    }
 }
 
 /// The sole bounded bridge from authoritative commits to presentation. There is

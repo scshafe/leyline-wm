@@ -374,20 +374,39 @@ private func runResidentSpaceShortcutChecks(configuration: ResidentInputConfigur
     guard let data = FileManager.default.contents(atPath: SelfTestFixtures.path("resident/space-shortcut.json", root: home)),
           let fixture = try? JSONValue.parse(data), let chord = fixture.at(path: "chord")?.stringValue,
           let base = fixture.at(path: "world")?.objectValue,
-          let cases = fixture.at(path: "policy_cases")?.arrayValue, cases.count == 12 else {
+          let cases = fixture.at(path: "policy_cases")?.arrayValue, cases.count == 19 else {
         test.check(false, "space-shortcut/fixture-load"); return
     }
     for row in cases {
         let world = JSONValue.object(base.merging(row.at(path: "delta")!.objectValue!))
         let normal = CoreRuntimeServices.inputCanClaim(world, trusted: row.at(path: "trusted")!.boolValue!)
         let control = CoreRuntimeServices.inputCanControlSpace(world, trusted: row.at(path: "trusted")!.boolValue!)
+        let navigate = CoreRuntimeServices.inputCanNavigate(world, trusted: row.at(path: "trusted")!.boolValue!)
         let routing = ResidentInputRouting(configuration: configuration, dispatchAction: { _, complete in complete(0) }, onModeChanged: { _, _, _ in return true })
-        routing.setClaimEligibility(management: normal, spaceControl: control)
-        routing.setAccepting(normal || control)
+        routing.setClaimEligibility(management: normal, spaceControl: control, navigation: navigate)
+        routing.setAccepting(normal || control || navigate)
         test.check(normal == row.at(path: "normal")!.boolValue! && control == row.at(path: "control")!.boolValue!
-            && (routing.route(for: chord) != nil) == control,
+            && navigate == (row.at(path: "navigate")?.boolValue ?? false)
+            && (routing.route(for: chord) != nil) == control
+            && (routing.route(for: fixture.requiredString("navigation_chord")) != nil) == (normal || navigate)
+            && (routing.route(for: fixture.requiredString("mode_entry_chord")) != nil) == normal,
             "space-shortcut/" + row.requiredString("name"))
     }
+    let landing = ResidentTestRecorder()
+    let navigationOnly = ResidentInputRouting(configuration: configuration,
+        dispatchAction: { action, complete in landing.action(action); complete(0) }, onModeChanged: { _, _, _ in return true })
+    navigationOnly.setClaimEligibility(management: false, spaceControl: false, navigation: true)
+    let unclaimed = fixture.at(path: "blocked_chords")!.arrayValue!.compactMap(\.stringValue)
+        .filter { $0 != fixture.requiredString("navigation_chord") }
+    let pointer = ResidentInputPointer(x: 640, y: 360)
+    let claimed = navigationOnly.admit(chord: fixture.requiredString("navigation_chord"), pointer: pointer)
+    navigationOnly.flushForSelfTest()
+    test.check(unclaimed.allSatisfy { navigationOnly.admit(chord: $0) == .passedThrough }
+        && navigationOnly.admit(chord: chord) == .passedThrough && claimed == .claimed && navigationOnly.mode == "default"
+        && navigationOnly.health()["active_action_ids"]?.arrayValue == ["east", "north", "south", "west"].map { .string("nav.focus." + $0) }
+        && landing.snapshot().actions.map(\.actionId) == ["nav.focus.west"]
+        && landing.snapshot().actions.first?.pointer == pointer,
+        "space-shortcut/no-managed-focus-claims-only-directional-focus-and-carries-its-pointer")
     let recorder = ResidentTestRecorder()
     let routing = ResidentInputRouting(configuration: configuration,
         dispatchAction: { action, complete in recorder.action(action); complete(0) }, onModeChanged: { _, _, _ in return true })

@@ -1,5 +1,20 @@
 # Release notes
 
+## 1.0.5
+
+Changes since 1.0.4:
+
+- New: Hyper + H / J / K / L work when no managed window is focused, for example
+  after closing a dialog, switching Spaces or waking the Mac. Until now the keys
+  passed through to the frontmost app and only a click brought a window back. The
+  first press now focuses a managed window: the one focused most recently, else
+  the one under the pointer, else the one nearest the centre of the main display.
+  The next press moves from there.
+- Hyper + R and Hyper + M still need a focused managed window, and the shortcuts
+  still pass through while the focused window is on an OFF or full-screen Space.
+- Limits: the automated checks cover the claim rules and the choice of window.
+  The pointer rule has not been checked against a physical key press.
+
 ## 1.0.4
 
 Changes since 1.0.3:

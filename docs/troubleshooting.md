@@ -13,6 +13,7 @@ Accessibility trust or an active input tap.
 | Symptom | Check |
 |---|---|
 | Shortcuts do nothing | Global management, focused Space ON/OFF, Accessibility/Input Monitoring grants, and actual Hyper modifiers |
+| Hyper + M or R does nothing, but H/J/K/L work | No managed window is focused. Press Hyper + H, J, K or L once to focus one, then enter the mode |
 | Caps Lock + key does nothing | Caps Lock must be mapped to Hyper externally; test Command+Control+Option+Shift + key |
 | Space toggle unavailable | The resident needs complete trustworthy identity for the focused ordinary desktop Space |
 | A resize or move refuses | Application minima, stale observation, missing source/destination or an infeasible common cut |

@@ -26,7 +26,15 @@ Entry/exit shortcut key-up consumes the held identity without dispatching a seco
 or inverse action. Move cancellation is further constrained by [move mode](move-mode-spec.md).
 
 Ordinary window chords require trustworthy managed eligibility in an enabled
-visible Space. Hyper + A has the distinct focused-Space control route: it remains
+visible Space. Directional focus alone has a wider route: it stays claimable while
+no managed window holds focus, provided a managed window stands on an identified
+enabled visible Space and the focused window, if any, is itself on an enabled
+visible Space. Its first press lands on the [navigation anchor](../focus-domain.md)
+and restores ordinary eligibility. Move and resize entry keep requiring managed
+focus. A focused window on an OFF, hidden or unidentified Space, a full-screen
+Space included, keeps every ordinary chord with its application.
+
+Hyper + A has the distinct focused-Space control route: it remains
 available in default/move/resize on an identified OFF or empty Space while global
 management and observation are available. One press toggles once, and stale queued
 input cannot control a newly focused Space. Global OFF, unknown identity, lost

@@ -781,7 +781,12 @@ final class ResidentActionController: @unchecked Sendable {
         }
         let id = UUID().uuidString
         lock.lock(); callbacks[id] = completion; lock.unlock()
-        let response = handle(["op": .string("act"), "action_id": .string(action.actionId), "request_id": .string(id)], receipt: action.receiptUptimeNs, inputGeneration: action.generation)
+        var request: JSONObject = ["op": .string("act"), "action_id": .string(action.actionId), "request_id": .string(id)]
+        // Only directional focus can land on a navigation anchor, so only it carries the pointer.
+        if let pointer = action.pointer, action.actionId.hasPrefix(ResidentActionIDs.navigationFocusPrefix) {
+            request["args"] = .object(["pointer": .object(["x": .double(pointer.x), "y": .double(pointer.y)])])
+        }
+        let response = handle(request, receipt: action.receiptUptimeNs, inputGeneration: action.generation)
         if response.at(path: "ok")?.boolValue != true {
             lock.lock(); callbacks.removeValue(forKey: id); lock.unlock()
             completion(4)
@@ -1269,7 +1274,8 @@ final class ResidentActionController: @unchecked Sendable {
             "topology": .object(["displays": .array(displays), "gap": .int(Int64(gap)), "outer_gap": .int(Int64(outerGap ?? gap))]),
             "space_contexts": .array(contexts), "observer_epoch": raw.at(path: "observer_epoch") ?? .null,
             "model_state_revision": raw.at(path: "model_state_revision") ?? .null,
-            "windows": .array(windows), "focused_window_id": raw.at(path: "focus.window_id") ?? .null])
+            "windows": .array(windows), "focused_window_id": raw.at(path: "focus.window_id") ?? .null,
+            "focus_outside_managed_spaces": .bool(raw.focusOutsideManagedSpaces)])
     }
 
     private func activeWindowGeneration(requestID: String, windowID: String) -> UInt64? {

@@ -17,7 +17,9 @@ identity does not create a same-display preference or a separate ranking tier.
 All coordinates share the native global, top-down coordinate system.
 
 Inputs are a source window ID, candidate IDs/frames, display frames and one of
-north/east/south/west. Missing source returns `noFocus`. Remove the source from the
+north/east/south/west. Missing source returns `noFocus`; the resident never ranks
+without a managed source and lands on the [navigation anchor](../focus-domain.md)
+instead. Remove the source from the
 candidate pool, then evaluate two phases:
 
 1. **Direct:** choose candidates in the direction (beyond the source's facing

@@ -111,7 +111,17 @@ enum ResidentPlanner {
                       let display = Geometry.assignDisplay(frame, normalized.displays) else { continue }
                 current.append(NavWindow(id: Int(id), display: Int(display), frame: frame))
             }
-            guard let focus, current.contains(where: { $0.id == Int(focus) }) else { return refusal("focus_not_managed") }
+            guard let focus, current.contains(where: { $0.id == Int(focus) }) else {
+                // Land, then move: without managed focus the first press focuses the anchor.
+                // A focused window on an OFF, hidden or unidentified Space keeps its chords.
+                guard world.at(path: "focus_outside_managed_spaces")?.boolValue != true,
+                      let anchor = navigationAnchor(candidates: current, state: state, eligible: eligible,
+                          pointer: arguments.at(path: "pointer"), displays: normalized.displays) else {
+                    return refusal("focus_not_managed")
+                }
+                return ResidentPlan(status: .accepted, reason: "navigation_anchor_" + anchor.rule, state: state,
+                    targets: .object([:]), focusTarget: anchor.windowID)
+            }
             let navigation = SpatialNav(displayFrames: normalized.displays.map { $0.frame }, windows: current)
             guard let winner = navigation.explain(sourceId: Int(focus), direction: direction).winner else {
                 return ResidentPlan(status: .noop, reason: "no_navigation_candidate", state: state,

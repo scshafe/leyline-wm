@@ -149,6 +149,254 @@
       "trusted": true,
       "normal": true,
       "control": false
+    },
+    {
+      "name": "no-focus-with-managed-window-navigates",
+      "delta": {
+        "focus": null,
+        "windows": [
+          {
+            "window_id": 1,
+            "eligible": true,
+            "managed": true,
+            "space_key": "space-A",
+            "display_id": "display-A",
+            "space_visible": true,
+            "space_enabled": true,
+            "space_identity_available": true,
+            "minimized": false
+          }
+        ],
+        "space_contexts": [
+          {
+            "space_key": "space-A",
+            "display_id": "display-A",
+            "space_identity_available": true,
+            "space_visible": true,
+            "space_enabled": true
+          }
+        ]
+      },
+      "trusted": true,
+      "normal": false,
+      "control": true,
+      "navigate": true
+    },
+    {
+      "name": "unmanaged-focus-on-enabled-space-navigates",
+      "delta": {
+        "focus": {
+          "eligible": false,
+          "space_visible": true,
+          "space_enabled": true
+        },
+        "windows": [
+          {
+            "window_id": 1,
+            "eligible": true,
+            "managed": true,
+            "space_key": "space-A",
+            "display_id": "display-A",
+            "space_visible": true,
+            "space_enabled": true,
+            "space_identity_available": true,
+            "minimized": false
+          }
+        ],
+        "space_contexts": [
+          {
+            "space_key": "space-A",
+            "display_id": "display-A",
+            "space_identity_available": true,
+            "space_visible": true,
+            "space_enabled": true
+          }
+        ]
+      },
+      "trusted": true,
+      "normal": false,
+      "control": true,
+      "navigate": true
+    },
+    {
+      "name": "off-space-focus-keeps-its-chords",
+      "delta": {
+        "focus": {
+          "eligible": true,
+          "space_visible": true,
+          "space_enabled": false
+        },
+        "windows": [
+          {
+            "window_id": 1,
+            "eligible": true,
+            "managed": true,
+            "space_key": "space-A",
+            "display_id": "display-A",
+            "space_visible": true,
+            "space_enabled": true,
+            "space_identity_available": true,
+            "minimized": false
+          }
+        ],
+        "space_contexts": [
+          {
+            "space_key": "space-A",
+            "display_id": "display-A",
+            "space_identity_available": true,
+            "space_visible": true,
+            "space_enabled": true
+          }
+        ]
+      },
+      "trusted": true,
+      "normal": false,
+      "control": true,
+      "navigate": false
+    },
+    {
+      "name": "unidentified-space-focus-keeps-its-chords",
+      "delta": {
+        "focus": {
+          "eligible": false
+        },
+        "windows": [
+          {
+            "window_id": 1,
+            "eligible": true,
+            "managed": true,
+            "space_key": "space-A",
+            "display_id": "display-A",
+            "space_visible": true,
+            "space_enabled": true,
+            "space_identity_available": true,
+            "minimized": false
+          }
+        ],
+        "space_contexts": [
+          {
+            "space_key": "space-A",
+            "display_id": "display-A",
+            "space_identity_available": true,
+            "space_visible": true,
+            "space_enabled": true
+          }
+        ]
+      },
+      "trusted": true,
+      "normal": false,
+      "control": true,
+      "navigate": false
+    },
+    {
+      "name": "no-space-contexts-cannot-navigate",
+      "delta": {
+        "focus": null,
+        "windows": [
+          {
+            "window_id": 1,
+            "eligible": true,
+            "managed": true,
+            "space_key": "space-A",
+            "display_id": "display-A",
+            "space_visible": true,
+            "space_enabled": true,
+            "space_identity_available": true,
+            "minimized": false
+          }
+        ],
+        "space_contexts": []
+      },
+      "trusted": true,
+      "normal": false,
+      "control": true,
+      "navigate": false
+    },
+    {
+      "name": "no-live-managed-window-cannot-navigate",
+      "delta": {
+        "focus": null,
+        "windows": [
+          {
+            "window_id": 1,
+            "eligible": true,
+            "managed": true,
+            "space_key": "space-A",
+            "display_id": "display-A",
+            "space_visible": true,
+            "space_enabled": true,
+            "space_identity_available": true,
+            "minimized": true
+          },
+          {
+            "window_id": 2,
+            "eligible": true,
+            "managed": true,
+            "space_key": "space-A",
+            "display_id": "display-A",
+            "space_visible": true,
+            "space_enabled": false,
+            "space_identity_available": true,
+            "minimized": false
+          },
+          {
+            "window_id": 3,
+            "eligible": false,
+            "managed": false,
+            "space_key": "space-A",
+            "display_id": "display-A",
+            "space_visible": true,
+            "space_enabled": true,
+            "space_identity_available": true,
+            "minimized": false
+          }
+        ],
+        "space_contexts": [
+          {
+            "space_key": "space-A",
+            "display_id": "display-A",
+            "space_identity_available": true,
+            "space_visible": true,
+            "space_enabled": true
+          }
+        ]
+      },
+      "trusted": true,
+      "normal": false,
+      "control": true,
+      "navigate": false
+    },
+    {
+      "name": "untrusted-cannot-navigate",
+      "delta": {
+        "focus": null,
+        "windows": [
+          {
+            "window_id": 1,
+            "eligible": true,
+            "managed": true,
+            "space_key": "space-A",
+            "display_id": "display-A",
+            "space_visible": true,
+            "space_enabled": true,
+            "space_identity_available": true,
+            "minimized": false
+          }
+        ],
+        "space_contexts": [
+          {
+            "space_key": "space-A",
+            "display_id": "display-A",
+            "space_identity_available": true,
+            "space_visible": true,
+            "space_enabled": true
+          }
+        ]
+      },
+      "trusted": false,
+      "normal": false,
+      "control": false,
+      "navigate": false
     }
   ],
   "stalled_action_clock": {
@@ -156,5 +404,6 @@
     "now_ns": 1300000000,
     "progress_ns": 1290000000
   },
-  "mode_entry_chord": "cmd + ctrl + alt + shift - m"
+  "mode_entry_chord": "cmd + ctrl + alt + shift - m",
+  "navigation_chord": "cmd + ctrl + alt + shift - h"
 }

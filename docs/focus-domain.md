@@ -11,6 +11,23 @@ nor destinations. See [the geometric ranker](contracts/spatial-nav-algorithm-spe
 Ordinary focus changes retain a valid captured move source; resize stays bound to
 its original managed context. Invalidation releases the interaction.
 
+When no managed window holds focus (nothing is focused, or the focused window is an
+unmanaged one on an enabled visible Space), the first directional press does not
+move. It focuses the navigation anchor, in any direction, and the next press
+navigates from there. The anchor is the first of:
+
+1. the most recently confirmed focus whose typed identity is still a navigable
+   window;
+2. the navigable window under the pointer position the key event carried, else the
+   one nearest it;
+3. the navigable window nearest the primary display's centre.
+
+Ties go to the nearer window centre, then the lower window ID. The landing is the
+same identity-fenced focus effect as navigation, with the same confirmation, and
+authors no layout. A focused window on an OFF, hidden or unidentified Space has no
+anchor: the command refuses `focus_not_managed`, as it does when no navigable
+window exists. Move and resize entry never use the anchor.
+
 After removal preserve valid managed focus, otherwise prefer the eligible absorber,
 then a recent confirmed survivor. The history is deduplicated, most-recent-first
 and bounded to 10 current typed identities. No survivor means no focus effect.

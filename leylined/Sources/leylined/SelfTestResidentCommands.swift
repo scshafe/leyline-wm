@@ -467,6 +467,33 @@ func runResidentCommandsSelfTest() -> Int32 {
             && crossApplication.server.worldState.at(path: "observer_generation")?.intValue == 9,
             "resident-commands/cross-app-focus-landing-keeps-requested-and-observed-generations-distinct")
 
+        // No managed focus: only directional focus stays claimable, and its first press lands.
+        for (name, pointer, expected) in [("display-centre", JSONValue.object([:]), Int64(1)),
+            ("pointer", .object(["pointer": .object(["x": .int(900), "y": .int(400)])]), 2)] {
+            let anchored = try ResidentCommandsRig(fixture: fixture)
+            let vacated = anchored.server.applyWorldDelta(["event": .string("ax_focus_changed"), "focus": .null])
+            _ = anchored.waitForProcessed(vacated.revision.value)
+            let before = anchored.server.worldState
+            _ = anchored.act("nav.focus.east", id: "anchor-landing", arguments: pointer)
+            let landed = anchored.result("anchor-landing")
+            let after = anchored.server.worldState
+            test.check(!CoreRuntimeServices.inputCanClaim(before, trusted: true)
+                && CoreRuntimeServices.inputCanNavigate(before, trusted: true)
+                && landed?.at(path: "status")?.stringValue == "accepted" && landed?.at(path: "focus_confirmed")?.boolValue == true
+                && after.at(path: "focus.window_id")?.intValue == expected && anchored.port.writeCount == 0
+                && CoreRuntimeServices.inputCanClaim(after, trusted: true),
+                "resident-commands/no-focus-navigation-lands-on-the-\(name)-anchor-and-restores-ordinary-claims")
+        }
+        let offSpace = try ResidentCommandsRig(fixture: fixture)
+        let strayed = offSpace.server.applyWorldDelta(["event": .string("ax_focus_changed"),
+            "focus": offSpace.server.worldState.at(path: "windows")!.arrayValue!.first { $0.at(path: "window_id") == .int(3) }!])
+        _ = offSpace.waitForProcessed(strayed.revision.value)
+        _ = offSpace.act("nav.focus.west", id: "off-space-navigation")
+        test.check(!CoreRuntimeServices.inputCanNavigate(offSpace.server.worldState, trusted: true)
+            && offSpace.result("off-space-navigation")?.at(path: "reason")?.stringValue == "focus_not_managed"
+            && offSpace.port.issued.isEmpty,
+            "resident-commands/focus-on-an-OFF-space-keeps-its-chords-and-refuses-navigation")
+
         let resize = try ResidentCommandsRig(fixture: fixture)
         _ = resize.act("resize.start", id: "resize-start"); _ = resize.result("resize-start")
         resize.port.hold(true)

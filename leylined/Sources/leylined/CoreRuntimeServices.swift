@@ -313,7 +313,8 @@ final class CoreRuntimeServices: @unchecked Sendable {
             }
         }
         let eligible = !startupSeedGate.blocksClaims && Self.inputCanClaim(snapshot.world, trusted: trustedProvider())
-        if eligible || controlEligible, let input, input.health()["tap_installed"]?.boolValue != true,
+        let navigable = !startupSeedGate.blocksClaims && Self.inputCanNavigate(snapshot.world, trusted: trustedProvider())
+        if eligible || controlEligible || navigable, let input, input.health()["tap_installed"]?.boolValue != true,
            !inputStartAttempted.exchange(true, ordering: .acquiringAndReleasing) {
             lifecycleQueue.async { [self] in
                 // Deliberately NOT worldReady: a guard failure here leaves inputStartAttempted
@@ -325,7 +326,8 @@ final class CoreRuntimeServices: @unchecked Sendable {
                 _ = startInput(input)
             }
         }
-        inputCapabilityGate.perform { input?.setClaimsAllowed(eligible, spaceControlAllowed: controlEligible, reason: .worldOrFocusedSpaceUnavailable) }
+        inputCapabilityGate.perform { input?.setClaimsAllowed(eligible, spaceControlAllowed: controlEligible,
+            navigationAllowed: navigable, reason: .worldOrFocusedSpaceUnavailable) }
         if let input, input.routing.mode != "default",
            Self.committedDefaultCanReleaseInput(snapshot.world, currentInputGeneration: input.routing.generation) {
             input.releaseModal(reason: .committedInteractionContextInvalidated)
@@ -401,13 +403,29 @@ final class CoreRuntimeServices: @unchecked Sendable {
         toggleSpace(target, inputAction: action, completion: completion)
     }
 
-    static func inputCanClaim(_ world: JSONValue, trusted: Bool) -> Bool {
+    private static func inputReady(_ world: JSONValue, trusted: Bool) -> Bool {
         trusted && worldReady(world)
             && world.at(path: "desired_running")?.boolValue != false
             && world.at(path: "resident_starting")?.boolValue != true
+    }
+
+    static func inputCanClaim(_ world: JSONValue, trusted: Bool) -> Bool {
+        inputReady(world, trusted: trusted)
             && world.at(path: "focus.eligible")?.boolValue == true
             && world.at(path: "focus.space_enabled")?.boolValue == true
             && world.at(path: "focus.space_visible")?.boolValue == true
+    }
+
+    /// Directional focus alone stays claimable without managed focus, so its first press
+    /// can land on the navigation anchor: some managed window stands on an identified
+    /// enabled visible Space and the focused window, if any, is not outside those Spaces.
+    static func inputCanNavigate(_ world: JSONValue, trusted: Bool) -> Bool {
+        inputReady(world, trusted: trusted) && !world.focusOutsideManagedSpaces
+            && world.at(path: "space_contexts")?.arrayValue?.isEmpty == false
+            && (world.at(path: "windows")?.arrayValue ?? []).contains {
+                $0.isLiveEnabledWindow && $0.at(path: "managed")?.boolValue != false
+                    && $0.at(path: "space_identity_available")?.boolValue == true
+            }
     }
 
     /// A committed reconcile whose only shortfall is a confirmed application minimum or

@@ -183,6 +183,36 @@ extension ResidentPlanner {
         return nil
     }
 
+    /// @canonical planner_navigation_anchor -- where directional focus lands when no managed
+    /// window holds focus: the most recently confirmed focus still among the candidates,
+    /// else the candidate nearest the pointer its input receipt carried, else the one
+    /// nearest the primary display's centre. Ties go to the nearer centre, then the lower
+    /// window ID. Nil with no candidate.
+    static func navigationAnchor(candidates: [NavWindow], state: JSONValue, eligible: [JSONValue],
+                                 pointer: JSONValue?, displays: [NormDisplay]) -> (windowID: Int64, rule: String)? {
+        let ids = Set(candidates.map { Int64($0.id) })
+        if let recent = lifecycleFocusTarget(absorbers: [], state: state,
+            eligible: eligible.filter { $0.at(path: "window_id")?.intValue.map(ids.contains) == true }) {
+            return (recent, "last_focus")
+        }
+        let reference: (x: Double, y: Double, rule: String)
+        if let x = pointer?.at(path: "x")?.numberValue, let y = pointer?.at(path: "y")?.numberValue,
+           x.isFinite, y.isFinite {
+            reference = (x, y, "pointer")
+        } else if let primary = displays.first(where: { $0.frame.x == 0 && $0.frame.y == 0 }) ?? displays.first {
+            reference = (primary.frame.midX, primary.frame.midY, "display_centre")
+        } else { return nil }
+        let x = reference.x, y = reference.y
+        /// Squared distance from the reference point to the frame, zero inside it, then to its centre.
+        func rank(_ window: NavWindow) -> (Double, Double, Int) {
+            let frame = window.frame
+            let dx = max(frame.x - x, 0, x - frame.maxX), dy = max(frame.y - y, 0, y - frame.maxY)
+            let cx = frame.midX - x, cy = frame.midY - y
+            return (dx * dx + dy * dy, cx * cx + cy * cy, window.id)
+        }
+        return candidates.min { rank($0) < rank($1) }.map { (Int64($0.id), reference.rule) }
+    }
+
     /// Every eligible managed identity survives settle, including overload and nested members.
     static func settle(arrangement: JSONValue, observed: [JSONValue], topology: JSONValue, focus: Int64?) -> JSONValue? {
         var result = Arrangement.bridgeArrangementNative(store: arrangement, topo: topology)

@@ -10,6 +10,8 @@ enum ResidentActionIDs {
     /// Resize adjustments repeat and commute; they are never ordered behind one another.
     static let resizeAdjustPrefix = "resize.adjust."
     static let worldReconcile = "world.reconcile"
+    /// Directional focus: the one ordinary chord family that needs no managed focus.
+    static let navigationFocusPrefix = "nav.focus."
 }
 
 enum ResidentInputConstants {
@@ -30,6 +32,12 @@ enum ResidentInputConstants {
 
 enum ResidentInputPhase: String, Sendable { case keyDown = "key_down", keyUp = "key_up", cancel }
 
+/// Where the pointer stood when a key event was received, in global display coordinates.
+struct ResidentInputPointer: Equatable, Sendable {
+    let x: Double
+    let y: Double
+}
+
 struct ResidentInputAction: Sendable {
     let actionId: String
     let phase: ResidentInputPhase
@@ -37,11 +45,13 @@ struct ResidentInputAction: Sendable {
     let generation: UInt64
     let receiptUptimeNs: UInt64
     let spaceContextGeneration: UInt64
+    let pointer: ResidentInputPointer?
 
     init(actionId: String, phase: ResidentInputPhase, mode: String, generation: UInt64,
-         receiptUptimeNs: UInt64, spaceContextGeneration: UInt64 = 0) {
+         receiptUptimeNs: UInt64, spaceContextGeneration: UInt64 = 0, pointer: ResidentInputPointer? = nil) {
         self.actionId = actionId; self.phase = phase; self.mode = mode; self.generation = generation
         self.receiptUptimeNs = receiptUptimeNs; self.spaceContextGeneration = spaceContextGeneration
+        self.pointer = pointer
     }
 }
 
@@ -222,8 +232,10 @@ final class ResidentInputRouting: @unchecked Sendable {
     }
 
     func setAccepting(_ value: Bool) { accepting.store(value, ordering: .releasing) }
-    func setClaimEligibility(management: Bool, spaceControl: Bool) {
-        claimEligibility.store((management ? 1 : 0) | (spaceControl ? 2 : 0), ordering: .releasing)
+    /// Management admits every ordinary chord, space control only the Space toggle and
+    /// navigation only directional focus.
+    func setClaimEligibility(management: Bool, spaceControl: Bool, navigation: Bool = false) {
+        claimEligibility.store((management ? 1 : 0) | (spaceControl ? 2 : 0) | (navigation ? 4 : 0), ordering: .releasing)
     }
 
     func invalidateSpaceContext() {
@@ -232,8 +244,9 @@ final class ResidentInputRouting: @unchecked Sendable {
         pendingSpaceControlCount.store(0, ordering: .releasing)
     }
     private func actionAllowed(_ actionID: String) -> Bool {
-        let bit: UInt64 = actionID == ResidentInputConstants.spaceToggleActionID ? 2 : 1
-        return isAccepting && claimEligibility.load(ordering: .acquiring) & bit != 0
+        let bits: UInt64 = actionID == ResidentInputConstants.spaceToggleActionID ? 2
+            : actionID.hasPrefix(ResidentActionIDs.navigationFocusPrefix) ? 5 : 1
+        return isAccepting && claimEligibility.load(ordering: .acquiring) & bits != 0
     }
     private func allowedRoute(at index: Int, chord: String) -> ResidentInputRoute? {
         guard let route = configuration.routes[index][chord], actionAllowed(route.actionId) else { return nil }
@@ -266,7 +279,8 @@ final class ResidentInputRouting: @unchecked Sendable {
     @discardableResult
     func admit(chord: String, phase: ResidentInputPhase = .keyDown,
                receiptUptimeNs: UInt64 = DispatchTime.now().uptimeNanoseconds, isRepeat: Bool = false,
-               spaceContextGeneration expectedSpaceContext: UInt64? = nil) -> ResidentInputAdmission {
+               spaceContextGeneration expectedSpaceContext: UInt64? = nil,
+               pointer: ResidentInputPointer? = nil) -> ResidentInputAdmission {
         let spaceContext = expectedSpaceContext ?? spaceContextGeneration
         let previous = packedMode.load(ordering: .acquiring)
         let index = Int(previous & ResidentInputConstants.modeIndexMask)
@@ -336,7 +350,8 @@ final class ResidentInputRouting: @unchecked Sendable {
         let action = ResidentInputAction(
             actionId: route.actionId, phase: priority ? (phase == .keyUp ? .keyUp : .cancel) : phase,
             mode: configuration.modeNames[route.enteringModeIndex ?? index],
-            generation: updated >> 32, receiptUptimeNs: receiptUptimeNs, spaceContextGeneration: spaceContext)
+            generation: updated >> 32, receiptUptimeNs: receiptUptimeNs, spaceContextGeneration: spaceContext,
+            pointer: pointer)
         let delivery = Delivery.action(action, route, route.enteringModeIndex ?? index, updated & ~ResidentInputConstants.pendingModeRelease)
         // Mode delivery stays first. A cancellation is otherwise the next item.
         if cancelling, updated == previous { mailbox.insert(delivery, at: 0) }

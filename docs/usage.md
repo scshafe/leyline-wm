@@ -30,6 +30,14 @@ removes its management borders and leaves its window frames in place. Its ordina
 window shortcuts pass through; other enabled Spaces remain managed. A global
 **Stop Leyline** releases all management shortcuts while retaining the menu.
 
+When no managed window is focused, for example after closing a dialog, switching
+Spaces or waking the Mac, the first Hyper + H / J / K / L press focuses a window
+instead of moving: the managed window you focused most recently, else the one
+under the pointer, else the one nearest the centre of the main display. The next
+press moves from there. Hyper + R and Hyper + M still need a focused managed
+window, and the shortcuts keep passing through while the focused window is on an
+OFF or full-screen Space.
+
 ## Resize
 
 Enter with Hyper + R, release the modifiers, then press H / J / K / L to move a

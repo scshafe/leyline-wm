@@ -320,6 +320,7 @@ func runResidentPlannerCompletionScenarios(tests: inout SelfTest) {
     historyWorld["focused_window_id"] = .null
     let recent = ResidentPlanner.plan(actionID: "window.destroyed", state: .object(historyState), world: .object(historyWorld))
     tests.check(recent.status == .accepted && recent.focusTarget == 13, "planner-completion/close-with-distributed-reclaim-uses-most-recent-valid-lifetime-history")
+    runNavigationAnchorScenarios(fixture: fixture, tests: &tests)
     var duplicateWorld = fixture.world("nested").objectValue!
     duplicateWorld["windows"] = .array(duplicateWorld["windows"]!.arrayValue! + [duplicateWorld["windows"]!.arrayValue![0]])
     tests.check(!MoveCandidate.isCurrent(candidate: parent.state.at(path: "interaction.candidate")!, state: parent.state, world: .object(duplicateWorld)),
@@ -338,6 +339,55 @@ func runResidentPlannerCompletionScenarios(tests: inout SelfTest) {
     tests.check(nestedReflow.map { Arrangement.allocationValid($0, topo: nestedFloorTopology) } == true
         && nestedReflow.map { Arrangement.allocatedWindowIDs($0, topo: nestedFloorTopology).sorted() } == [1, 11, 12, 13],
         "planner-completion/nested-minimum-refit-keeps-structural-members-and-exact-gutters")
+}
+
+/// Directional focus without managed focus lands on the navigation anchor: the walk scene
+/// has window 1 on the left and 20, 7, 13 stacked top to bottom on the right; the display
+/// centre lies in 7.
+private func runNavigationAnchorScenarios(fixture: NativeLayoutFixture, tests: inout SelfTest) {
+    let state = fixture.state("walk")
+    func world(focus: JSONValue = .null, outside: Bool = false) -> JSONValue {
+        var value = fixture.world("walk", focus: 7).objectValue!
+        value["focused_window_id"] = focus; value["focus_outside_managed_spaces"] = .bool(outside)
+        return .object(value)
+    }
+    func land(_ state: JSONValue, _ world: JSONValue, pointer: (Double, Double)? = nil, action: String = "nav.focus.west") -> ResidentPlan {
+        ResidentPlanner.plan(actionID: action, state: state, world: world, arguments: .object(pointer.map {
+            ["pointer": .object(["x": .double($0.0), "y": .double($0.1)])] } ?? [:]))
+    }
+    func landed(_ plan: ResidentPlan, on id: Int64, rule: String) -> Bool {
+        plan.status == .accepted && plan.focusTarget == id && plan.reason == "navigation_anchor_" + rule
+            && plan.state == state && plan.targets == .object([:])
+    }
+    var remembered = state.objectValue!
+    remembered["focus_history"] = .array([.object(["window_id": .int(20), "pid": .int(520), "window_generation": .int(99)]),
+        .object(["window_id": .int(13), "pid": .int(513), "window_generation": .int(1)])])
+    let recent = land(.object(remembered), world(), pointer: (100, 100))
+    tests.check(recent.status == .accepted && recent.focusTarget == 13 && recent.reason == "navigation_anchor_last_focus"
+        && recent.state == .object(remembered) && recent.targets == .object([:]),
+        "navigation-anchor/no-focus-lands-on-most-recent-confirmed-focus-of-a-current-lifetime")
+    tests.check(landed(land(state, world(), pointer: (100, 100)), on: 1, rule: "pointer")
+        && landed(land(state, world(), pointer: (900, 500)), on: 13, rule: "pointer")
+        && landed(land(state, world(), pointer: (5000, 100)), on: 20, rule: "pointer"),
+        "navigation-anchor/without-history-lands-on-the-window-under-or-nearest-the-pointer")
+    tests.check(landed(land(state, world()), on: 7, rule: "display_centre")
+        && landed(land(state, world(), action: "nav.focus.east"), on: 7, rule: "display_centre"),
+        "navigation-anchor/without-history-or-pointer-lands-at-the-primary-display-centre-in-any-direction")
+    tests.check(landed(land(state, world(focus: .int(999))), on: 7, rule: "display_centre"),
+        "navigation-anchor/unmanaged-focus-on-an-enabled-visible-space-lands-too")
+    let outside = land(.object(remembered), world(focus: .int(999), outside: true), pointer: (100, 100))
+    tests.check(outside.status == .refused && outside.reason == "focus_not_managed" && outside.focusTarget == nil,
+        "navigation-anchor/focus-on-an-off-hidden-or-unidentified-space-keeps-refusing")
+    let managed = land(.object(remembered), world(focus: .int(7)), pointer: (100, 100))
+    tests.check(managed.status == .accepted && managed.focusTarget == 1 && managed.reason == nil,
+        "navigation-anchor/managed-focus-navigates-directionally-and-ignores-the-anchor")
+    var empty = world().objectValue!; empty["windows"] = .array([])
+    let nothing = ResidentPlanner.plan(actionID: "nav.focus.west", state: state, world: .object(empty))
+    tests.check(nothing.status == .refused && nothing.reason == "focus_not_managed",
+        "navigation-anchor/no-navigable-window-refuses")
+    let start = ["move.start", "resize.start"].map { ResidentPlanner.plan(actionID: $0, state: state, world: world()) }
+    tests.check(start.allSatisfy { $0.status == .refused && $0.reason == "focus_not_managed" },
+        "navigation-anchor/move-and-resize-entry-still-require-managed-focus")
 }
 
 /// A 2x2 whose middle line is two collinear segments. Moving only the right half up puts the

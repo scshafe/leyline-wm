@@ -1,6 +1,6 @@
 # Core window-manager contract
 
-Leyline 1.0.4 manages eligible tiled windows, borders, move previews and controls
+Leyline 1.0.5 manages eligible tiled windows, borders, move previews and controls
 in one native `leylined` resident. On-demand CLI clients and the independent
 Finder Recovery app do not own layout authority.
 
@@ -69,7 +69,9 @@ Ignored, minimized, destroyed, stale and OFF windows receive no management borde
 
 Directional focus ranks eligible presented windows across the stitched visible
 display surface, direct before wrap, with deterministic ties. Success requires
-confirmed target focus. See [spatial navigation](spatial-nav-algorithm-spec.md).
+confirmed target focus. Without managed focus the first press focuses the
+[navigation anchor](../focus-domain.md) instead of ranking. See
+[spatial navigation](spatial-nav-algorithm-spec.md).
 
 Resize moves a complete collinear shared boundary by 40 points per admitted nudge.
 At a canvas wall it uses the opposite interior face with the same signed direction.
