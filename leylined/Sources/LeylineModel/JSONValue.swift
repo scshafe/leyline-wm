@@ -177,7 +177,9 @@ public enum JSONValue: Equatable, Sendable {
     public var intValue: Int64? {
         switch self {
         case .int(let i): return i
-        case .double(let d) where d == d.rounded(): return Int64(d)
+        // Exactly representable only: a fractional, non-finite or out-of-range double is
+        // not an integer, and converting one unchecked traps the process.
+        case .double(let d): return Int64(exactly: d)
         default: return nil
         }
     }
@@ -221,6 +223,18 @@ public struct JSONParseError: Error, CustomStringConvertible {
 private struct JSONParser {
     let bytes: [UInt8]
     var i = 0
+    /// Containers currently open. Nesting recurses, so untrusted input bounds it.
+    var depth = 0
+    static let maximumDepth = 256
+
+    mutating func nested<T>(_ body: (inout JSONParser) throws -> T) throws -> T {
+        guard depth < Self.maximumDepth else {
+            throw JSONParseError(offset: i, message: "nesting deeper than \(Self.maximumDepth)")
+        }
+        depth += 1
+        defer { depth -= 1 }
+        return try body(&self)
+    }
 
     mutating func parseDocument() throws -> JSONValue {
         skipWhitespace()
@@ -246,8 +260,8 @@ private struct JSONParser {
             throw JSONParseError(offset: i, message: "unexpected end of input")
         }
         switch bytes[i] {
-        case UInt8(ascii: "{"): return try parseObject()
-        case UInt8(ascii: "["): return try parseArray()
+        case UInt8(ascii: "{"): return try nested { try $0.parseObject() }
+        case UInt8(ascii: "["): return try nested { try $0.parseArray() }
         case UInt8(ascii: "\""): return .string(try parseString())
         case UInt8(ascii: "t"): try expectLiteral("true"); return .bool(true)
         case UInt8(ascii: "f"): try expectLiteral("false"); return .bool(false)
@@ -430,6 +444,9 @@ private struct JSONParser {
         }
         guard let d = Double(text) else {
             throw JSONParseError(offset: start, message: "unparseable number \(text)")
+        }
+        guard d.isFinite else {
+            throw JSONParseError(offset: start, message: "number out of range")
         }
         return .double(d)
     }

@@ -51,6 +51,8 @@ final class ResidentActionController: @unchecked Sendable {
         }
     }
     private var pendingConfirmedFocus: ConfirmedFocusCandidate? // one newest proof, planning queue only
+    private var confirmedFocusRetries = 0 // planning queue only
+    static let confirmedFocusRetryLimit = 3
     struct CommandSource: Sendable {
         let actionID: String
         let origin: String
@@ -161,11 +163,21 @@ final class ResidentActionController: @unchecked Sendable {
     }
     private var pendingReconciliationAttempt = 0
     private var reconciliationBatches: [String: ReconciliationBatch] = [:]
-    /// `revision_changed_during_journal`: another commit landed while this plan's
-    /// effect intent was being made durable, so the effector aborted it uncommitted.
+    /// `revision_changed_during_journal`, `authoritative_commit_revision_mismatch` and
+    /// `authoritative_revision_churn`: another commit landed while this plan's effect
+    /// intent was being made durable or committed, so the effector aborted it uncommitted.
     static let reconciliationRaceReasons: Set<String> = [
         "expected_revision_mismatch", "queued_command_invalidated", "effect_identity_or_context_changed",
-        "revision_changed_during_journal"]
+        "revision_changed_during_journal", "authoritative_commit_revision_mismatch", "authoritative_revision_churn"]
+    /// A committed reconcile failing for one of these already has its own bounded replan
+    /// once the constraint is learned.
+    static let reconciliationConstraintReasons: Set<String> = ["minimum_constraint", "fixed_aspect_constraint"]
+    /// The effector's own context refusals. On a plan that was accepted they mean the
+    /// context was fenced between planning and issue (a mode exit installs a cancelling
+    /// context from another queue), not that the planned world was unusable.
+    static let reconciliationContextReasons: Set<String> = [
+        "world_incomplete", "space_disabled", "active_space_unknown", "active_space_mismatch",
+        "observer_generation_mismatch", "topology_revision_mismatch"]
     static let reconciliationRetryLimit = 3
     /// Snapshot admission and the planning queue share the feed's input bound.
     private static let observationQueueBound = ProjectionInputFeed.maximumPendingInputs
@@ -489,10 +501,29 @@ final class ResidentActionController: @unchecked Sendable {
         lock.lock(); let admission = admissionGeneration; lock.unlock()
         let source = CommandSource(actionID: "focus.confirmed", origin: "observer", inputGeneration: nil,
             receipt: candidate.observedNanos, admissionGeneration: admission)
-        commitStateOnly(bound, snapshot: snapshot, requestID: "focus-history:\(candidate.observedNanos)",
+        let attempt = confirmedFocusRetries
+        commitStateOnly(bound, snapshot: snapshot,
+            requestID: "focus-history:\(candidate.observedNanos)" + (attempt == 0 ? "" : ":retry\(attempt)"),
             receipt: candidate.observedNanos, source: source, admission: admission, preserveModeAuthority: true,
             additionalGuard: { [weak self] in self?.confirmedFocusScopeMatches(candidate) == true ? nil : "confirmed_focus_context_changed" },
-            completion: { _, _ in })
+            completion: { [weak self] status, reason in
+                // Runs synchronously on the planning queue. Another publication landing
+                // between the snapshot read and this commit is not a reason to forget
+                // which window was focused: a stale history defeats close-refocus.
+                guard let self else { return }
+                guard Self.confirmedFocusOwesRetry(status: status, reason: reason, attempt: attempt) else {
+                    self.confirmedFocusRetries = 0; return
+                }
+                self.confirmedFocusRetries = attempt + 1
+                if self.pendingConfirmedFocus.map({ $0.observedNanos <= candidate.observedNanos }) ?? true {
+                    self.pendingConfirmedFocus = candidate
+                }
+                self.queue.async { [self] in self.drainConfirmedFocus() }
+            })
+    }
+
+    static func confirmedFocusOwesRetry(status: WmStatus, reason: String?, attempt: Int) -> Bool {
+        status == .refused && reason == "expected_revision_mismatch" && attempt < confirmedFocusRetryLimit
     }
 
     /// Canonical per-write gate, used by the real AX port. Safety release is
@@ -1374,7 +1405,9 @@ final class ResidentActionController: @unchecked Sendable {
             ResidentPerformanceTrace.shared.record("verified", fields: trace, timestamp: UInt64(stamp))
         }
         var delta: JSONObject = metadata.merging(["event": .string("action_result"), "last_result": value])
-        if value.at(path: "effect_kind")?.stringValue == "frame" {
+        if value.at(path: "effect_kind")?.stringValue == "frame",
+           Self.frameResultAssertsMode(status: status, priorInteraction: effect?.priorInteraction,
+                                       proposedState: effect?.proposedState) {
             let state = server.worldState.at(path: "model_state") ?? .object([:])
             delta = Self.modelProjection(state: state, event: "action_result").merging(delta)
             if status == .failed { delta["mode"] = .string("default") }
@@ -1390,14 +1423,31 @@ final class ResidentActionController: @unchecked Sendable {
         // world fence cancelled may have committed a layout no window reached. Either
         // way the facts it carried are still owed. Replan them, bounded, on the newer world.
         if let batch, batch.attempt < Self.reconciliationRetryLimit,
-           Self.reconciliationOwesReplan(status: status, reason: value.at(path: "reason")?.stringValue ?? "") {
+           Self.reconciliationOwesReplan(status: status, reason: value.at(path: "reason")?.stringValue ?? "",
+               committed: value.at(path: "desired_state_committed_revision")?.intValue != nil, planned: effect != nil) {
             scheduleReconciliation(batch.events, overflow: batch.overflow, attempt: batch.attempt + 1)
         }
     }
 
-    static func reconciliationOwesReplan(status: WmStatus, reason: String) -> Bool {
+    /// A reconcile that never applied still owes its facts (`planned`: its plan was
+    /// accepted and reached the effector before being refused), and one that committed its
+    /// layout but failed to land it owes the windows that layout: nothing else replans
+    /// until the next world event, which may be long after.
+    static func reconciliationOwesReplan(status: WmStatus, reason: String, committed: Bool = false,
+                                         planned: Bool = false) -> Bool {
         (status == .refused && reconciliationRaceReasons.contains(reason))
+            || (status == .refused && planned && reconciliationContextReasons.contains(reason))
             || ((status == .refused || status == .failed) && reason.hasPrefix("invalidated_"))
+            || (status == .failed && committed && !reconciliationConstraintReasons.contains(reason))
+    }
+
+    /// A finished frame effect speaks for the mode only when its own plan held or ended
+    /// an interaction, or when it failed. A layout pass planned before a mode was entered
+    /// has no interaction on either side; publishing the model's "no interaction" as
+    /// `mode: default` would cancel the entry still waiting behind it.
+    static func frameResultAssertsMode(status: WmStatus, priorInteraction: JSONValue?, proposedState: JSONValue?) -> Bool {
+        func held(_ interaction: JSONValue?) -> Bool { interaction != nil && interaction != .null }
+        return status == .failed || held(priorInteraction) || held(proposedState?.at(path: "interaction"))
     }
 
 }

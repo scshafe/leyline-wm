@@ -428,6 +428,7 @@ func runResidentCommandsSelfTest() -> Int32 {
     runStartupAdmissionContentionScenarios(fixture: fixture, test: &test)
     runStartupDesktopSpaceAwaitScenarios(test: &test)
     runReactiveLifecycleRefocusScenarios(fixture: fixture, test: &test)
+    runLayoutPassModeAuthorityScenarios(fixture: fixture, test: &test)
     do {
         let navigation = try ResidentCommandsRig(fixture: fixture)
         test.check(navigation.bootstrapResult?.at(path: "status")?.stringValue == "accepted"
@@ -1125,6 +1126,90 @@ private func runResidentMinimumCheckpointScenario(fixture: JSONValue, test: inou
             && rig.result("minimum-write") == result,
             "resident-commands/minimum-checkpoint-preserves-mode-and-original-effect-result")
     } catch { test.check(false, "resident-commands/minimum-checkpoint-fixture: \(error)") }
+}
+
+/// A layout pass planned before a mode was entered finishes after the entry: its result
+/// must not publish the model's still-empty interaction as `mode: default`.
+private func runLayoutPassModeAuthorityScenarios(fixture: JSONValue, test: inout SelfTest) {
+    typealias Controller = ResidentActionController
+    let held: JSONValue = .object(["mode": .string("move")])
+    test.check(!Controller.frameResultAssertsMode(status: .accepted, priorInteraction: nil, proposedState: .object([:]))
+        && !Controller.frameResultAssertsMode(status: .accepted, priorInteraction: .null, proposedState: nil)
+        && Controller.frameResultAssertsMode(status: .failed, priorInteraction: nil, proposedState: .object([:]))
+        && Controller.frameResultAssertsMode(status: .accepted, priorInteraction: held, proposedState: .object([:]))
+        && Controller.frameResultAssertsMode(status: .accepted, priorInteraction: nil, proposedState: .object(["interaction": held])),
+        "resident-commands/only-a-failed-or-interaction-bearing-frame-result-speaks-for-the-mode")
+    test.check(Controller.reconciliationOwesReplan(status: .refused, reason: "authoritative_commit_revision_mismatch")
+        && Controller.reconciliationOwesReplan(status: .refused, reason: "authoritative_revision_churn")
+        && Controller.reconciliationOwesReplan(status: .failed, reason: "targeted_evidence_timeout", committed: true)
+        && Controller.reconciliationOwesReplan(status: .failed, reason: "effect_cancelled", committed: true)
+        && !Controller.reconciliationOwesReplan(status: .failed, reason: "targeted_evidence_timeout", committed: false)
+        && !Controller.reconciliationOwesReplan(status: .failed, reason: "minimum_constraint", committed: true)
+        && !Controller.reconciliationOwesReplan(status: .failed, reason: "fixed_aspect_constraint", committed: true)
+        && !Controller.reconciliationOwesReplan(status: .accepted, reason: "", committed: true)
+        && !Controller.reconciliationOwesReplan(status: .refused, reason: "world_incomplete", committed: false)
+        && Controller.reconciliationOwesReplan(status: .refused, reason: "world_incomplete", planned: true)
+        && Controller.reconciliationOwesReplan(status: .refused, reason: "observer_generation_mismatch", planned: true)
+        && !Controller.reconciliationOwesReplan(status: .refused, reason: "ax_untrusted", planned: true)
+        && Controller.confirmedFocusOwesRetry(status: .refused, reason: "expected_revision_mismatch", attempt: 0)
+        && !Controller.confirmedFocusOwesRetry(status: .refused, reason: "expected_revision_mismatch",
+            attempt: Controller.confirmedFocusRetryLimit)
+        && !Controller.confirmedFocusOwesRetry(status: .refused, reason: "confirmed_focus_context_changed", attempt: 0)
+        && !Controller.confirmedFocusOwesRetry(status: .accepted, reason: nil, attempt: 0),
+        "resident-commands/a-lost-commit-race-or-an-unlanded-committed-layout-owes-a-bounded-replan")
+    do {
+        let rig = try ResidentCommandsRig(fixture: fixture)
+        var windows = rig.server.worldState.at(path: "windows")!.arrayValue!
+        var drifted = windows[1].objectValue!, frame = drifted["frame"]!.objectValue!
+        frame["x"] = .int((frame["x"]?.intValue ?? 0) + 40); drifted["frame"] = .object(frame); windows[1] = .object(drifted)
+        let drift = rig.server.applyWorldDelta(["event": .string("settings_changed"), "windows": .array(windows)])
+        _ = rig.waitForProcessed(drift.revision.value)
+        rig.port.hold(true)
+        rig.controller.reconcile(requestID: "layout-before-mode")
+        let issued = rig.port.waitForIssues(1)
+        _ = rig.server.applyModeFrame(.init(type: .snapshot, epoch: "mode-authority-fixture", sequence: 0, mode: "default"))
+        let entered = rig.server.applyModeFrame(.init(type: .changed, epoch: "mode-authority-fixture", sequence: 1,
+            mode: "move", inputGeneration: 1))
+        _ = rig.waitForProcessed(entered.revision.value)
+        let enteredMode = rig.server.worldState.at(path: "mode")
+        rig.port.hold(false); rig.port.release("layout-before-mode")
+        let landed = rig.result("layout-before-mode")
+        let world = rig.server.worldState
+        if landed?.at(path: "status")?.stringValue != "accepted" || world.at(path: "mode") != .string("move") {
+            print("diagnostic layout-before-mode issued=\(issued) entered=\(entered.status) result=\((landed ?? .null).canonical()) mode=\((world.at(path: "mode") ?? .null).canonical())")
+        }
+        test.check(issued && entered.status == .accepted && enteredMode == .string("move")
+            && landed?.at(path: "status")?.stringValue == "accepted" && landed?.at(path: "effect_kind")?.stringValue == "frame"
+            && world.at(path: "mode") == .string("move") && world.at(path: "last_result.request_id") == .string("layout-before-mode"),
+            "resident-commands/a-layout-pass-finishing-after-mode-entry-cannot-cancel-the-entered-mode")
+    } catch { test.check(false, "resident-commands/layout-pass-mode-authority-fixture: \(error)") }
+    do {
+        // Another publication lands between the history snapshot and its commit.
+        let gate = ResidentCommandsStateOnlyJournalGate(actionID: "focus.confirmed", active: false)
+        let rig = try ResidentCommandsRig(fixture: fixture, stateOnlyAppend: { try gate.append($0, journal: $1) })
+        defer { gate.permit.signal() }
+        gate.arm()
+        _ = rig.act("nav.focus.east", id: "raced-history-focus")
+        let held = gate.entered.wait(timeout: .now() + .seconds(3)) == .success
+        gate.disarm()
+        let racing = rig.server.applyWorldDelta(["event": .string("settings_changed")])
+        gate.permit.signal()
+        let recorded = selfTestWaitUntil { rig.server.worldState.at(path: "model_state.confirmed_focus_window_id") == .int(2) }
+        _ = rig.waitForIOQuiescent()
+        let journal = (try? String(contentsOfFile: rig.journal.path, encoding: .utf8)) ?? ""
+        let records = journal.split(separator: "\n").compactMap { try? JSONValue.parse(Data($0.utf8)) }
+            .filter { $0.at(path: "request_id")?.stringValue?.hasPrefix("focus-history:") == true }
+        let aborted = records.contains { $0.at(path: "type") == .string("model_state_abort")
+            && $0.at(path: "reason") == .string("expected_revision_mismatch") }
+        let retried = records.contains { $0.at(path: "type") == .string("model_state_commit")
+            && $0.at(path: "request_id")?.stringValue?.hasSuffix(":retry1") == true }
+        if !(held && recorded && aborted && retried) {
+            print("diagnostic raced-history held=\(held) racing=\(racing.status) recorded=\(recorded) aborted=\(aborted) retried=\(retried) records=\(records.count)")
+        }
+        test.check(held && racing.status == .accepted && recorded && aborted && retried
+            && rig.server.worldState.at(path: "model_state.focus_history")?.arrayValue?.first?.at(path: "window_id") == .int(2),
+            "resident-commands/confirmed-focus-that-loses-a-revision-race-is-committed-on-retry")
+    } catch { test.check(false, "resident-commands/raced-focus-history-fixture: \(error)") }
 }
 
 private func runResidentCachedLandingScenarios(fixture: JSONValue, test: inout SelfTest) {

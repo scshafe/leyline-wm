@@ -20,10 +20,16 @@ The pure evaluator recognizes these predicates:
 
 A stale result code 4 forces default before the ordinary predicate. Direct exits
 release mode locally; a partial cancel can restore its previous mode only with a
-fresh generation. Late action completion cannot re-enter an invalidated mode.
+fresh generation. Late action completion cannot re-enter an invalidated mode, and
+a finished frame effect whose plan neither held nor ended an interaction cannot
+change the mode: a layout pass that finishes after a mode was entered leaves it
+entered. A failed frame effect still returns to default.
 Admission retains the original input receipt, generation and target context.
 Entry/exit shortcut key-up consumes the held identity without dispatching a second
-or inverse action. Move cancellation is further constrained by [move mode](move-mode-spec.md).
+or inverse action. A claimed key stays with the tap until its key-up: its autorepeat
+routes only as the same directional focus, resize nudge or cursor step, and is
+otherwise swallowed, so holding an entry or exit key acts once and a held key cannot
+reach the application as text after its mode ends. A released tap claims nothing. Move cancellation is further constrained by [move mode](move-mode-spec.md).
 
 Ordinary window chords require trustworthy managed eligibility in an enabled
 visible Space. Directional focus alone has a wider route: it stays claimable while
@@ -39,6 +45,9 @@ available in default/move/resize on an identified OFF or empty Space while globa
 management and observation are available. One press toggles once, and stale queued
 input cannot control a newly focused Space. Global OFF, unknown identity, lost
 observation or session safety release all management claims.
+
+A tap whose registered events lack key-down or key-up, as when Input Monitoring is
+not granted to this build, is a failed start, not an installed tap.
 
 Independent callback, run-loop, authority and action watchdogs can release capture
 without waiting for blocked dispatch or AppKit. The release ceiling is 250 ms.

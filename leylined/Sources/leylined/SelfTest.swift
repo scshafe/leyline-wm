@@ -44,5 +44,21 @@ func runModelSelfTest() -> Int32 {
         t.check(false, "revision/wire-shape-bare-integer")
     }
 
+    func parsed(_ text: String) -> JSONValue? { try? JSONValue.parse(Data(text.utf8)) }
+    t.check(parsed("3.0")?.intValue == 3 && parsed("-0.0")?.intValue == 0 && parsed("7")?.intValue == 7
+        && parsed("2.5")?.intValue == nil, "json/integral-doubles-read-as-integers-and-fractions-do-not")
+    t.check(parsed("1e19") != nil && parsed("1e19")?.intValue == nil && parsed("-1e300")?.intValue == nil
+        && JSONValue.double(.infinity).intValue == nil && JSONValue.double(.nan).intValue == nil
+        && JSONValue.double(9_223_372_036_854_775_808).intValue == nil,
+        "json/out-of-range-or-non-finite-double-is-not-an-integer-and-cannot-trap")
+    t.check(parsed("1e999") == nil && parsed("-1e999") == nil && parsed("{\"border_radius\":1e999}") == nil,
+        "json/non-finite-number-is-refused-at-parse")
+    let deep = 100_000
+    t.check(parsed(String(repeating: "[", count: 256) + String(repeating: "]", count: 256)) != nil
+        && parsed(String(repeating: "[", count: 257) + String(repeating: "]", count: 257)) == nil
+        && parsed(String(repeating: "[", count: deep)) == nil
+        && parsed(String(repeating: "{\"a\":", count: deep)) == nil,
+        "json/nesting-is-bounded-so-hostile-depth-refuses-instead-of-exhausting-the-stack")
+
     return t.finish("model")
 }

@@ -1,5 +1,32 @@
 # Release notes
 
+## 1.0.6
+
+Changes since 1.0.5:
+
+- Fixed: after an update, shortcuts could do nothing while the icon stayed green.
+  macOS creates the keyboard tap without Input Monitoring but delivers no key
+  events to it. Leyline now detects that and shows a red icon naming Input
+  Monitoring. See [troubleshooting](troubleshooting.md) for the re-grant steps.
+- Fixed: windows could stay at their old sizes after a layout change until some
+  later window event. A layout pass that lost a race with another change, or that
+  saved its layout and then failed to move the windows, is now planned again, at
+  most three times.
+- Fixed: pressing Hyper + M or Hyper + R while windows were still moving into
+  place could enter the mode and immediately leave it.
+- Fixed: closing a window sometimes left no window focused, because the record of
+  the last focused window had been dropped when it was saved at the same moment as
+  another change. The record is now saved again.
+- Fixed: holding Hyper + M or Hyper + R switched the mode on and off repeatedly,
+  and a key held while its mode ended could type into the application. A held
+  key now acts once, except for focus, resize and cursor steps, which repeat.
+- Fixed: a number too large to be an integer, or deeply nested JSON, in a settings
+  file or a socket request could crash Leyline. Both are now refused.
+- Fixed: `brew install` failed for macOS account names that are ordinary words,
+  such as `user` or `test`.
+- `ley test` refuses a test binary older than the sources and `ley test all` runs
+  every stage. The release packager refuses uncommitted changes.
+
 ## 1.0.5
 
 Changes since 1.0.4:

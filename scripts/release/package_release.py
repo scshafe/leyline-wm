@@ -34,6 +34,24 @@ def app_shell(template: Path, app: Path, version: str) -> Path:
     return app
 
 
+def tracked_changes(repository: Path) -> list[str]:
+    """Tracked paths whose index or working bytes differ from the last commit."""
+    result=subprocess.run(["git","status","--porcelain","--untracked-files=no"],cwd=repository,text=True,capture_output=True)
+    if result.returncode: raise RuntimeError("Release operation failed: git status\n"+result.stderr[-4000:])
+    # Each row is two status columns, a space and the path; the columns may be blank.
+    return [line[3:] for line in result.stdout.splitlines() if len(line)>3]
+
+
+def deny_tokens(repository: Path, assemble_only: bool) -> set[str]:
+    """Identity tokens that must not appear in an artifact.
+
+    Assembly runs on the installing user's machine, where a login name such as
+    `user` or `test` is an ordinary word in the application. Leaked build paths,
+    credentials, private hosts and email addresses are still refused there.
+    """
+    return set() if assemble_only else private_tokens(repository)
+
+
 def source_files(repository: Path) -> list[Path]:
     """Tracked files only: untracked work never enters a public export."""
     result=run(["git","ls-files","--cached"],cwd=repository)
@@ -213,13 +231,16 @@ def main() -> int:
     if not (ROOT/'LICENSE').is_file():raise RuntimeError('Choose the public license before creating release artifacts')
     if not __import__('re').fullmatch(r'\d+\.\d+\.\d+',version):raise RuntimeError('Invalid semantic version')
     output=args.output.resolve();output.mkdir(parents=True,exist_ok=True)
-    deny=private_tokens(ROOT)
+    deny=deny_tokens(ROOT,args.assemble_only)
     artifacts=[]
     if args.assemble_only:
         assemble_existing(ROOT,output)
         findings=audit(output,deny)
         if findings:raise RuntimeError('Assembled application privacy audit failed: '+json.dumps(findings))
         print(json.dumps({'data':{'version':version,'assembled':True},'error':None,'meta':{'publish_attempted':False}}));return 0
+    # The export copies working files, so they must be exactly the last commit.
+    changed=tracked_changes(ROOT)
+    if changed:raise RuntimeError('Tracked files differ from the last commit; commit or restore them before packaging: '+', '.join(changed[:8]))
     source=output/f'leyline-{version}-public'
     export_source(ROOT,source,deny)
     archive=output/f'leyline-{version}-source.tar.gz';archive_source(source,archive);artifacts.append(archive)

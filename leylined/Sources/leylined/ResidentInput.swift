@@ -57,6 +57,7 @@ final class ResidentInput: @unchecked Sendable {
     private let osDisabledCount = ResidentAtomic<Int>(0)
     private let rearmCount = ResidentAtomic<Int>(0)
     private let createFailed = ResidentAtomic<Bool>(false)
+    private let keysWithheld = ResidentAtomic<Bool>(false)
     private let safetyReleased = ResidentAtomic<Bool>(false)
     private let watchdogQueue = DispatchQueue(label: "leyline.resident.input.watchdog", qos: .userInteractive)
     // Used only by the dedicated tap thread and independent watchdog queue.
@@ -112,6 +113,7 @@ final class ResidentInput: @unchecked Sendable {
         guard !desiredRunning.exchange(true, ordering: .acquiringAndReleasing) else { return false }
         lifecycleGeneration.wrappingAdd(1, ordering: .acquiringAndReleasing)
         createFailed.store(false, ordering: .releasing)
+        keysWithheld.store(false, ordering: .releasing)
         safetyReleased.store(false, ordering: .releasing)
         runLoopHeartbeatPending.store(false, ordering: .releasing)
         routing.setAccepting(false)
@@ -215,6 +217,7 @@ final class ResidentInput: @unchecked Sendable {
         value["space_control_allowed"] = .bool(spaceControlAllowed.load(ordering: .acquiring))
         value["navigation_allowed"] = .bool(navigationAllowed.load(ordering: .acquiring))
         value["tap_create_failed"] = .bool(createFailed.load(ordering: .acquiring))
+        value["key_events_withheld"] = .bool(keysWithheld.load(ordering: .acquiring))
         value["safety_released"] = .bool(safetyReleased.load(ordering: .acquiring))
         value["watchdog_release_count"] = .int(Int64(watchdogReleaseCount.load(ordering: .relaxed)))
         value["os_disabled_count"] = .int(Int64(osDisabledCount.load(ordering: .relaxed)))
@@ -237,6 +240,27 @@ final class ResidentInput: @unchecked Sendable {
     static let keyboardEventMask: CGEventMask =
         (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.keyUp.rawValue)
         | (1 << CGEventType.flagsChanged.rawValue)
+    static let keyEventMask: CGEventMask =
+        (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.keyUp.rawValue)
+
+    /// Without Input Monitoring the window server still creates the tap but strips the
+    /// key events from its mask, so the tap never sees a key. Only a positively reported
+    /// mask lacking them is that evidence; an unlisted tap proves nothing.
+    static func keyEventsWithheld(grantedMask: CGEventMask?) -> Bool {
+        grantedMask.map { $0 & keyEventMask != keyEventMask } ?? false
+    }
+
+    /// The events the window server registered for this process's keyboard tap.
+    private static func grantedKeyboardMask() -> CGEventMask? {
+        var count: UInt32 = 0
+        guard CGGetEventTapList(0, nil, &count) == .success, count > 0 else { return nil }
+        var taps = [CGEventTapInformation](repeating: CGEventTapInformation(), count: Int(count))
+        guard CGGetEventTapList(count, &taps, &count) == .success else { return nil }
+        let own = taps.prefix(Int(count)).filter {
+            $0.tappingProcess == getpid() && $0.eventsOfInterest & ~keyboardEventMask == 0
+        }
+        return own.count == 1 ? own[0].eventsOfInterest : nil
+    }
 
     #if LEYLINE_BUILD_TESTS
     /// Drives the exact no-tap-safe deadline handler without installing a tap.
@@ -252,6 +276,7 @@ final class ResidentInput: @unchecked Sendable {
             workerActive.store(false, ordering: .releasing)
             notifyStopped()
         }
+        heldChords.removeAll() // a new tap thread owns no press of the previous one
         let context = Unmanaged.passUnretained(self).toOpaque()
         guard let created = CGEvent.tapCreate(
             tap: .cgSessionEventTap, place: .headInsertEventTap, options: .defaultTap,
@@ -261,6 +286,15 @@ final class ResidentInput: @unchecked Sendable {
                 return Unmanaged<ResidentInput>.fromOpaque(pointer).takeUnretainedValue().receive(type: type, event: event)
             }, userInfo: context),
               let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, created, 0) else {
+            createFailed.store(true, ordering: .releasing)
+            desiredRunning.store(false, ordering: .releasing)
+            ready.signal()
+            return
+        }
+        guard !Self.keyEventsWithheld(grantedMask: Self.grantedKeyboardMask()) else {
+            // A tap that can never see a key is not an installed tap.
+            CFMachPortInvalidate(created)
+            keysWithheld.store(true, ordering: .releasing)
             createFailed.store(true, ordering: .releasing)
             desiredRunning.store(false, ordering: .releasing)
             ready.signal()
@@ -301,14 +335,20 @@ final class ResidentInput: @unchecked Sendable {
             portLock.unlock()
             return Unmanaged.passUnretained(event)
         }
-        guard type != .flagsChanged, desiredRunning.load(ordering: .acquiring),
-              routing.isAccepting else { return Unmanaged.passUnretained(event) }
+        guard type == .keyDown || type == .keyUp else { return Unmanaged.passUnretained(event) }
+        let code = Int(event.getIntegerValueField(.keyboardEventKeycode))
+        let repeated = type == .keyDown && event.getIntegerValueField(.keyboardEventAutorepeat) != 0
+        guard desiredRunning.load(ordering: .acquiring), routing.isAccepting else {
+            // Not claiming: this key's next edge is the application's, so an older
+            // claim on it is over and cannot swallow a later key-up.
+            if !repeated { heldChords.removeValue(forKey: code) }
+            return Unmanaged.passUnretained(event)
+        }
         let now = DispatchTime.now().uptimeNanoseconds
         let spaceContext = routing.spaceContextGeneration
         callbackStarted.store(now, ordering: .releasing)
         defer { callbackStarted.store(0, ordering: .releasing) }
         runLoopProgress.store(now, ordering: .releasing)
-        let code = Int(event.getIntegerValueField(.keyboardEventKeycode))
         if type == .keyUp {
             guard let held = heldChords.removeValue(forKey: code) else { return Unmanaged.passUnretained(event) }
             ResidentPerformanceTrace.shared.record("key_up", fields: ["origin": .string("input"), "input_boundary": .string("cg_session_tap"),
@@ -321,22 +361,25 @@ final class ResidentInput: @unchecked Sendable {
             }
             return nil
         }
-        guard type == .keyDown else { return Unmanaged.passUnretained(event) }
-        let repeated = event.getIntegerValueField(.keyboardEventAutorepeat) != 0
-        if repeated, heldChords[code]?.actionId == ResidentInputConstants.spaceToggleActionID { return nil }
+        // The press this key code already holds, when this is its autorepeat.
+        let owned = repeated ? heldChords[code] : nil
+        if owned?.actionId == ResidentInputConstants.spaceToggleActionID { return nil }
         var flags: KeyDecode.Flags = []
         if event.flags.contains(.maskCommand) { flags.insert(.cmd) }
         if event.flags.contains(.maskControl) { flags.insert(.ctrl) }
         if event.flags.contains(.maskAlternate) { flags.insert(.alt) }
         if event.flags.contains(.maskShift) { flags.insert(.shift) }
         if event.flags.contains(.maskSecondaryFn) { flags.insert(.fn) }
-        guard let chord = routing.configuration.decode.chord(keyCode: code, flags: flags) else {
-            return Unmanaged.passUnretained(event)
-        }
+        let chord = routing.configuration.decode.chord(keyCode: code, flags: flags)
         let generation = routing.generation
-        guard let route = routing.route(for: chord),
+        let route = chord.flatMap { routing.route(for: $0) }
+        if owned != nil, !ResidentActionIDs.repeatRoutes(held: owned?.actionId, routed: route?.actionId) { return nil }
+        guard let chord, let route,
               routing.admit(chord: chord, receiptUptimeNs: now, isRepeat: repeated, spaceContextGeneration: spaceContext,
                   pointer: ResidentInputPointer(x: Double(event.location.x), y: Double(event.location.y))) == .claimed else {
+            if owned != nil { return nil }
+            // A fresh press the tap does not claim ends any older claim on this key.
+            if !repeated { heldChords.removeValue(forKey: code) }
             return Unmanaged.passUnretained(event)
         }
         heldChords[code] = HeldChord(chord: chord, actionId: route.actionId, generation: generation)

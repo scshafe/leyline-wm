@@ -2,10 +2,18 @@
 # Required native/oracle/interface checks; missing binaries or corpora fail visibly.
 # The developer runner every native check defaults to; LEYLINE_CORE_BIN overrides it.
 test_core_bin() { printf '%s\n' "${LEYLINE_CORE_BIN:-$LEYLINE_HOME/bin/leylined-tests}"; }
+# A default runner older than the sources it tests would certify code it does not contain.
+test_runner_current() {
+  local binary="$1" newer
+  [[ -z "${LEYLINE_CORE_BIN:-}" && -d "$LEYLINE_HOME/leylined/Sources" ]] || return 0
+  newer="$(/usr/bin/find "$LEYLINE_HOME/leylined/Sources" "$LEYLINE_HOME/leylined/Package.swift" -type f -newer "$binary" 2>/dev/null | /usr/bin/head -n 1)"
+  [[ -z "$newer" ]] || { wm_err "native test binary is older than ${newer#"$LEYLINE_HOME"/}; run bin/leylined-build --tests"; return 69; }
+}
 test_native() {
   local binary suite failed=0
   binary="$(test_core_bin)"
   [[ -x "$binary" ]] || { wm_err "native test binary unavailable: $binary"; return 69; }
+  test_runner_current "$binary" || return $?
   for suite in model decode fsm timeline socket projection feed responsiveness effector resident-commands resident-client space-partitions maintenance startup claims input-stop-barrier input shell presentation installation; do
     wm_head "native/$suite"
     "$binary" self-test "$suite" || failed=$((failed+1))
@@ -16,6 +24,7 @@ test_oracles() {
   local binary
   binary="$(test_core_bin)"
   [[ -x "$binary" ]] || { wm_err 'native oracle binary unavailable'; return 69; }
+  test_runner_current "$binary" || return $?
   LEYLINE_CORE_BIN="$binary" "$LEYLINE_HOME/tests/oracles/model-tests.sh" || return $?
   LEYLINE_CORE_BIN="$binary" "$LEYLINE_HOME/tests/oracles/navigation-tests.sh" run || return $?
   /usr/bin/python3 "$LEYLINE_HOME/tests/oracles/test_largest_first_insertion.py" --core-bin "$binary"
@@ -52,7 +61,16 @@ test_main() {
     recovery) test_recovery ;; acceptance-tools) test_acceptance_tools ;; release) test_release ;;
     syntax|json|links|dependencies) /usr/bin/python3 "$LEYLINE_HOME/tests/source_checks.py" "$1" ;;
     all)
-      test_native && test_oracles && test_cli && test_recovery && test_acceptance_tools && test_release && /usr/bin/python3 "$LEYLINE_HOME/tests/source_checks.py" all ;;
+      # Every stage runs: an early failure must not hide what the later stages would report.
+      local stage failed=""
+      for stage in native oracles cli recovery acceptance-tools release source; do
+        case "$stage" in
+          native) test_native ;; oracles) test_oracles ;; cli) test_cli ;;
+          recovery) test_recovery ;; acceptance-tools) test_acceptance_tools ;; release) test_release ;;
+          source) /usr/bin/python3 "$LEYLINE_HOME/tests/source_checks.py" all ;;
+        esac || failed="$failed $stage"
+      done
+      [[ -z "$failed" ]] || { wm_err "failed stages:$failed"; return 1; } ;;
     *) wm_err 'usage: ley test [all|native|oracles|cli|recovery|acceptance-tools|release|syntax|json|links|dependencies]'; return 64 ;;
   esac
 }

@@ -14,6 +14,7 @@ Accessibility trust or an active input tap.
 |---|---|
 | Shortcuts do nothing | Global management, focused Space ON/OFF, Accessibility/Input Monitoring grants, and actual Hyper modifiers |
 | Hyper + M or R does nothing, but H/J/K/L work | No managed window is focused. Press Hyper + H, J, K or L once to focus one, then enter the mode |
+| Shortcuts do nothing after an update, with a red icon naming Input Monitoring | macOS still ties the grant to the previous build and delivers no key events. Remove Leyline from Input Monitoring, add `~/Applications/Leyline.app` again, then restart Leyline. Do the same for Accessibility if the icon names it |
 | Caps Lock + key does nothing | Caps Lock must be mapped to Hyper externally; test Command+Control+Option+Shift + key |
 | Space toggle unavailable | The resident needs complete trustworthy identity for the focused ordinary desktop Space |
 | A resize or move refuses | Application minima, stale observation, missing source/destination or an infeasible common cut |

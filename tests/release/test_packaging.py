@@ -6,7 +6,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'scripts/release'))
 from privacy_audit import audit,private_tokens
-from package_release import export_source,archive_source,anonymous_history,source_files,install_recipe,app_shell,app_resources
+from package_release import export_source,archive_source,anonymous_history,source_files,install_recipe,app_shell,app_resources,tracked_changes,deny_tokens
 
 class Packaging(unittest.TestCase):
     def setUp(self):
@@ -24,6 +24,26 @@ class Packaging(unittest.TestCase):
         dest=self.root/'public';export_source(self.repo,dest,set())
         self.assertTrue((dest/'VERSION').is_file())
         for name in ['.git','.claude','runtime','notes.private.txt','bin/leylined']:self.assertFalse((dest/name).exists())
+    def test_packaging_sees_every_tracked_difference_from_the_last_commit_and_no_untracked_file(self):
+        self.assertIn('README.md',tracked_changes(self.repo))  # staged, never committed
+        identity=['-c','user.name=Leyline Contributors','-c','user.email=contributors@leyline.invalid']
+        subprocess.run(['git',*identity,'commit','-q','-m','baseline'],cwd=self.repo,check=True)
+        self.assertEqual(tracked_changes(self.repo),[])
+        (self.repo/'draft.md').write_text('untracked\n')
+        self.assertEqual(tracked_changes(self.repo),[])
+        (self.repo/'README.md').write_text('edited after the commit\n')
+        self.assertEqual(tracked_changes(self.repo),['README.md'])
+    def test_assembly_on_an_installing_machine_denies_no_login_name(self):
+        import getpass
+        from unittest import mock
+        with mock.patch.object(getpass,'getuser',return_value='user'):
+            self.assertIn('user',deny_tokens(self.repo,assemble_only=False))
+            self.assertEqual(deny_tokens(self.repo,assemble_only=True),set())
+        app=self.root/'assembled';app.mkdir();(app/'receipt.json').write_text('{"user_data_preserved":true}\n')
+        self.assertEqual(audit(app,deny_tokens(self.repo,assemble_only=True)),[])
+        self.assertEqual(audit(app,{'user'})[0]['code'],'personal_identifier')
+        (app/'leak.txt').write_text('/'+'/'.join(['Users','fixture-account','build']))
+        self.assertEqual(audit(app,deny_tokens(self.repo,assemble_only=True))[0]['code'],'absolute_home_path')
     def test_export_excludes_untracked_source_files(self):
         (self.repo/'docs').mkdir();(self.repo/'docs/draft.md').write_text('untracked draft\n')
         dest=self.root/'public';export_source(self.repo,dest,set())

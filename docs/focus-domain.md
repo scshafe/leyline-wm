@@ -31,7 +31,8 @@ window exists. Move and resize entry never use the anchor.
 After removal preserve valid managed focus, otherwise prefer the eligible absorber,
 then a recent confirmed survivor. The history is deduplicated, most-recent-first
 and bounded to 10 current typed identities. No survivor means no focus effect.
-Only verified focus readback or compound completion updates it. The Windows menu
+Only verified focus readback or compound completion updates it; an update that
+loses a revision race to another publication is committed again, at most three times. The Windows menu
 can reveal an obscured overload member and verify final front/focus without losing
 other members. See [reclaim](contracts/reclaim-policy.md).
 

@@ -98,6 +98,26 @@ private func runResidentInputChecks(home: String, test: inout SelfTest) {
     let mouseMask = (1 << CGEventType.leftMouseDown.rawValue) | (1 << CGEventType.rightMouseDown.rawValue)
         | (1 << CGEventType.mouseMoved.rawValue) | (1 << CGEventType.scrollWheel.rawValue)
     test.check(ResidentInput.keyboardEventMask & UInt64(mouseMask) == 0, "resident/tap-mask-keyboard-only")
+    test.check(["nav.focus.west", "resize.adjust.east", "move.cursor.north"].allSatisfy(ResidentActionIDs.repeats)
+        && ["move.start", "resize.start", "move.off", "resize.off", "move.cancel", "move.execute.auto", "move.drop",
+            "move.execute.swap", "move.rotate", "move.level.up", "service.restart",
+            ResidentInputConstants.spaceToggleActionID].allSatisfy { !ResidentActionIDs.repeats($0) },
+        "resident/only-stepwise-motions-repeat-while-held")
+    test.check(ResidentActionIDs.repeatRoutes(held: "move.cursor.west", routed: "move.cursor.west")
+        && ResidentActionIDs.repeatRoutes(held: nil, routed: "move.start")
+        && ResidentActionIDs.repeatRoutes(held: nil, routed: nil)
+        && !ResidentActionIDs.repeatRoutes(held: "move.start", routed: "move.off")
+        && !ResidentActionIDs.repeatRoutes(held: "resize.start", routed: "resize.off")
+        && !ResidentActionIDs.repeatRoutes(held: "move.cursor.west", routed: nil)
+        && !ResidentActionIDs.repeatRoutes(held: "nav.focus.west", routed: "move.cursor.west")
+        && !ResidentActionIDs.repeatRoutes(held: "move.execute.auto", routed: "move.execute.auto"),
+        "resident/a-held-claimed-key-neither-toggles-its-mode-again-nor-leaks-to-the-application")
+    let modifiersOnly: CGEventMask = 1 << CGEventType.flagsChanged.rawValue
+    test.check(ResidentInput.keyEventsWithheld(grantedMask: modifiersOnly)
+        && ResidentInput.keyEventsWithheld(grantedMask: modifiersOnly | (1 << CGEventType.keyDown.rawValue))
+        && !ResidentInput.keyEventsWithheld(grantedMask: ResidentInput.keyboardEventMask)
+        && !ResidentInput.keyEventsWithheld(grantedMask: nil),
+        "resident/tap-with-key-events-stripped-is-withheld-and-an-unlisted-tap-proves-nothing")
     test.check(input.routing.configuration.decode.chord(keyCode: 0x37, flags: [.cmd]) == nil,
                "resident/pure-modifier-never-claimable")
     test.check(input.inject(chord: "cmd + ctrl + alt + shift - 0x31") == .passedThrough,

@@ -47,6 +47,9 @@ native resident socket.
 Targeted checks are `bin/ley test native`, `oracles`, `cli`, `recovery`,
 `acceptance-tools`, `release`, `syntax`, `json`, `links` and `dependencies`.
 A missing binary, fixture/tool or empty inventory fails rather than skipping required coverage.
+The default runner must be newer than every file under `leylined/Sources`; a stale
+one is refused with the rebuild command. `ley test all` runs every stage and names
+the ones that failed, so one failure cannot hide the stages after it.
 Do not run actuating probes or launchd installation as part of a hermetic test.
 `ley test release` refuses to run while an `org.leyline.leylined` job is registered,
 leaving that job untouched.

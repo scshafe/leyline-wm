@@ -19,7 +19,8 @@ python3 scripts/release/package_release.py --help
 python3 scripts/release/package_release.py --output dist --arch universal --anonymous-history
 ```
 
-It prepares versioned source/app archives and integrity metadata. The package
+It refuses to run while tracked files differ from the last commit, because the
+export copies working files. It prepares versioned source/app archives and integrity metadata. The package
 contains `Leyline.app`, `Leyline Recovery.app` and `install.sh`, with production
 resources independent of the checkout. An extracted archive must install and
 operate from a path containing spaces, without Python/Command Line Tools.
@@ -67,7 +68,7 @@ Do not distribute that template as a working formula.
 
 ## Signing and publication
 
-The prepared 1.0.5 universal app is ad-hoc signed and unnotarized. Source and
+The prepared 1.0.6 universal app is ad-hoc signed and unnotarized. Source and
 Homebrew builds can remain anonymous with this local signing profile. Developer ID
 signatures expose the certificate's publisher identity. For normal direct-download
 Gatekeeper distribution, use the intended Developer ID certificate, hardened

@@ -12,6 +12,20 @@ enum ResidentActionIDs {
     static let worldReconcile = "world.reconcile"
     /// Directional focus: the one ordinary chord family that needs no managed focus.
     static let navigationFocusPrefix = "nav.focus."
+    /// A held key repeats only where each repeat is one more step of the same motion.
+    /// Entering, leaving or committing a mode happens once per press.
+    static func repeats(_ actionID: String) -> Bool {
+        actionID.hasPrefix(navigationFocusPrefix) || actionID.hasPrefix(resizeAdjustPrefix)
+            || actionID.hasPrefix("move.cursor.")
+    }
+    /// An autorepeat of a key whose press this tap claimed stays with the tap until its
+    /// key-up: it routes only as the same repeating action, and is otherwise swallowed
+    /// rather than toggling a mode again or reaching the application as typed text.
+    /// An autorepeat of a key the tap never claimed (`held` nil) routes as before.
+    static func repeatRoutes(held: String?, routed: String?) -> Bool {
+        guard let held else { return true }
+        return routed == held && repeats(held)
+    }
 }
 
 enum ResidentInputConstants {

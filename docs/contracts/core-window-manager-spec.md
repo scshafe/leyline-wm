@@ -1,6 +1,6 @@
 # Core window-manager contract
 
-Leyline 1.0.5 manages eligible tiled windows, borders, move previews and controls
+Leyline 1.0.6 manages eligible tiled windows, borders, move previews and controls
 in one native `leylined` resident. On-demand CLI clients and the independent
 Finder Recovery app do not own layout authority.
 
@@ -96,7 +96,11 @@ A journaled transition establishes the authoritative intended model. External AX
 writes are bounded attempts, not proof of a landed frame or focus. Effect readback
 must match the original lifetime/context and requested compound goal. Multi-window
 writes are not physically simultaneous merely because their logical plan is atomic.
-Partial effects retain their actual outcome and committed checkpoint.
+Partial effects retain their actual outcome and committed checkpoint. An
+event-driven layout pass that lost a commit race, was fenced between planning and
+issue, or committed its layout and then failed to land it, is planned again against
+the newer world, at most three times;
+a minimum or fixed-aspect shortfall keeps its own single replan.
 
 Public results are `accepted`, `noop`, `refused` or `failed`. Refusal makes no
 mutation. Failure identifies genuine unlanded effects rather than pretending to
