@@ -68,7 +68,7 @@ Do not distribute that template as a working formula.
 
 ## Signing and publication
 
-The prepared 1.0.6 universal app is ad-hoc signed and unnotarized. Source and
+The prepared 1.0.7 universal app is ad-hoc signed and unnotarized. Source and
 Homebrew builds can remain anonymous with this local signing profile. Developer ID
 signatures expose the certificate's publisher identity. For normal direct-download
 Gatekeeper distribution, use the intended Developer ID certificate, hardened

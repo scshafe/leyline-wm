@@ -44,6 +44,31 @@ func projectionNonDesktopOnlyWindowIds(_ ids: Set<Int64>, spaceTypes: [UInt64: I
     }
 }
 
+/// @canonical projection_attached_child_window -- a CG-visible row with no AX
+/// window is outside the tiling inventory only when the window server positively
+/// reports it attached to a parent that is visible, owned by the same process and
+/// AX-classified in this same sweep (or to another row already proven attached).
+/// An application's child windows (a popover-style panel under a toolbar button, a
+/// sheet) are layer-0 CG windows that its `AXWindows` never lists; they move with
+/// their parent, which is the tile. An unknown, absent or foreign parent, or one
+/// this sweep did not classify, keeps the row required, so a failed parent read
+/// can never shrink the visible set.
+func projectionAttachedChildWindowIds(_ unresolved: Set<Int64>, owners: [Int64: pid_t], classified: Set<Int64>,
+                                      parents: [Int64: Int64]) -> Set<Int64> {
+    var attached: Set<Int64> = []
+    var grew = true
+    while grew {
+        grew = false
+        for id in unresolved where !attached.contains(id) {
+            guard let parent = parents[id], parent > 0, parent != id,
+                  let owner = owners[id], owner > 0, owners[parent] == owner,
+                  classified.contains(parent) || attached.contains(parent) else { continue }
+            attached.insert(id); grew = true
+        }
+    }
+    return attached
+}
+
 @_silgen_name("_AXUIElementGetWindow")
 private func projectionAXWindowID(_ element: AXUIElement,
                                   _ windowId: UnsafeMutablePointer<CGWindowID>) -> AXError

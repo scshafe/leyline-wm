@@ -71,6 +71,10 @@ final class IndependentProjectionSpaceObserver: ProjectionSpaceObserving, @unche
     private static let allSpacesMask: Int32 = 0x7
     private typealias CopyWindowDisplay = @convention(c) (Int32, UInt32) -> Unmanaged<CFString>?
     private typealias CurrentDisplaySpace = @convention(c) (Int32, CFString) -> UInt64
+    private typealias QueryWindows = @convention(c) (Int32, CFArray, Int32) -> Unmanaged<CFTypeRef>?
+    private typealias CopyQueryIterator = @convention(c) (CFTypeRef) -> Unmanaged<CFTypeRef>?
+    private typealias AdvanceIterator = @convention(c) (CFTypeRef) -> Bool
+    private typealias IteratorWindowID = @convention(c) (CFTypeRef) -> UInt32
     private struct Space: Sendable { let key: String; let displayId: String; let visible: Bool }
     private let handle: UnsafeMutableRawPointer?
     private let connection: MainConnection?
@@ -78,6 +82,11 @@ final class IndependentProjectionSpaceObserver: ProjectionSpaceObserving, @unche
     private let windows: CopyWindowSpaces?
     private let windowDisplay: CopyWindowDisplay?
     private let currentSpace: CurrentDisplaySpace?
+    private let queryWindows: QueryWindows?
+    private let copyQueryIterator: CopyQueryIterator?
+    private let advanceIterator: AdvanceIterator?
+    private let iteratorWindowID: IteratorWindowID?
+    private let iteratorParentID: IteratorWindowID?
     private var spaces: [UInt64: Space] = [:]
     private var baselineFailure: ProjectionObservationFailure? = .init(code: "space_not_baselined")
 
@@ -93,6 +102,11 @@ final class IndependentProjectionSpaceObserver: ProjectionSpaceObserving, @unche
         windows = symbol("SLSCopySpacesForWindows", as: CopyWindowSpaces.self)
         windowDisplay = symbol("SLSCopyManagedDisplayForWindow", as: CopyWindowDisplay.self)
         currentSpace = symbol("SLSManagedDisplayGetCurrentSpace", as: CurrentDisplaySpace.self)
+        queryWindows = symbol("SLSWindowQueryWindows", as: QueryWindows.self)
+        copyQueryIterator = symbol("SLSWindowQueryResultCopyWindows", as: CopyQueryIterator.self)
+        advanceIterator = symbol("SLSWindowIteratorAdvance", as: AdvanceIterator.self)
+        iteratorWindowID = symbol("SLSWindowIteratorGetWindowID", as: IteratorWindowID.self)
+        iteratorParentID = symbol("SLSWindowIteratorGetParentID", as: IteratorWindowID.self)
     }
 
     deinit { if let handle { dlclose(handle) } }
@@ -212,6 +226,29 @@ final class IndependentProjectionSpaceObserver: ProjectionSpaceObserving, @unche
                   let raw = windows(cid, Self.allSpacesMask, [NSNumber(value: id)] as CFArray)?.takeRetainedValue() else { return nil }
             return (raw as? [NSNumber])?.map(\.uint64Value)
         }
+    }
+
+    /// Fresh window-server parent read for the inventory guard: the attached
+    /// (child-window) relation, keyed by child ID. Uses only immutable function
+    /// pointers, like `nonDesktopOnlyWindowIds`. A window the server does not
+    /// return, a parentless window and any missing symbol or failed query leave
+    /// the ID absent, so the caller keeps that row required.
+    func windowParents(_ ids: Set<Int64>) -> [Int64: Int64] {
+        let wanted = ids.filter { $0 > 0 && $0 <= Int64(UInt32.max) }
+        guard !wanted.isEmpty, wanted.count <= Int(Int32.max), let connection, let queryWindows, let copyQueryIterator,
+              let advanceIterator, let iteratorWindowID, let iteratorParentID else { return [:] }
+        let list = wanted.sorted().map { NSNumber(value: UInt32($0)) } as CFArray
+        guard let query = queryWindows(connection(), list, Int32(wanted.count))?.takeRetainedValue(),
+              let iterator = copyQueryIterator(query)?.takeRetainedValue() else { return [:] }
+        var parents: [Int64: Int64] = [:]
+        // The server returns at most one row per requested ID; the bound only
+        // stops a misbehaving iterator from holding the observation lane.
+        for _ in 0..<wanted.count {
+            guard advanceIterator(iterator) else { break }
+            let id = Int64(iteratorWindowID(iterator)), parent = Int64(iteratorParentID(iterator))
+            if wanted.contains(id), parent > 0 { parents[id] = parent }
+        }
+        return parents
     }
 
     /// The only no-window Space target is an exact OS display UUID.

@@ -1,5 +1,20 @@
 # Release notes
 
+## 1.0.7
+
+Changes since 1.0.6:
+
+- Fixed: Leyline could stay at "Starting" after login and never tile. A panel
+  that an application attaches to one of its windows, such as a browser's
+  toolbar panel, is not exposed to Accessibility, and Leyline waits until every
+  visible window is identified. A panel attached to an identified window of the
+  same application is now recognised through that window and left alone.
+- Fixed: choosing **Start Leyline** or **Restart Leyline** while Leyline was still
+  starting could stop it at "Recovery needed" until the next restart, with a
+  status that did not name the cause. Start and Restart now wait the way startup
+  does and finish when the windows can be read. `ley ctl start` reports `failed`
+  with `startup_pending: true` while that wait continues.
+
 ## 1.0.6
 
 Changes since 1.0.5:

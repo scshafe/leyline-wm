@@ -15,6 +15,7 @@ Accessibility trust or an active input tap.
 | Shortcuts do nothing | Global management, focused Space ON/OFF, Accessibility/Input Monitoring grants, and actual Hyper modifiers |
 | Hyper + M or R does nothing, but H/J/K/L work | No managed window is focused. Press Hyper + H, J, K or L once to focus one, then enter the mode |
 | Shortcuts do nothing after an update, with a red icon naming Input Monitoring | macOS still ties the grant to the previous build and delivers no key events. Remove Leyline from Input Monitoring, add `~/Applications/Leyline.app` again, then restart Leyline. Do the same for Accessibility if the icon names it |
+| The menu stays on *Starting* | Leyline is waiting for Accessibility trust, a desktop Space on screen, or a complete read of the visible windows. `ley resident` shows the cause in `world.observation.failure_code`; `world_visible_window_set_incomplete:id=…,pid=…` names a window its application does not expose to Accessibility. Close that window or quit the application and Leyline starts by itself |
 | Caps Lock + key does nothing | Caps Lock must be mapped to Hyper externally; test Command+Control+Option+Shift + key |
 | Space toggle unavailable | The resident needs complete trustworthy identity for the focused ordinary desktop Space |
 | A resize or move refuses | Application minima, stale observation, missing source/destination or an infeasible common cut |
@@ -26,7 +27,10 @@ Accessibility trust or an active input tap.
 ## Recovery controls
 
 **Stop Leyline** releases management while retaining the menu. **Restart Leyline**
-restarts its capabilities against a fresh baseline. If the process or menu is
+restarts its capabilities against a fresh baseline. A Start or Restart issued
+while the world is still incomplete keeps waiting in *Starting* and finishes when
+the world completes; `ley ctl start` then reports `failed` with the reason and
+`startup_pending: true` instead of a verified start. If the process or menu is
 wedged, use Finder's **Leyline Recovery.app**. Bounce restarts the registered job;
 Disable deregisters it for the login session; Re-enable restores it.
 

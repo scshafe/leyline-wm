@@ -188,7 +188,8 @@ final class TargetedProjectionSnapshot: @unchecked Sendable {
         let spaces = IndependentProjectionSpaceObserver()
         self.init(trusted: trustedProvider,
                   reader: LiveTargetedProjectionWindowReader(sessionAvailable: sessionAvailable,
-                      nonDesktopOnly: { [spaces] in spaces.nonDesktopOnlyWindowIds($0) }),
+                      nonDesktopOnly: { [spaces] in spaces.nonDesktopOnlyWindowIds($0) },
+                      windowParents: { [spaces] in spaces.windowParents($0) }),
                   spaces: spaces, spaceEnabled: spaceEnabled,
                   worldObserver: AccessibilityWorldObserver(trustedProvider: { trustedProvider() && sessionAvailable() }),
                   sessionAvailable: sessionAvailable, sessionGeneration: sessionGeneration)

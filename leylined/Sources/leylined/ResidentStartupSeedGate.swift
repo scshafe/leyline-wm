@@ -25,6 +25,19 @@ final class ResidentStartupSeedGate: @unchecked Sendable {
         }
     }
 
+    /// A lifecycle Start, Restart or reset begins its own baseline reconciliation
+    /// directly, with whatever world the feed has. It re-arms the same wait with
+    /// that reconciliation already in flight, so an incomplete world keeps the
+    /// resident Starting and observing instead of parking it. Any earlier token is
+    /// retired; the caller has already cancelled the lifecycle that owned it.
+    func rearm(generation: UInt64, observationEpoch: UInt64) -> Scope {
+        lock.withLock {
+            let token = Scope(generation: generation, observationEpoch: observationEpoch)
+            awaiting = true; scope = token; reconciling = true
+            return token
+        }
+    }
+
     func isCurrent(_ token: Scope, generation: UInt64, observationEpoch: UInt64) -> Bool {
         lock.withLock { awaiting && scope == token && token.generation == generation && token.observationEpoch == observationEpoch }
     }

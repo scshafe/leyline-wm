@@ -100,6 +100,10 @@ struct LiveTargetedProjectionWindowReader: TargetedProjectionWindowReading {
     /// Rows outside the desktop eligibility contract (see
     /// `projectionNonDesktopOnlyWindowIds`); the default keeps every row required.
     var nonDesktopOnly: @Sendable (Set<Int64>) -> Set<Int64> = { _ in [] }
+    /// Fresh window-server parent IDs for rows AX did not list (see
+    /// `projectionAttachedChildWindowIds`); the default knows no parent, so every
+    /// such row stays required.
+    var windowParents: @Sendable (Set<Int64>) -> [Int64: Int64] = { _ in [:] }
     var supportsCacheAudit: Bool { true }
     func auditInventory(ignored: [ProjectionWindowHandle], beforeExternalCall: @escaping @Sendable () -> ProjectionObservationFailure?)
         -> Result<ProjectionWindowInventory, ProjectionObservationFailure> {
@@ -235,18 +239,33 @@ struct LiveTargetedProjectionWindowReader: TargetedProjectionWindowReading {
             }
         }
         let observedIds = Set(handles.map(\.windowId))
-        let unresolved = visibleIds.subtracting(observedIds.union(ignoredIds))
+        var unresolved = visibleIds.subtracting(observedIds.union(ignoredIds))
+        // Only a row AX did not list costs the window-server parent read.
+        var attached: Set<Int64> = []
+        if !unresolved.isEmpty {
+            if let failure = beforeExternalCall() { return .failure(failure) }
+            var rowOwners: [Int64: pid_t] = [:]
+            for row in visible {
+                guard let id = (row[kCGWindowNumber as String] as? NSNumber)?.int64Value,
+                      let pid = (row[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value else { continue }
+                rowOwners[id] = pid
+            }
+            attached = projectionAttachedChildWindowIds(unresolved, owners: rowOwners,
+                classified: observedIds.intersection(visibleIds), parents: windowParents(unresolved))
+            unresolved.subtract(attached)
+        }
         guard unresolved.isEmpty else {
             let missing = visible.filter { row in
                 guard let id = (row[kCGWindowNumber as String] as? NSNumber)?.int64Value else { return true }
-                return !observedIds.contains(id)
+                return !observedIds.contains(id) && !attached.contains(id)
             }.map { row in
                 "id=\((row[kCGWindowNumber as String] as? NSNumber)?.int64Value ?? 0),pid=\((row[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value ?? 0)"
             }.joined(separator: ";")
             return .failure(.init(code: "world_visible_window_set_incomplete:\(missing):observed=\(observedIds.sorted()):inventory=\(inventoryCounts.joined(separator: ","))",
                                   unresolvedWindowIds: unresolved))
         }
-        return .success(.init(handles: handles, visibleWindowIds: visibleIds, ownerPids: owners, ignoredWindowIds: ignoredIds))
+        return .success(.init(handles: handles, visibleWindowIds: visibleIds.subtracting(attached), ownerPids: owners,
+                              ignoredWindowIds: ignoredIds))
     }
     func focusedElement(pid: pid_t) -> Result<AXUIElement?, ProjectionObservationFailure> {
         guard sessionAvailable() else { return .failure(.init(code: "session_locked")) }

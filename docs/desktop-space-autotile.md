@@ -31,6 +31,18 @@ window-cohort overlap cannot supply durable identity. Incomplete data, ambiguous
 membership, unsupported system Spaces and unavailable bridge capabilities refuse
 observation rather than guessing. Failed AX reads do not prove ineligibility.
 
+Every visible normal-layer window must be classified before the world is complete.
+A window its application's Accessibility window list omits is outside that
+requirement in two positively proven cases only: every Space it occupies is a
+non-desktop Space, or the window server reports it attached to a window of the same
+application that the same read classified (a child panel or sheet, which moves with
+its parent). An unknown, foreign or unclassified parent keeps the window required.
+
+Process startup and every Start, Restart or reset share one wait. While
+Accessibility trust, a complete world or a visible desktop Space is missing, the
+resident stays *Starting* with observation on, and the next complete sweep runs the
+baseline reconcile again. Any other failed baseline parks *Recovery needed*.
+
 The partition owner requires complete world and current lifetime/UUID/display
 membership. A partial world cannot prune a partition as empty. A switch into an
 empty Space cannot delete the previously visible Space. Every eligible nested or

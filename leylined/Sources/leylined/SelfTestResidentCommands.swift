@@ -2988,6 +2988,66 @@ private func runStartupDesktopSpaceAwaitScenarios(test: inout SelfTest) {
         && !CoreRuntimeServices.startupAwaitsDesktopSpace(refusal("space_contexts_unavailable", status: "failed"))
         && !CoreRuntimeServices.startupAwaitsDesktopSpace(refusal("space_contexts_unavailable", action: "move.start")),
         "startup-desktop-space/other-refusals-still-park-recovery-needed")
+    // Live 2026-11-17: a DuckDuckGo panel with no AX window kept the desktop
+    // Space's world incomplete. Start pressed in the menu was refused
+    // `queued_command_invalidated` (its seed's own reconcile advanced admission),
+    // parked "Recovery needed" under that name and turned observation off.
+    func world(complete: Bool) -> JSONValue {
+        .object(["management_enabled": .bool(true), "observation": .object(["world_complete": .bool(complete)])])
+    }
+    let contended = refusal("queued_command_invalidated")
+    test.check(CoreRuntimeServices.startupWaitsForRecovery(contended, trusted: true, world: world(complete: false))
+        && CoreRuntimeServices.startupWaitsForRecovery(refusal("world_incomplete"), trusted: true, world: world(complete: false))
+        && CoreRuntimeServices.startupWaitsForRecovery(contended, trusted: true, world: .object([:]))
+        && CoreRuntimeServices.startupWaitsForRecovery(contended, trusted: false, world: world(complete: true))
+        && CoreRuntimeServices.startupWaitsForRecovery(refusal("space_contexts_unavailable"), trusted: true, world: world(complete: true)),
+        "startup-wait/incomplete-world-missing-trust-and-no-desktop-Space-keep-a-start-waiting")
+    test.check(!CoreRuntimeServices.startupWaitsForRecovery(contended, trusted: true, world: world(complete: true))
+        && !CoreRuntimeServices.startupWaitsForRecovery(refusal("space_identity_unavailable"), trusted: true, world: world(complete: true))
+        && !CoreRuntimeServices.startupWaitsForRecovery(refusal("minimum_constraint", status: "failed"), trusted: true,
+            world: world(complete: true)),
+        "startup-wait/a-refusal-on-a-complete-trusted-desktop-world-still-parks-recovery-needed")
+    func reason(_ result: JSONValue, complete: Bool, matched: Bool = true, reconciled: Bool = false, ready: Bool = false) -> String {
+        CoreRuntimeServices.startupFailureReason(result, matched: matched, reconciled: reconciled, ready: ready,
+            world: world(complete: complete))
+    }
+    test.check(CoreRuntimeServices.startupReconciliationContentionReasons.allSatisfy {
+            reason(refusal($0), complete: false) == "world_incomplete" && reason(refusal($0), complete: true) == $0
+        } && reason(.object([:]), complete: false) == "world_incomplete",
+        "startup-reason/contention-on-an-incomplete-world-reports-the-incomplete-world")
+    test.check(reason(refusal("space_identity_unavailable"), complete: false) == "space_identity_unavailable"
+        && reason(refusal("ax_untrusted"), complete: false) == "ax_untrusted"
+        && reason(.object([:]), complete: true) == "world_reconcile_failed"
+        && reason(contended, complete: false, matched: false) == "startup_reconcile_stale"
+        && reason(contended, complete: true, reconciled: true) == "world_incomplete"
+        && reason(contended, complete: true, reconciled: true, ready: true) == "resident_input_unavailable",
+        "startup-reason/specific-refusals-stale-results-and-input-failure-keep-their-own-names")
+    // A lifecycle Start plans against whatever world the feed has. Refused a
+    // moment before the completing sweep commits, it plans again on the ready
+    // world; while the world stays incomplete it waits and never replans.
+    // The incomplete read publishes no windows, so the two worlds never share a
+    // reconciliation scope; an unready baseline had none to preserve.
+    let partial: JSONObject = ["management_enabled": .bool(true), "desired_running": .bool(true),
+        "observation": .object(["world_complete": .bool(false)]), "windows": .array([])]
+    var completed = partial
+    completed["observation"] = .object(["world_complete": .bool(true)])
+    completed["windows"] = .array([.object(["window_id": .int(125), "pid": .int(670), "eligible": .bool(true),
+        "space_visible": .bool(true)])])
+    func replans(_ reason: String, baseline: JSONObject, current: JSONObject, attempt: Int = 0) -> Bool {
+        CoreRuntimeServices.startupReconciliationCanReplan(refusal(reason), baseline: .object(baseline),
+            current: .object(current), trusted: true, generation: 3, currentGeneration: 3, attempt: attempt)
+    }
+    test.check(replans("world_incomplete", baseline: partial, current: completed)
+        && replans("queued_command_invalidated", baseline: partial, current: completed)
+        && !replans("world_incomplete", baseline: partial, current: completed,
+            attempt: CoreRuntimeServices.startupReconciliationRetryLimit),
+        "startup-wait/world-completed-during-the-start-admits-a-bounded-fresh-plan")
+    var moved = completed; moved["topology_revision"] = .int(9)
+    test.check(!replans("world_incomplete", baseline: partial, current: partial)
+        && !replans("space_identity_unavailable", baseline: partial, current: completed)
+        && !replans("world_incomplete", baseline: completed, current: moved)
+        && replans("world_incomplete", baseline: completed, current: completed),
+        "startup-wait/still-incomplete-world-foreign-reason-and-changed-ready-scope-admit-no-fresh-plan")
 }
 
 /// A Space switch publishes `space_changed` (which wakes the startup seed gate)

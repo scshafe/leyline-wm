@@ -456,8 +456,11 @@ final class CoreRuntimeServices: @unchecked Sendable {
     /// generation, or (c) cancels the startup frame effect already issued
     /// (`invalidated_<event>`, status failed).
     /// Identity/Space changes are excluded by the scope check, not by reason.
+    /// `world_incomplete` joins them for a lifecycle Start, which plans against
+    /// whatever world the feed has: the plan can be refused a moment before the
+    /// sweep that completes the world commits, and replanning needs a ready world.
     static let startupReconciliationContentionReasons: Set<String> = [
-        "expected_revision_mismatch", "queued_command_invalidated",
+        "expected_revision_mismatch", "queued_command_invalidated", "world_incomplete",
         "invalidated_space_changed", "invalidated_app_activated", "invalidated_app_terminated"]
 
     /// Startup shares the controller's reconcile retry bound: a retry can itself
@@ -467,7 +470,9 @@ final class CoreRuntimeServices: @unchecked Sendable {
     /// A bounded fresh plan may resolve harmless revision/admission/invalidation
     /// contention. The refused/cancelled intent stays aborted; changed
     /// identities/Spaces or lifecycle authority cannot be retried under the old
-    /// startup scope.
+    /// startup scope. A baseline that was not ready had no scope to preserve: its
+    /// plan was refused for the world it saw, and the sweep that has since made
+    /// the world ready is the first one a plan can be held to.
     static func startupReconciliationCanReplan(_ result: JSONValue, baseline: JSONValue, current: JSONValue,
                                                trusted: Bool, generation: UInt64, currentGeneration: UInt64,
                                                attempt: Int) -> Bool {
@@ -479,7 +484,8 @@ final class CoreRuntimeServices: @unchecked Sendable {
             && result.at(path: "origin") == .string("internal_reconcile")
             && worldReady(current)
             && current.at(path: "desired_running")?.boolValue != false
-            && ResidentActionController.reconciliationScope(baseline) == ResidentActionController.reconciliationScope(current)
+            && (!worldReady(baseline)
+                || ResidentActionController.reconciliationScope(baseline) == ResidentActionController.reconciliationScope(current))
     }
 
     /// A display whose current Space is native full-screen (or another non-desktop
@@ -494,6 +500,33 @@ final class CoreRuntimeServices: @unchecked Sendable {
             && result.at(path: "action_id") == .string("world.reconcile")
             && (result.at(path: "reconciliation_failure_reason") ?? result.at(path: "reason"))?.stringValue
                 .map(startupDesktopSpaceAwaitReasons.contains) == true
+    }
+
+    /// A start that cannot verify readiness yet keeps waiting, armed and observing,
+    /// when the cause is one a later complete sweep can cure: Accessibility trust
+    /// not granted, a world some window still keeps incomplete, or no desktop Space
+    /// on screen. Process startup and every lifecycle Start share this rule; any
+    /// other failure parks "Recovery needed".
+    static func startupWaitsForRecovery(_ result: JSONValue, trusted: Bool, world: JSONValue) -> Bool {
+        !trusted || world.worldComplete != true || startupAwaitsDesktopSpace(result)
+    }
+
+    /// The reason a start that did not reach Running reports. The startup
+    /// reconcile races the reconcile its own seed event schedules, so while the
+    /// world is incomplete it is usually refused for that contention
+    /// (`queued_command_invalidated`) and not for the world. The contention is a
+    /// symptom then; the incomplete world is what the operator can act on.
+    static func startupFailureReason(_ result: JSONValue, matched: Bool, reconciled: Bool, ready: Bool,
+                                     world: JSONValue) -> String {
+        guard matched else { return "startup_reconcile_stale" }
+        guard reconciled else {
+            let own = result.at(path: "reconciliation_failure_reason")?.stringValue ?? result.at(path: "reason")?.stringValue
+            if world.worldComplete != true, own.map(startupReconciliationContentionReasons.contains) ?? true {
+                return "world_incomplete"
+            }
+            return own ?? "world_reconcile_failed"
+        }
+        return ready ? "resident_input_unavailable" : "world_incomplete"
     }
 
     /// Pure final authority guard. The publication mirror is updated in commit
@@ -866,11 +899,19 @@ final class CoreRuntimeServices: @unchecked Sendable {
                 guard lifecycleGeneration.load(ordering: .acquiring) == generation else { return }
                 feed.start(frontmost: application)
                 guard lifecycleGeneration.load(ordering: .acquiring) == generation else { feed.stop(); snapshots.stop(); return }
+                // A fresh start retires the reason an earlier park published. While it
+                // waits, the menu names the live observation failure instead; a start
+                // that parks again publishes its own reason.
                 _ = server.applyWorldDelta(["event": .string("global_start"), "management_enabled": .bool(true),
-                    "resident_starting": .bool(true), "resident_running": .bool(false), "resident_status": .string("Starting")])
+                    "resident_starting": .bool(true), "resident_running": .bool(false), "resident_status": .string("Starting"),
+                    "resident_unavailable_reason": .null])
                 lifecycleQueue.async { [self] in
                     guard desiredRunning, lifecycleGeneration.load(ordering: .acquiring) == generation else { return }
-                    reconcileBaseline(generation: generation, completion: completion)
+                    // Same wait as process startup: a Start pressed while some window
+                    // still keeps the world incomplete stays Starting and observing,
+                    // and the sweep that completes the world runs the reconcile again.
+                    let startup = startupSeedGate.rearm(generation: generation, observationEpoch: server.observationEpoch)
+                    reconcileBaseline(generation: generation, completion: completion, startup: startup)
                 }
             }
         }
@@ -910,13 +951,18 @@ final class CoreRuntimeServices: @unchecked Sendable {
                 let started = inputStarted && trustedProvider() && Self.worldReady(verified.world)
                     && result.at(path: "reconciliation_verified_scope") == ResidentActionController.reconciliationScope(verified.world)
                     && verified.world.at(path: "model_state.space_partitions") == beforeInput.world.at(path: "model_state.space_partitions")
-                let reason = started ? nil : !matched ? "startup_reconcile_stale" : !reconciled
-                    ? result.at(path: "reconciliation_failure_reason")?.stringValue ?? result.at(path: "reason")?.stringValue ?? "world_reconcile_failed"
-                    : !ready ? "world_incomplete" : "resident_input_unavailable"
+                let reason = started ? nil : Self.startupFailureReason(result, matched: matched, reconciled: reconciled,
+                    ready: ready, world: verified.world)
                 if let startup, !started,
-                   (!trustedProvider() || verified.world.worldComplete != true || Self.startupAwaitsDesktopSpace(result)),
+                   Self.startupWaitsForRecovery(result, trusted: trustedProvider(), world: verified.world),
                    startupSeedGate.waitForRecovery(startup, generation: generation, observationEpoch: server.observationEpoch) {
                     input?.stop()
+                    // A control that asked for this start gets its one terminal answer
+                    // now: readiness is not verified, and the resident keeps Starting.
+                    // The reconcile a later sweep admits carries no completion.
+                    completion?(.failed, reason, ["readiness_verified": .bool(false), "startup_pending": .bool(true),
+                        "management_enabled": .bool(verified.world.managementEnabled), "resident_process_alive": .bool(true),
+                        "reconciliation_request_id": .string(requestID), "reconciliation_result": result])
                     return
                 }
                 if let startup, !startupSeedGate.finish(startup, generation: lifecycleGeneration.load(ordering: .acquiring),

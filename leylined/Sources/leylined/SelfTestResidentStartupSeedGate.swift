@@ -107,6 +107,48 @@ func runResidentStartupSeedGateScenarios(check: (String, Bool) -> Void) {
             !offGate.isCurrent(offToken, generation: token.generation, observationEpoch: offToken.observationEpoch)
                 && offGate.observe(server.committedSnapshot, generation: token.generation, observationEpoch: offToken.observationEpoch) == nil)
 
+        // Live 2026-11-17: Start was pressed in the menu while process startup was
+        // still waiting on a world one window kept incomplete. The lifecycle
+        // cancelled the boot wait and reconciled once with no wait of its own, so
+        // the resident parked "Recovery needed" with observation off.
+        let manualServer = CoreServer(socketPath: "/tmp/leyline-tests-\(getpid())/native-startup-manual-unused.sock")
+        _ = manualServer.applyWorldDelta(CoreStartupBootstrap.pendingDelta)
+        _ = manualServer.applyWorldDelta(starting)
+        let manualGate = ResidentStartupSeedGate()
+        let bootToken = manualGate.arm(generation: token.generation, observationEpoch: manualServer.observationEpoch)!
+        manualGate.cancel()
+        _ = manualServer.applyWorldDelta(partial)
+        let manualGeneration = token.generation + 1
+        let manualToken = manualGate.rearm(generation: manualGeneration, observationEpoch: manualServer.observationEpoch)
+        check("native-startup/lifecycle-start-rearms-the-wait-and-retires-the-boot-token",
+            manualToken != bootToken && manualGate.blocksClaims
+                && manualGate.isCurrent(manualToken, generation: manualGeneration, observationEpoch: manualServer.observationEpoch)
+                && !manualGate.isCurrent(bootToken, generation: token.generation, observationEpoch: manualServer.observationEpoch))
+        _ = manualServer.applyWorldDelta(seed)
+        check("native-startup/lifecycle-start-holds-its-own-reconciliation-so-a-sweep-cannot-queue-a-second",
+            manualGate.observe(manualServer.committedSnapshot, generation: manualGeneration,
+                observationEpoch: manualServer.observationEpoch) == nil && manualGate.blocksClaims)
+        _ = manualServer.applyWorldDelta(partial)
+        let manualPaused = manualGate.waitForRecovery(manualToken, generation: manualGeneration,
+            observationEpoch: manualServer.observationEpoch)
+        check("native-startup/lifecycle-start-on-an-incomplete-world-keeps-waiting-with-management-on",
+            manualPaused && manualGate.blocksClaims
+                && manualGate.observe(manualServer.committedSnapshot, generation: manualGeneration,
+                    observationEpoch: manualServer.observationEpoch) == nil
+                && manualServer.worldState.at(path: "management_enabled")?.boolValue != false)
+        _ = manualServer.applyWorldDelta(recovered)
+        check("native-startup/stale-lifecycle-generation-cannot-claim-the-rearmed-wait",
+            manualGate.observe(manualServer.committedSnapshot, generation: token.generation,
+                observationEpoch: manualServer.observationEpoch) == nil)
+        let manualRecovery = manualGate.observe(manualServer.committedSnapshot, generation: manualGeneration,
+            observationEpoch: manualServer.observationEpoch)
+        check("native-startup/complete-sweep-after-a-waiting-lifecycle-start-admits-one-reconciliation",
+            manualRecovery == manualToken
+                && manualGate.observe(manualServer.committedSnapshot, generation: manualGeneration,
+                    observationEpoch: manualServer.observationEpoch) == nil
+                && manualGate.finish(manualToken, generation: manualGeneration, observationEpoch: manualServer.observationEpoch)
+                && !manualGate.blocksClaims)
+
         let heldServer = CoreServer(socketPath: "/tmp/leyline-tests-\(getpid())/native-startup-stop-unused.sock")
         _ = heldServer.applyWorldDelta(CoreStartupBootstrap.pendingDelta)
         let heldGate = ResidentStartupSeedGate()

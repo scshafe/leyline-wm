@@ -88,6 +88,24 @@ func runFeedSelfTest() -> Int32 {
         "feed/desktop-shared-unknown-empty-and-unreadable-memberships-stay-required")
     test.check(projectionNonDesktopOnlyWindowIds([13223], spaceTypes: [4: 0, 918: 0]) { memberships[$0] }.isEmpty,
         "feed/no-known-non-desktop-Space-excludes-nothing")
+    // Live shape 2026-11-17: after login DuckDuckGo (pid 670) showed a 346x274
+    // layer-0 panel (127) that its AXWindows never listed; the window server
+    // reported it attached to the browser window (125), which AX did classify.
+    // Every world read on that desktop Space refused for as long as it stayed up.
+    let rowOwners: [Int64: pid_t] = [125: 670, 127: 670, 128: 670, 131: 682, 140: 682, 141: 670, 142: 670, 150: 670]
+    let rowParents: [Int64: Int64] = [127: 125, 128: 127, 140: 125, 141: 999, 142: 142, 150: 104]
+    test.check(projectionAttachedChildWindowIds([127], owners: rowOwners, classified: [125, 131], parents: rowParents) == [127],
+        "feed/row-attached-to-a-classified-window-of-its-owner-is-outside-the-inventory-contract")
+    test.check(projectionAttachedChildWindowIds([127, 128], owners: rowOwners, classified: [125, 131], parents: rowParents) == [127, 128],
+        "feed/row-attached-to-an-attached-row-follows-its-chain-to-a-classified-window")
+    test.check(projectionAttachedChildWindowIds([127, 128, 140, 141, 142, 150, 160], owners: rowOwners, classified: [125, 131],
+        parents: rowParents) == [127, 128],
+        "feed/foreign-absent-self-unclassified-and-unknown-parents-stay-required")
+    test.check(projectionAttachedChildWindowIds([127, 128], owners: rowOwners, classified: [131], parents: rowParents).isEmpty
+        && projectionAttachedChildWindowIds([127], owners: rowOwners, classified: [125], parents: [:]).isEmpty
+        && projectionAttachedChildWindowIds([127], owners: [127: 670], classified: [125], parents: rowParents).isEmpty
+        && projectionAttachedChildWindowIds([127], owners: [125: 670, 127: -1], classified: [125], parents: rowParents).isEmpty,
+        "feed/unclassified-parent-failed-parent-read-and-unknown-owner-exclude-nothing")
     // Live shape 2026-10-16: Xcode's Device Hub was a regular running app with
     // processIdentifier -1; enrolling it failed AXObserverCreate and refused
     // every world read for 12 h.
